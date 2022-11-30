@@ -40,7 +40,7 @@
 ; Page 0  Initialisation
 ; **************************************************************************		
 
-    .ORG ROMSTART + $180		; 0+180 put Siena code from here	
+.org ROMSTART + $180		; 0+180 put Siena code from here	
 
 ; **************************************************************************
 ; this code must not span pages
@@ -110,8 +110,8 @@ iOpcodes:
     DB lsb(nop_)                ;    %  
     DB lsb(nop_)                ;    &
     DB lsb(strDef_)             ;    '
-    DB lsb(nop_)                ;    (    
-    DB lsb(nop_)                ;    )
+    DB lsb(lambda_)             ;    (    
+    DB lsb(ret_)                ;    )
     DB lsb(nop_)                ;    *  
     DB lsb(newAdd2_)            ;    +
     DB lsb(nop_)                ;    ,  
@@ -373,7 +373,7 @@ iOpcodes:
 
     ENDDAT 
 
-etx:        ;=12
+etx:        
     ld hl,-DSTACK
     add hl,sp
     jr nc,etx1
@@ -383,53 +383,48 @@ etx1:
 
 start:
     ld sp,DSTACK		        ; start of Siena
-    call init		        ; setups
-    call printStr		    ; prog count to stack, put code line 235 on stack then call print
+    call init		            ; setups
+    call printStr		        ; prog count to stack, put code line 235 on stack then call print
     .cstr "Siena V0.0\r\n"
 
 interpret:
     call prompt
 
-    ld bc,0                    ; load bc with offset into TIB, decide char into tib or execute or control    
+    ld bc,0                     ; load bc with offset into TIB, decide char into tib or execute or control    
     ld (vTIBPtr),bc
 
-interpret2:                  ; calc nesting (a macro might have changed it)
-    ld e,0                    ; initilize nesting value
-    push bc                    ; save offset into TIB, 
-                              ; bc is also the count of chars in TIB
-    ld hl,TIB                 ; hl is start of TIB
+interpret2:                     ; calc nesting (a macro might have changed it)
+    ld e,0                      ; initilize nesting value
+    push bc                     ; save offset into TIB, 
+                                ; bc is also the count of chars in TIB
+    ld hl,TIB                   ; hl is start of TIB
     jr interpret4
 
 interpret3:
-    ld a,(hl)                 ; a = char in TIB
-    inc hl                    ; inc pointer into TIB
-    dec bc                    ; dec count of chars in TIB
-    call nesting              ; update nesting value
+    ld a,(hl)                   ; a = char in TIB
+    inc hl                      ; inc pointer into TIB
+    dec bc                      ; dec count of chars in TIB
+    call nesting                ; update nesting value
 
 interpret4:
-    ld a,c                    ; is count zero?
+    ld a,c                      ; is count zero?
     or b
-    jr nz, interpret3        ; if not loop
-    pop bc                    ; restore offset into TIB
-; *******************************************************************    
-; Wait for a character from the serial input (keyboard) 
-; and store it in the text buffer. Keep accepting characters,
-; increasing the instruction pointer bc - until a newline received.
-; *******************************************************************
-
+    jr nz, interpret3           ; if not loop
+    pop bc                      ; restore offset into TIB
+    
 waitchar:    
-    call getchar  ; loop around waiting for character from serial port
-    cp $20			; compare to space
-    jr nc,waitchar1		; if >= space, if below 20 set cary flag
-    cp $0    ; is it end of string? null end of string
+    call getchar                ; loop around waiting for character from serial port
+    cp $20			            ; compare to space
+    jr nc,waitchar1		        ; if >= space, if below 20 set cary flag
+    cp $0                       ; is it end of string? null end of string
     jr z,waitchar4
-    cp '\r'        ; carriage return? ascii 13
-    jr z,waitchar3		; if anything else its macro/control 
-    ; ld d,0
-macro:       ;=25
+    cp '\r'                     ; carriage return? ascii 13
+    jr z,waitchar3		        ; if anything else its macro/control 
+
+macro:       
     ld (vTIBPtr),bc
     ld hl,ctrlCodes
-    add a,l			;look up key of macros
+    add a,l			            ; look up key of macros
     ld l,a
     ld e,(hl)
     ld a,e
@@ -437,7 +432,7 @@ macro:       ;=25
     jr z,macro1
     ld d,msb(macros)
     push de
-    call ENTER		;Siena go operation and jump to it
+    call ENTER		            ; Siena go operation and jump to it
     .cstr "go"
 macro1:
     ld bc,(vTIBPtr)
@@ -446,31 +441,31 @@ macro1:
 waitchar1:
     ld hl,TIB
     add hl,bc
-    ld (hl),a     ; store the character in textbuf
+    ld (hl),a                   ; store the character in textbuf
     inc bc
-    call putchar  ; echo character to screen
+    call putchar                ; echo character to screen
     call nesting
-    jr  waitchar  ; wait for next character
+    jr  waitchar                ; wait for next character
 
 waitchar3:
     ld hl,TIB
     add hl,bc
-    ld (hl),"\r"  ; store the crlf in textbuf
+    ld (hl),"\r"                ; store the crlf in textbuf
     inc hl
     ld (hl),"\n"  
-    inc hl    ; ????
+    inc hl    
     inc bc
     inc bc
-    call crlf     ; echo character to screen
-    ld a,e    ; if zero nesting append and ETX after \r
+    call crlf                   ; echo character to screen
+    ld a,e                      ; if zero nesting append and ETX after \r
     or a
     jr nz,waitchar
-    ld (hl),$03    ; store end of text ETX in text buffer 
+    ld (hl),$03                 ; store end of text ETX in text buffer 
     inc bc
 
 waitchar4:    
     ld (vTIBPtr),bc
-    ld bc,TIB     ; Instructions stored on heap at address HERE, we pressed enter
+    ld bc,TIB                   ; Instructions stored on heap at address HERE, we pressed enter
     dec bc
 
 ; ********************************************************************************
@@ -495,14 +490,14 @@ waitchar4:
 ;
 ; *********************************************************************************
 
-next:       ;=9 
-    inc bc        ;  Increment the IP
-    ld a, (bc)    ;  Get the next character and dispatch
-    ld l,a        ;  Index into table
-    ld h,msb(opcodes)       ;  Start address of jump table    
-    ld l,(hl)    ;  get low jump address
-    ld h,msb(page4)    ;  Load h with the 1st page address
-    jp (hl)       ;  Jump to routine
+next:        
+    inc bc                      ;  Increment the IP
+    ld a, (bc)                  ;  Get the next character and dispatch
+    ld l,a                      ;  Index into table
+    ld h,msb(opcodes)           ;  Start address of jump table    
+    ld l,(hl)                   ;  get low jump address
+    ld h,msb(page4)             ;  Load h with the 1st page address
+    jp (hl)                     ;  Jump to routine
 
 init:       
     ld iy,DSTACK
@@ -512,7 +507,7 @@ init:
     ld bc,8 * 2
     ldir
     
-    ld hl,data    ; init namespaces to 0 using ldir
+    ld hl,data                  ; init namespaces to 0 using ldir
     ld de,hl
     inc de
     ld (hl),0
@@ -549,16 +544,16 @@ initOps2a:
 
 enter:     ;=9
     ld hl,bc
-    call rpush    ; save Instruction Pointer
+    call rpush                  ; save Instruction Pointer
     pop bc
     dec bc
     jp next     
 
-printStr:        ;=14
-    ex (sp),hl		; swap			
+printStr:        
+    ex (sp),hl		            ; swap			
     call putStr		
-    inc hl			; inc past null
-    ex (sp),hl		; put it back	
+    inc hl			            ; inc past null
+    ex (sp),hl		            ; put it back	
     ret
 
 lookupRef:
@@ -583,7 +578,7 @@ lookupRef3:
     adc a,h
     ld h,a
     xor a
-    or e    ; sets z flag if a-z
+    or e                        ; sets z flag if a-z
     ret
 
 ; **************************************************************************    
@@ -596,8 +591,8 @@ lookupRef3:
 ; limited to 127 levels
 ; **************************************************************************    
 
-nesting:    ;
-    cp $22    ; quote char
+nesting:    
+    cp $22                      ; quote char
     jr nz,nesting1
     bit 7,e
     jr z,nesting1a
@@ -645,8 +640,14 @@ strDef_:
     jp strDef
 newAdd2_:
     jp newAdd2
+lambda_:    
+    jr lambda
 go_:
     jp go
+ret_:
+    call rpop                   ; Restore Instruction pointer
+    ld bc,hl       
+    jp next    
 
 dot_:  
     pop hl
@@ -657,21 +658,21 @@ dot2:
     jp next
 
 and_:    
-    pop de     ;     Bitwise and the top 2 elements of the stack
-    pop hl     ;    
-    ld a,e    ;    
-    and     l       ;    
-    ld l,a    ;    
-    ld a,d    ;    
-    and     h       ;    
+    pop de                      ; Bitwise and the top 2 elements of the stack
+    pop hl     
+    ld a,e        
+    and l           
+    ld l,a        
+    ld a,d        
+    and h           
 and1:
-    ld h,a    ;    
-    push    hl     ;    
-    jp next    ;    
+    ld h,a        
+    push hl         
+    jp next        
     
-        ; 
+         
 or_: 		 
-    pop de    ; Bitwise or the top 2 elements of the stack
+    pop de                      ; Bitwise or the top 2 elements of the stack
     pop hl
     ld a,e
     or l
@@ -681,7 +682,7 @@ or_:
     jr and1
 
 xor_:		 
-    pop de    ; Bitwise xor the top 2 elements of the stack
+    pop de                      ; Bitwise xor the top 2 elements of the stack
 xor1:
     pop hl
     ld a,e
@@ -691,15 +692,15 @@ xor1:
     xor     h
     jr and1
 
-inv_:				; Bitwise INVert the top member of the stack
-    ld de, $FFFF  ; by xoring with $FFFF
+inv_:				            ; Bitwise INVert the top member of the stack
+    ld de, $FFFF                ; by xoring with $FFFF
     jr xor1    
     
-add_:        ; add the top 2 members of the stack
+add_:                           ; add the top 2 members of the stack
     pop de        
     pop hl        
-    add     hl,de    
-    push    hl        
+    add hl,de    
+    push hl        
     jp next    
         
 call_:
@@ -710,13 +711,12 @@ call_:
     ld d,(hl)
     jp go1
 
-
-hdot_:       ; print hexadecimal
+hdot_:                          ; print hexadecimal
     pop hl
     call prthex
     jr    dot2
 
-drop_:       ; Discard the top member of the stack
+drop_:                          ; Discard the top member of the stack
     pop hl
     jp next
 
@@ -726,7 +726,7 @@ undrop_:
     jp next
     
 dup_:    
-    pop hl    ; Duplicate the top member of the stack
+    pop hl                      ; Duplicate the top member of the stack
     push    hl
     push    hl
     jp next
@@ -734,14 +734,14 @@ etx_:
     jp ETX
     
 exit_:
-    inc bc			    ; store offests into a table of bytes, smaller
+    inc bc			            ; store offests into a table of bytes, smaller
     ld de,bc       
-    call rpop       ; Restore Instruction pointer
+    call rpop                   ; Restore Instruction pointer
     ld bc,hl
     ex de,hl
     jp (hl)
     
-fetch_:     ; Fetch the value from the address placed on the top of the stack 
+fetch_:                         ; Fetch the value from the address placed on the top of the stack 
     pop hl    
 fetch1:
     ld e,(hl)    
@@ -761,47 +761,42 @@ key_:
 mul_:    jp mul 
 
 nop_:  
-    jp next    ; hardwire white space to always go to next (important for arrays)
+    jp next                     ; hardwire white space to always go to next (important for arrays)
 
 
 over_:  
-    pop hl    ; Duplicate 2nd element of the stack
+    pop hl                      ; Duplicate 2nd element of the stack
     pop de
     push de
     push hl
-    push de    ; and push it to top of stack
+    push de                     ; and push it to top of stack
     jp next    
     
-ret_:
-    call rpop       ; Restore Instruction pointer
-    ld bc,hl       
-    jp next    
-
-rot_:       ; a b c -- b c a
-    pop de        ; a b    de = c
-    pop hl        ; a       hl = b
-    ex (sp),hl    ; b       hl = a
-    push de       ; b c    
-    push hl       ; b c a     
+rot_:                           ; a b c -- b c a
+    pop de                      ; a b    de = c
+    pop hl                      ; a       hl = b
+    ex (sp),hl                  ; b       hl = a
+    push de                     ; b c    
+    push hl                     ; b c a     
     jp next
 
-;  Left shift { is multiply by 2		
+                                ;  Left shift { is multiply by 2		
 shl_:    
-    pop hl    ; Duplicate the top member of the stack
+    pop hl                      ; Duplicate the top member of the stack
     add hl,hl
-    push hl        ; shift left fallthrough into add_     
-    jp next        ;    
+    push hl                     ; shift left fallthrough into add_     
+    jp next            
     
-				;  Right shift } is a divide by 2		
+				                ;  Right shift } is a divide by 2		
 shr_:    
-    pop hl    ; Get the top member of the stack
+    pop hl                      ; Get the top member of the stack
 shr1:
     srl h
     RR l
     push hl
-    jp next        ;    
+    jp next            
 
-store_:     ; Store the value at the address placed on the top of the stack
+store_:                         ; Store the value at the address placed on the top of the stack
     pop hl     
     pop de     
     ld (hl),e     
@@ -809,31 +804,31 @@ store_:     ; Store the value at the address placed on the top of the stack
     ld (hl),d     
     jp next  
           
-swap_:        ; a b -- b a Swap the top 2 elements of the stack
+swap_:                          ; a b -- b a Swap the top 2 elements of the stack
     pop hl
     ex (sp),hl
     push hl
     jp next
     
 neg_:    
-    ld hl, 0    		; NEGate the value on top of stack (2's complement)
-    pop de    ;    
-    jr sub2    ; use the SUBtract routine
+    ld hl, 0    		        ; NEGate the value on top of stack (2's complement)
+    pop de       
+    jr sub2                     ; use the SUBtract routine
     
-sub_:  		    ; Subtract the value 2nd on stack from top of stack 
-    pop de    ;    
-    pop hl    ; Entry point for INVert
+sub_:  		                    ; Subtract the value 2nd on stack from top of stack 
+    pop de    
+    pop hl                      ; Entry point for INVert
 sub2:    
-    or a       ; Entry point for NEGate
-    sbc hl,de       ; 15t
-    push hl    ;    
-    jp next    ;    
-        ; 5  
+    or a                        ; Entry point for NEGate
+    sbc hl,de       
+    push hl        
+    jp next        
+        
 eq_:    
     pop hl
     pop de
-    or a    ; reset the carry flag
-    sbc hl,de     ; only equality sets hl=0 here
+    or a                        ; reset the carry flag
+    sbc hl,de                   ; only equality sets hl=0 here
     jr z, true_
 false_:
     ld hl, 0
@@ -849,7 +844,7 @@ lt_:
     pop hl
     pop de
 lt1:    
-    or a    ; reset the carry flag
+    or a                        ; reset the carry flag
     sbc hl,de    
 	    jr z,false_    
     jp m,false_
@@ -866,7 +861,7 @@ lte_:
     pop hl
     pop de
 lte1:    
-    or a    ; reset the carry flag
+    or a                        ; reset the carry flag
     sbc hl,de    
     jp m,false_
     jp true
@@ -878,9 +873,6 @@ var_:
     push hl
     jp next
     
-lambda_:    
-    jr lambda
-
 a_:
     jp a
 c_:
@@ -929,22 +921,6 @@ div_:
 
     push hl
     jp next
-
-lambda:          ;=    
-    inc bc
-    ld de,(vHeapPtr)  ; start of defintion
-    push de
-lambda1:       ; Skip to end of definition    
-    ld a,(bc)    ; Get the next character
-    inc bc        ; Point to next character
-    ld (de),a
-    inc de
-    cp ")"        ; Is it a semicolon 
-    jr nz, lambda1    ; get the next element
-lambda2:    
-    dec bc
-    ld (vHeapPtr),de  ; bump heap ptr to after definiton
-    jp next  
 
 ; ********************************************************************
 ; 16-bit division subroutine.
@@ -1579,22 +1555,38 @@ newAdd2:
     push de                     ; push result    
     
     jp next    
-    
-go:				       ;\^
-    pop de
+
+lambda:              
+    inc bc
+    ld de,(vHeapPtr)            ; start of lambda defintion
+    push de
+lambda1:                        ; Skip to end of definition    
+    ld a,(bc)                   ; Get the next character
+    inc bc                      ; Point to next character
+    ld (de),a
+    inc de
+    cp ")"                      ; Is it the end of the definition? 
+    jr nz, lambda1              ; get the next element
+lambda2:    
+    dec bc
+    ld (vHeapPtr),de            ; bump heap ptr to after definiton
+    jp next  
+
+go:				                ; execute Siena lambda at pointer
+    pop de                      ; de = pointer to lambda
 go1:
-    ld a,d        ; skip if destination address is null
+    ld a,d                      ; skip if destination address is null
     or e
     jr z,go3
-    ld hl,bc
-    inc bc        ; read next char from source
-    ld a,(bc)    ; if ; to tail call optimise
-    cp ";"        ; by jumping to rather than calling destination
+    ld hl,bc                    ; hl = IP
+    inc bc                      ; read ahead next char and check for )
+    ld a,(bc)                   ; if ) then we can tail call optimise
+    cp ")"                      ; by jumping to rather than calling destination
     jr z,go2
-    call rpush    ; save Instruction Pointer
+    call rpush                  ; save IP (in hl)
 go2:
-    ld bc,de
-    dec bc
+    ld bc,de                    ; IP = pointer to lambda
+    dec bc                      ; dec to prepare for next routine
 go3:
     jp next       
 

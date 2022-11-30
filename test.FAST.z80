@@ -5,9 +5,9 @@
     
     .include "IOSerial.asm"
     
-    LD SP,DSTACK
-    CALL init
-    JP testsStart
+    ld SP,DSTACK
+    call init
+    jp testsStart
     
     .include "Siena.asm"
     .include "ram.asm"
