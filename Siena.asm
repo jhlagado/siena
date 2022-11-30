@@ -22,20 +22,6 @@
 
     DATASIZE    EQU 26*2*2	    ; a..z, a..z words
 
-.macro LITDAT,len
-    DB len
-.endm
-
-.macro REPDAT,len,data			; compress the command tables
-    
-    DB (len | $80)
-    DB data
-.endm
-
-.macro ENDDAT
-    DB 0
-.endm
-
 ; **************************************************************************
 ; Page 0  Initialisation
 ; **************************************************************************		
@@ -60,18 +46,12 @@ iAltVars:			            ; value copied into tables
     DW 0                        ; g 
     DW HEAP                     ; h vHeapPtr \h start of the free mem
 
-
-
+    .align $100
 iOpcodes:
-    LITDAT 4		            ; macros for compression
     DB lsb(exit_)               ; NUL 
     DB lsb(nop_)                ; SOH 
     DB lsb(nop_)                ; STX 
     DB lsb(etx_)                ; ETX 
-
-    LITDAT 29
-    ; REPDAT 29, lsb(nop_)
-
     DB lsb(nop_)                ;     
     DB lsb(nop_)    ;     
     DB lsb(nop_)    ;     
@@ -101,8 +81,6 @@ iOpcodes:
     DB lsb(nop_)    ;     
     DB lsb(nop_)    ;     
     DB lsb(nop_)    ;     
-
-    LITDAT 15
     DB lsb(nop_)                ;    !  
     DB lsb(nop_)                ;    "
     DB lsb(hexnum_)             ;    #
@@ -111,16 +89,13 @@ iOpcodes:
     DB lsb(nop_)                ;    &
     DB lsb(strDef_)             ;    '
     DB lsb(lambda_)             ;    (    
-    DB lsb(ret_)                ;    )
+    DB lsb(return_)             ;    )
     DB lsb(nop_)                ;    *  
     DB lsb(newAdd2_)            ;    +
     DB lsb(nop_)                ;    ,  
     DB lsb(num_)                ;    -
     DB lsb(dot_)                ;    .
     DB lsb(nop_)                ;    /	
-
-    ; REPDAT 10, lsb(num_)		; 10 x repeat lsb of add to the num routine 
-    LITDAT 10
     DB lsb(num_)                ;    0     
     DB lsb(num_)                ;    1    
     DB lsb(num_)                ;    2    
@@ -131,8 +106,6 @@ iOpcodes:
     DB lsb(num_)                ;    7    
     DB lsb(num_)                ;    8    
     DB lsb(num_)                ;    9    
-
-    LITDAT 7
     DB lsb(nop_)                ;    :    
     DB lsb(nop_)                ;    ;
     DB lsb(nop_)                ;    <
@@ -140,9 +113,6 @@ iOpcodes:
     DB lsb(nop_)                ;    >  
     DB lsb(nop_)                ;    ?    
     DB lsb(fetch_)              ;    @  
-
-    ; REPDAT 26, lsb(call_)		; call a command a, b ....z
-    LITDAT 26
     DB lsb(call_)               ;    A     
     DB lsb(call_)               ;    B     
     DB lsb(call_)               ;    C     
@@ -169,17 +139,12 @@ iOpcodes:
     DB lsb(call_)               ;    X     
     DB lsb(call_)               ;    Y     
     DB lsb(call_)               ;    Z    
-
-    LITDAT 6
     DB lsb(nop_)                ;    [
     DB lsb(nop_)                ;    \
     DB lsb(nop_)                ;    ]
     DB lsb(nop_)                ;    ^
     DB lsb(nop_)                ;    _
     DB lsb(nop_)                ;    `    	    
-
-    ; REPDAT 26, lsb(var_)		
-    LITDAT 26
     DB lsb(a_)                  ;    a     
     DB lsb(var_)                ;    b  
     DB lsb(c_)                  ;    c  
@@ -206,15 +171,11 @@ iOpcodes:
     DB lsb(x_)                  ;    x  
     DB lsb(var_)                ;    y  
     DB lsb(var_)                ;    z  
-
-    LITDAT 5
     DB lsb(nop_)                ;    {
     DB lsb(or_)                 ;    |  
     DB lsb(nop_)                ;    }  
     DB lsb(nop_)                ;    ~    
     DB lsb(nop_)                ;    DEL	
-
-    LITDAT 32
     DB lsb(EMPTY)               ; NUL ^@    
     DB lsb(EMPTY)               ; SOH ^a  1
     DB lsb(EMPTY)               ; STX ^b  2
@@ -247,21 +208,14 @@ iOpcodes:
     DB lsb(EMPTY)               ; ^]  
     DB lsb(EMPTY)               ; ^^  
     DB lsb(EMPTY)               ; ^_  
-
-    LITDAT 5
     DB lsb(aNop_)  ;a0    sp  				;space
     DB lsb(aNop_)  ;a1    \!  			; this is a bug shud be lsb(cstore_)     
     DB lsb(aNop_)  ;a2    \"  				
     DB lsb(aNop_)  ;a3    \#  utility command		; table of special routines ie #5 etc				
     DB lsb(aNop_)  ;a4    \$  prints a newline to output	
-
-    ; REPDAT 3, lsb(aNop_)
-    LITDAT 3
     DB lsb(aNop_)  ;     
     DB lsb(aNop_)  ;     
     DB lsb(aNop_)  ;     
-
-    LITDAT 8
     DB lsb(aNop_)  ;a8    \(  ( b -- )    
     DB lsb(aNop_)  ;a9    \)       
     DB lsb(aNop_)  ;aa    \*       
@@ -270,9 +224,6 @@ iOpcodes:
     DB lsb(aNop_)  ;ad    \-       
     DB lsb(aNop_)  ;ae    \.  ( b -- ) prints a string from add term by null char    
     DB lsb(aNop_)  ;af    \/       
-
-    ; REPDAT 10, lsb(aNop_)
-    LITDAT 10
     DB lsb(aNop_)    ;     
     DB lsb(aNop_)    ;     
     DB lsb(aNop_)    ;     
@@ -283,8 +234,6 @@ iOpcodes:
     DB lsb(aNop_)    ;     
     DB lsb(aNop_)    ;     
     DB lsb(aNop_)    ;     
-
-    LITDAT 7
     DB lsb(aNop_)    ;ba    \:	return add of a anon def, \: 1 2 3;    \\ ret add of this       
     DB lsb(aNop_)  ;bb    \;       
     DB lsb(aNop_)  ;bc    \<  ( port -- val )
@@ -292,9 +241,6 @@ iOpcodes:
     DB lsb(aNop_)  ;be    \>  ( val port -- )
     DB lsb(aNop_)  ;bf    \?
     DB lsb(aNop_)     ;c0    \@ byte fetch
-
-    ; REPDAT 26, lsb(aNop_)
-    LITDAT 26
     DB lsb(aNop_)    ;     
     DB lsb(aNop_)    ;     
     DB lsb(aNop_)    ;     
@@ -321,17 +267,12 @@ iOpcodes:
     DB lsb(aNop_)    ;     
     DB lsb(aNop_)    ;     
     DB lsb(aNop_)    ;     
-
-    LITDAT 6
     DB lsb(aNop_)        
     DB lsb(aNop_)                       
     DB lsb(aNop_)                           
     DB lsb(aNop_)                           
     DB lsb(aNop_)                              
     DB lsb(aNop_)                           
-
-    ; REPDAT 8, lsb(altVar_)  ;e1	\a...\h
-    LITDAT 8
     DB lsb(aNop_)
     DB lsb(aNop_)
     DB lsb(aNop_)
@@ -340,13 +281,8 @@ iOpcodes:
     DB lsb(aNop_)
     DB lsb(aNop_)
     DB lsb(aNop_)
-    
-    LITDAT 2
     DB lsb(aNop_)          
     DB lsb(aNop_)        
-
-    ; REPDAT 16, lsb(altVar_)		; \k...\z
-    LITDAT 16
     DB lsb(aNop_)
     DB lsb(aNop_)
     DB lsb(aNop_)
@@ -363,15 +299,11 @@ iOpcodes:
     DB lsb(aNop_)
     DB lsb(aNop_)
     DB lsb(aNop_)
-
-    LITDAT 5
     DB lsb(aNop_)             
     DB lsb(aNop_)                
     DB lsb(aNop_)        
     DB lsb(aNop_)    
     DB lsb(aNop_)    
-
-    ENDDAT 
 
 etx:        
     ld hl,-DSTACK
@@ -494,7 +426,7 @@ next:
     inc bc                      ;  Increment the IP
     ld a, (bc)                  ;  Get the next character and dispatch
     ld l,a                      ;  Index into table
-    ld h,msb(opcodes)           ;  Start address of jump table    
+    ld h,msb(iOpcodes)           ;  Start address of jump table    
     ld l,(hl)                   ;  get low jump address
     ld h,msb(page4)             ;  Load h with the 1st page address
     jp (hl)                     ;  Jump to routine
@@ -513,34 +445,35 @@ init:
     ld (hl),0
     ld bc,DATASIZE
     ldir
-
-initOps:
-    ld hl, iOpcodes
-    ld de, opcodes
-    ld bc, 256
-
-initOps1:
-    ld a,(hl)
-    inc hl
-    sla a       
-    ret z
-    jr c, initOps2
-    srl a
-    ld c,a
-    ld b,0
-    ldir
-    jr initOps1
+    ret
     
-initOps2:    
-    srl a
-    ld b,a
-    ld a,(hl)
-    inc hl
-initOps2a:
-    ld (de),a
-    inc de
-    djnz initOps2a
-    jr initOps1
+; initOps:
+;     ld hl, iOpcodes
+;     ld de, opcodes
+;     ld bc, 256
+
+; initOps1:
+;     ld a,(hl)
+;     inc hl
+;     sla a       
+;     ret z
+;     jr c, initOps2
+;     srl a
+;     ld c,a
+;     ld b,0
+;     ldir
+;     jr initOps1
+    
+; initOps2:    
+;     srl a
+;     ld b,a
+;     ld a,(hl)
+;     inc hl
+; initOps2a:
+;     ld (de),a
+;     inc de
+;     djnz initOps2a
+;     jr initOps1
 
 enter:     ;=9
     ld hl,bc
@@ -641,13 +574,11 @@ strDef_:
 newAdd2_:
     jp newAdd2
 lambda_:    
-    jr lambda
+    jp lambda
 go_:
     jp go
-ret_:
-    call rpop                   ; Restore Instruction pointer
-    ld bc,hl       
-    jp next    
+return_:
+    jp return
 
 dot_:  
     pop hl
@@ -656,6 +587,42 @@ dot2:
     ld a,' '       
     call putchar
     jp next
+a_:
+    jp a
+c_:
+    jp c
+d_:
+    jp d
+e_:
+    jp e
+f_:
+    jp f
+g_:
+    jp g
+i_:
+    jp i
+k_:
+    jp k
+l_:
+    jp l
+m_:
+    jp m
+n_:
+    jp n
+o_:
+    jp o
+p_:
+    jp p
+r_:
+    jp r
+s_:
+    jp s
+u_:
+    jp u
+w_:
+    jp w
+x_:
+    jp x
 
 and_:    
     pop de                      ; Bitwise and the top 2 elements of the stack
@@ -873,42 +840,6 @@ var_:
     push hl
     jp next
     
-a_:
-    jp a
-c_:
-    jp c
-d_:
-    jp d
-e_:
-    jp e
-f_:
-    jp f
-g_:
-    jp g
-i_:
-    jp i
-k_:
-    jp k
-l_:
-    jp l
-m_:
-    jp m
-n_:
-    jp n
-o_:
-    jp o
-p_:
-    jp p
-r_:
-    jp r
-s_:
-    jp s
-u_:
-    jp u
-w_:
-    jp w
-x_:
-    jp x
     
 div_:    
     jr div
@@ -1502,38 +1433,6 @@ strDef2:
     ld (vHeapPtr),de            ; bump heap ptr to after definiton
     jp next  
 
-newAdd:
-    push bc                     ; push interpreter pointer
-    ld d,(iy-1)
-    ld e,(iy-2)
-    ld h,(iy-3)
-    ld l,(iy-4)
-    push iy                     ; push base pointer
-    ld iy,0                     ; base pointer = stack pointer
-
-    add iy,sp
-    add hl,de    
-    push hl
-
-    ld b,(iy-3)                 ; return from routine
-    ld c,(iy-4)
-    exx                         ; preserve bc
-    ld d,iyh                    ; de = BP
-    ld e,iyl                    ;
-    ld hl,de                    ; hl = BP
-    or a                        ; bc = diff in bytes
-    sbc HL,SP                   ; 
-    ld bc,hl                    ; 
-    ex de,hl                    ; hl = BP
-    ld d,(iy-1)                 ; old BP in DE
-    ld e,(iy-2)
-    lddr                        ; de decremented past 
-    ex de,hl                    ; sp = de                    
-    ld sp,hl
-    exx                         ; restore bc
-
-    jp next    
-    
 newAdd2:
     push bc                     ; push IP
     
@@ -1567,7 +1466,6 @@ lambda1:                        ; Skip to end of definition
     inc de
     cp ")"                      ; Is it the end of the definition? 
     jr nz, lambda1              ; get the next element
-lambda2:    
     dec bc
     ld (vHeapPtr),de            ; bump heap ptr to after definiton
     jp next  
@@ -1577,18 +1475,24 @@ go:				                ; execute Siena lambda at pointer
 go1:
     ld a,d                      ; skip if destination address is null
     or e
-    jr z,go3
-    ld hl,bc                    ; hl = IP
-    inc bc                      ; read ahead next char and check for )
-    ld a,(bc)                   ; if ) then we can tail call optimise
-    cp ")"                      ; by jumping to rather than calling destination
     jr z,go2
-    call rpush                  ; save IP (in hl)
-go2:
+
+    push bc                     ; save IP 
+    push iy                     ; push base pointer
+    ld iy,0                     ; base pointer = stack pointer
+    add iy,sp
+
     ld bc,de                    ; IP = pointer to lambda
     dec bc                      ; dec to prepare for next routine
-go3:
+go2:
     jp next       
 
+return:
+    pop de                      ; de = result 
+    pop hl                      ; hl = old BP
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    push de                     ; push result    
+    jp next    
     
     
