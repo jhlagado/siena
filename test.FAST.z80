@@ -16,6 +16,7 @@
 
 testsStart:
 
+    test "1", 1
     ; test "1 2 +", 3
     ; test "'A' @", 65
     
@@ -23,7 +24,6 @@ testsStart:
     ; test "10 20 $1", 10
     ; test "10 20 $2", 20
     ; test "10 20 30 $3", 30
-
 
     ; test "1", 1
     ; test "0", 0
