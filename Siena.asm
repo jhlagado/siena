@@ -12,14 +12,15 @@
 ;
 ; *****************************************************************************
 
+                                ; 
     DSIZE  EQU $80
     RSIZE  EQU $80
-    TIBSIZE     EQU $100	; 256 bytes , along line!
-    TRUE    EQU 1		; not FF, for Siena
+    TIBSIZE     EQU $100	    ; 256 bytes , along line!
+    TRUE    EQU 1		        ; not FF, for Siena
     FALSE  EQU 0
-    EMPTY  EQU 0		; for an empty macro, ctrl-<something>=macro, ie ctrl-h = backspace macros (in Siena)
+    EMPTY  EQU 0		        ; for an empty macro, ctrl-<something>=macro, ie ctrl-h = backspace macros (in Siena)
 
-    DATASIZE    EQU 26*2*2	; a..z, a..z words
+    DATASIZE    EQU 26*2*2	    ; a..z, a..z words
 
 .macro LITDAT,len
     DB len
@@ -39,7 +40,7 @@
 ; Page 0  Initialisation
 ; **************************************************************************		
 
-		.ORG ROMSTART + $180		; 0+180 put Siena code from here	
+    .ORG ROMSTART + $180		; 0+180 put Siena code from here	
 
 ; **************************************************************************
 ; this code must not span pages
@@ -49,29 +50,29 @@ macros:
 ; ***********************************************************************
 ; Initial values for user mintVars		
 ; ***********************************************************************		
-iAltVars:			  ; value copied into tables
-    DW dStack     ; a vS0 start of datastack			
-    DW 0     ; b  
-    DW 0     ; c vTIBPtr an offset to the tib
-    DW 0     ; d 
-    DW 0     ; e 
-    DW 0     ; f 
-    DW 0     ; g 
-    DW HEAP        ; h vHeapPtr \h start of the free mem
+iAltVars:			            ; value copied into tables
+    DW dStack                   ; a vS0 start of datastack			
+    DW 0                        ; b  
+    DW 0                        ; c vTIBPtr an offset to the tib
+    DW 0                        ; d 
+    DW 0                        ; e 
+    DW 0                        ; f 
+    DW 0                        ; g 
+    DW HEAP                     ; h vHeapPtr \h start of the free mem
 
 
 
 iOpcodes:
-    LITDAT 4		    ; macros for compression
-    DB lsb(exit_)       ; NUL 
-    DB lsb(nop_)  ; SOH 
-    DB lsb(nop_)  ; STX 
-    DB lsb(etx_)  ; ETX 
+    LITDAT 4		            ; macros for compression
+    DB lsb(exit_)               ; NUL 
+    DB lsb(nop_)                ; SOH 
+    DB lsb(nop_)                ; STX 
+    DB lsb(etx_)                ; ETX 
 
     LITDAT 29
     ; REPDAT 29, lsb(nop_)
 
-    DB lsb(nop_)    ;     
+    DB lsb(nop_)                ;     
     DB lsb(nop_)    ;     
     DB lsb(nop_)    ;     
     DB lsb(nop_)    ;     
@@ -102,150 +103,150 @@ iOpcodes:
     DB lsb(nop_)    ;     
 
     LITDAT 15
-    DB lsb(nop_)    ;    !  
-    DB lsb(nop_)    ;    "
-    DB lsb(hexnum_) ;    #
-    DB lsb(arg_)    ;    $  
-    DB lsb(nop_)    ;    %  
-    DB lsb(nop_)    ;    &
-    DB lsb(strDef_) ;    '
-    DB lsb(nop_)    ;    (    
-    DB lsb(nop_)    ;    )
-    DB lsb(nop_)    ;    *  
-    DB lsb(add_)    ;    +
-    DB lsb(nop_)    ;    ,  
-    DB lsb(num_)    ;    -
-    DB lsb(dot_)    ;    .
-    DB lsb(nop_)    ;    /	
+    DB lsb(nop_)                ;    !  
+    DB lsb(nop_)                ;    "
+    DB lsb(hexnum_)             ;    #
+    DB lsb(arg_)                ;    $  
+    DB lsb(nop_)                ;    %  
+    DB lsb(nop_)                ;    &
+    DB lsb(strDef_)             ;    '
+    DB lsb(nop_)                ;    (    
+    DB lsb(nop_)                ;    )
+    DB lsb(nop_)                ;    *  
+    DB lsb(add_)                ;    +
+    DB lsb(nop_)                ;    ,  
+    DB lsb(num_)                ;    -
+    DB lsb(dot_)                ;    .
+    DB lsb(nop_)                ;    /	
 
     ; REPDAT 10, lsb(num_)		; 10 x repeat lsb of add to the num routine 
     LITDAT 10
-    DB lsb(num_)    ;    0     
-    DB lsb(num_)    ;    1    
-    DB lsb(num_)    ;    2    
-    DB lsb(num_)    ;    3    
-    DB lsb(num_)    ;    4    
-    DB lsb(num_)    ;    5    
-    DB lsb(num_)    ;    6    
-    DB lsb(num_)    ;    7    
-    DB lsb(num_)    ;    8    
-    DB lsb(num_)    ;    9    
+    DB lsb(num_)                ;    0     
+    DB lsb(num_)                ;    1    
+    DB lsb(num_)                ;    2    
+    DB lsb(num_)                ;    3    
+    DB lsb(num_)                ;    4    
+    DB lsb(num_)                ;    5    
+    DB lsb(num_)                ;    6    
+    DB lsb(num_)                ;    7    
+    DB lsb(num_)                ;    8    
+    DB lsb(num_)                ;    9    
 
     LITDAT 7
-    DB lsb(nop_)    ;    :    
-    DB lsb(nop_)    ;    ;
-    DB lsb(nop_)    ;    <
-    DB lsb(nop_)    ;    =  
-    DB lsb(nop_)    ;    >  
-    DB lsb(nop_)    ;    ?    
-    DB lsb(fetch_)  ;    @  
+    DB lsb(nop_)                ;    :    
+    DB lsb(nop_)                ;    ;
+    DB lsb(nop_)                ;    <
+    DB lsb(nop_)                ;    =  
+    DB lsb(nop_)                ;    >  
+    DB lsb(nop_)                ;    ?    
+    DB lsb(fetch_)              ;    @  
 
     ; REPDAT 26, lsb(call_)		; call a command a, b ....z
     LITDAT 26
-    DB lsb(call_)    ;    A     
-    DB lsb(call_)    ;    B     
-    DB lsb(call_)    ;    C     
-    DB lsb(call_)    ;    D     
-    DB lsb(call_)    ;    E     
-    DB lsb(call_)    ;    F     
-    DB lsb(call_)    ;    G     
-    DB lsb(call_)    ;    h     
-    DB lsb(call_)    ;    I     
-    DB lsb(call_)    ;    J     
-    DB lsb(call_)    ;    K     
-    DB lsb(call_)    ;    L     
-    DB lsb(call_)    ;    M     
-    DB lsb(call_)    ;    N     
-    DB lsb(call_)    ;    O     
-    DB lsb(call_)    ;    p     
-    DB lsb(call_)    ;    Q     
-    DB lsb(call_)    ;    R     
-    DB lsb(call_)    ;    S     
-    DB lsb(call_)    ;    T     
-    DB lsb(call_)    ;    U     
-    DB lsb(call_)    ;    V     
-    DB lsb(call_)    ;    W     
-    DB lsb(call_)    ;    X     
-    DB lsb(call_)    ;    Y     
-    DB lsb(call_)    ;    Z    
+    DB lsb(call_)               ;    A     
+    DB lsb(call_)               ;    B     
+    DB lsb(call_)               ;    C     
+    DB lsb(call_)               ;    D     
+    DB lsb(call_)               ;    E     
+    DB lsb(call_)               ;    F     
+    DB lsb(call_)               ;    G     
+    DB lsb(call_)               ;    h     
+    DB lsb(call_)               ;    I     
+    DB lsb(call_)               ;    J     
+    DB lsb(call_)               ;    K     
+    DB lsb(call_)               ;    L     
+    DB lsb(call_)               ;    M     
+    DB lsb(call_)               ;    N     
+    DB lsb(call_)               ;    O     
+    DB lsb(call_)               ;    p     
+    DB lsb(call_)               ;    Q     
+    DB lsb(call_)               ;    R     
+    DB lsb(call_)               ;    S     
+    DB lsb(call_)               ;    T     
+    DB lsb(call_)               ;    U     
+    DB lsb(call_)               ;    V     
+    DB lsb(call_)               ;    W     
+    DB lsb(call_)               ;    X     
+    DB lsb(call_)               ;    Y     
+    DB lsb(call_)               ;    Z    
 
     LITDAT 6
-    DB lsb(nop_)    ;    [
-    DB lsb(nop_)    ;    \
-    DB lsb(nop_)    ;    ]
-    DB lsb(nop_)    ;    ^
-    DB lsb(nop_)    ;    _
-    DB lsb(nop_)    ;    `    	    
+    DB lsb(nop_)                ;    [
+    DB lsb(nop_)                ;    \
+    DB lsb(nop_)                ;    ]
+    DB lsb(nop_)                ;    ^
+    DB lsb(nop_)                ;    _
+    DB lsb(nop_)                ;    `    	    
 
     ; REPDAT 26, lsb(var_)		
     LITDAT 26
-    DB lsb(a_) ;    a     
-    DB lsb(var_)    ;    b  
-    DB lsb(c_) ;    c  
-    DB lsb(d_) ;    d  
-    DB lsb(e_) ;    e  
-    DB lsb(f_) ;    f  
-    DB lsb(g_) ;    g  
-    DB lsb(var_)    ;    h  
-    DB lsb(i_) ;    i  
-    DB lsb(var_)    ;    j  
-    DB lsb(k_) ;    k  
-    DB lsb(l_) ;    l  
-    DB lsb(m_) ;    m  
-    DB lsb(m_) ;    n  
-    DB lsb(o_) ;    o  
-    DB lsb(p_) ;    p  
-    DB lsb(var_)    ;    q  
-    DB lsb(r_) ;    r  
-    DB lsb(s_) ;    s  
-    DB lsb(var_)    ;    t  
-    DB lsb(u_) ;    u  
-    DB lsb(var_)    ;    v  
-    DB lsb(w_) ;    w  
-    DB lsb(x_) ;    x  
-    DB lsb(var_)    ;    y  
-    DB lsb(var_)    ;    z  
+    DB lsb(a_)                  ;    a     
+    DB lsb(var_)                ;    b  
+    DB lsb(c_)                  ;    c  
+    DB lsb(d_)                  ;    d  
+    DB lsb(e_)                  ;    e  
+    DB lsb(f_)                  ;    f  
+    DB lsb(g_)                  ;    g  
+    DB lsb(var_)                ;    h  
+    DB lsb(i_)                  ;    i  
+    DB lsb(var_)                ;    j  
+    DB lsb(k_)                  ;    k  
+    DB lsb(l_)                  ;    l  
+    DB lsb(m_)                  ;    m  
+    DB lsb(m_)                  ;    n  
+    DB lsb(o_)                  ;    o  
+    DB lsb(p_)                  ;    p  
+    DB lsb(var_)                ;    q  
+    DB lsb(r_)                  ;    r  
+    DB lsb(s_)                  ;    s  
+    DB lsb(var_)                ;    t  
+    DB lsb(u_)                  ;    u  
+    DB lsb(var_)                ;    v  
+    DB lsb(w_)                  ;    w  
+    DB lsb(x_)                  ;    x  
+    DB lsb(var_)                ;    y  
+    DB lsb(var_)                ;    z  
 
     LITDAT 5
-    DB lsb(nop_)    ;    {
-    DB lsb(or_)     ;    |  
-    DB lsb(nop_)    ;    }  
-    DB lsb(nop_)    ;    ~    
-    DB lsb(nop_)    ;    DEL	
+    DB lsb(nop_)                ;    {
+    DB lsb(or_)                 ;    |  
+    DB lsb(nop_)                ;    }  
+    DB lsb(nop_)                ;    ~    
+    DB lsb(nop_)                ;    DEL	
 
     LITDAT 32
-    DB lsb(EMPTY)  ; NUL ^@    
-    DB lsb(EMPTY)  ; SOH ^a  1
-    DB lsb(EMPTY)  ; STX ^b  2
-    DB lsb(EMPTY)  ; ETX ^c  3
-    DB lsb(EMPTY)  ; EOT ^d  4
-    DB lsb(EMPTY)  ; ENQ ^e  5
-    DB lsb(EMPTY)  ; ACK ^F  6
-    DB lsb(EMPTY)  ; BEL ^G  7 
-    DB lsb(EMPTY)  ; BS  ^h  8
-    DB lsb(EMPTY)  ; TAB ^I  9
-    DB lsb(EMPTY)  ; LF  ^J 10
-    DB lsb(EMPTY)  ; VT  ^K 11
-    DB lsb(EMPTY)  ; FF  ^l 12
-    DB lsb(EMPTY)  ; CR  ^m 13
-    DB lsb(EMPTY)  ; SO  ^N 14
-    DB lsb(EMPTY)  ; SI  ^O 15
-    DB lsb(EMPTY)  ; DLE ^p 16
-    DB lsb(EMPTY)  ; ^Q     
-    DB lsb(EMPTY)  ; ^R     
-    DB lsb(EMPTY)  ; ^S    
-    DB lsb(EMPTY)  ; ^T    
-    DB lsb(EMPTY)  ; ^U       
-    DB lsb(EMPTY)  ; ^V  
-    DB lsb(EMPTY)  ; ^W    
-    DB lsb(EMPTY)  ; ^X    
-    DB lsb(EMPTY)  ; ^Y    
-    DB lsb(EMPTY)  ; ^z    
-    DB lsb(EMPTY)  ; ^[  
-    DB lsb(EMPTY)  ; ^\  
-    DB lsb(EMPTY)  ; ^]  
-    DB lsb(EMPTY)  ; ^^  
-    DB lsb(EMPTY)  ; ^_  
+    DB lsb(EMPTY)               ; NUL ^@    
+    DB lsb(EMPTY)               ; SOH ^a  1
+    DB lsb(EMPTY)               ; STX ^b  2
+    DB lsb(EMPTY)               ; ETX ^c  3
+    DB lsb(EMPTY)               ; EOT ^d  4
+    DB lsb(EMPTY)               ; ENQ ^e  5
+    DB lsb(EMPTY)               ; ACK ^F  6
+    DB lsb(EMPTY)               ; BEL ^G  7 
+    DB lsb(EMPTY)               ; BS  ^h  8
+    DB lsb(EMPTY)               ; TAB ^I  9
+    DB lsb(EMPTY)               ; LF  ^J 10
+    DB lsb(EMPTY)               ; VT  ^K 11
+    DB lsb(EMPTY)               ; FF  ^l 12
+    DB lsb(EMPTY)               ; CR  ^m 13
+    DB lsb(EMPTY)               ; SO  ^N 14
+    DB lsb(EMPTY)               ; SI  ^O 15
+    DB lsb(EMPTY)               ; DLE ^p 16
+    DB lsb(EMPTY)               ; ^Q     
+    DB lsb(EMPTY)               ; ^R     
+    DB lsb(EMPTY)               ; ^S    
+    DB lsb(EMPTY)               ; ^T    
+    DB lsb(EMPTY)               ; ^U       
+    DB lsb(EMPTY)               ; ^V  
+    DB lsb(EMPTY)               ; ^W    
+    DB lsb(EMPTY)               ; ^X    
+    DB lsb(EMPTY)               ; ^Y    
+    DB lsb(EMPTY)               ; ^Z    
+    DB lsb(EMPTY)               ; ^[  
+    DB lsb(EMPTY)               ; ^\  
+    DB lsb(EMPTY)               ; ^]  
+    DB lsb(EMPTY)               ; ^^  
+    DB lsb(EMPTY)               ; ^_  
 
     LITDAT 5
     DB lsb(aNop_)  ;a0    sp  				;space
@@ -1431,11 +1432,11 @@ prtdec4:
     ld a,b
     jp putchar
 
-                              ; 
+                                ; 
 
 prthex:          
-                              ; Display hl as a 16-bit number in hex.
-    push bc                    ; preserve the IP
+                                ; Display hl as a 16-bit number in hex.
+    push bc                     ; preserve the IP
     ld a,h
     call prthex2
     ld a,l
@@ -1495,13 +1496,13 @@ crlf:
     call printStr
     .cstr "\r\n"
     ret
-                              ; 
+                                ; 
 arg:
-    inc     bc                ; get next char
+    inc     bc                  ; get next char
     ld a,(bc)
-    sub     "1"               ; treat as a digit, 1 based index
-    and     $07               ; mask 
-    add     a,a               ; double
+    sub     "1"                 ; treat as a digit, 1 based index
+    and     $07                 ; mask 
+    add     a,a                 ; double
     ld l,a
     ld h,0
     ld e,iyl
@@ -1516,24 +1517,24 @@ arg:
     push    de
     jp next
 
-                              ; 
+                                ; 
 strDef:     
-    ld de,(vHeapPtr)          ; DE = heap ptr
-    push de                    ; save start of string 
-    inc bc                    ; point to next char
+    ld de,(vHeapPtr)            ; DE = heap ptr
+    push de                     ; save start of string 
+    inc bc                      ; point to next char
     jr strDef2
 strDef1:
     ld (de),a
-    inc de                    ; increase count
-    inc bc                    ; point to next char
+    inc de                      ; increase count
+    inc bc                      ; point to next char
 strDef2:
     ld a,(bc)
-    cp "'"                    ; ' is the string terminator
+    cp "'"                      ; ' is the string terminator
     jr nz,strDef1
-    xor a                     ; write null to terminate string
+    xor a                       ; write null to terminate string
     ld (de),a
     inc de
-    ld (vHeapPtr),de          ; bump heap ptr to after definiton
+    ld (vHeapPtr),de            ; bump heap ptr to after definiton
     jp next  
 
 newAdd:
