@@ -1,4 +1,4 @@
-    .engine mycomputer
+    ; .engine mycomputer
 
     .include "constants.asm"
     .include "test.fast.mac.asm"
@@ -17,7 +17,6 @@
 testsStart:
 
     test "1 2 +", 3
-
 
     ; test "'A' @", 65
     ; test "10 $1", 10

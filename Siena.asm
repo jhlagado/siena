@@ -113,7 +113,7 @@ iOpcodes:
     DB lsb(nop_)                ;    (    
     DB lsb(nop_)                ;    )
     DB lsb(nop_)                ;    *  
-    DB lsb(add_)                ;    +
+    DB lsb(newAdd2_)            ;    +
     DB lsb(nop_)                ;    ,  
     DB lsb(num_)                ;    -
     DB lsb(dot_)                ;    .
@@ -639,8 +639,8 @@ arg_:
     jp arg
 strDef_:
     jp strDef
-newAdd_:
-    jp newAdd
+newAdd2_:
+    jp newAdd2
 num_:    
     jp  num
 
@@ -1509,12 +1509,12 @@ arg:
     ld d,iyh
     ex de,hl
     or a
-    sbc     hl,de
-    dec     hl
+    sbc hl,de
+    dec hl
     ld d,(hl)
-    dec     hl
+    dec hl
     ld e,(hl)
-    push    de
+    push de
     jp next
 
                                 ; 
@@ -1538,5 +1538,58 @@ strDef2:
     jp next  
 
 newAdd:
-    jp next
+    push bc                     ; push interpreter pointer
+    ld d,(iy-1)
+    ld e,(iy-2)
+    ld h,(iy-3)
+    ld l,(iy-4)
+    push iy                     ; push base pointer
+    ld iy,0                     ; base pointer = stack pointer
+
+    add iy,sp
+    add hl,de    
+    push hl
+
+    ld b,(iy-3)                 ; return from routine
+    ld c,(iy-4)
+    exx                         ; preserve bc
+    ld d,iyh                    ; de = BP
+    ld e,iyl                    ;
+    ld hl,de                    ; hl = BP
+    or a                        ; bc = diff in bytes
+    sbc HL,SP                   ; 
+    ld bc,hl                    ; 
+    ex de,hl                    ; hl = BP
+    ld d,(iy-1)                 ; old BP in DE
+    ld e,(iy-2)
+    lddr                        ; de decremented past 
+    ex de,hl                    ; sp = de                    
+    ld sp,hl
+    exx                         ; restore bc
+
+    jp next    
+    
+newAdd2:
+    push bc                     ; push IP
+    
+    ld d,(iy-1)
+    ld e,(iy-2)
+    ld h,(iy-3)
+    ld l,(iy-4)
+    
+    push iy                     ; push base pointer
+    ld iy,0                     ; base pointer = stack pointer
+    add iy,sp
+    
+    add hl,de                   ; hl = hl + de   
+    ex de,hl                    ; de = result
+
+    pop hl                      ; hl = old BP
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    push de                     ; push result    
+    
+    jp next    
+    
+    
     

@@ -1,4 +1,4 @@
-0000                          .ENGINE   mycomputer   
+0000                             ; .engine mycomputer
 0000                             ; 
 0000                TEC_1:    EQU   1   
 0000                RC2014:   EQU   0   
@@ -662,7 +662,7 @@
 01BB   86                     DB   lsb(nop_)   ;    (
 01BC   86                     DB   lsb(nop_)   ;    )
 01BD   86                     DB   lsb(nop_)   ;    *
-01BE   2F                     DB   lsb(add_)   ;    +
+01BE   06                     DB   lsb(newAdd2_)   ;    +
 01BF   86                     DB   lsb(nop_)   ;    ,
 01C0   09                     DB   lsb(num_)   ;    -
 01C1   40                     DB   lsb(dot_)   ;    .
@@ -1163,8 +1163,8 @@
 0400   C3 8C 08               JP   arg   
 0403                STRDEF_:      
 0403   C3 A6 08               JP   strDef   
-0406                NEWADD_:      
-0406   C3 C0 08               JP   newAdd   
+0406                NEWADD2_:      
+0406   C3 F8 08               JP   newAdd2   
 0409                NUM_:        
 0409   C3 AD 07               JP   num   
 040C                AND_:        
@@ -1959,7 +1959,49 @@
 08B9   ED 53 8E 1B            LD   (vHeapPtr),de   ; bump heap ptr to after definiton
 08BD   C3 3C 03               JP   next   
 08C0                NEWADD:      
-08C0   C3 3C 03               JP   next   
+08C0   C5                     PUSH   bc   ; push interpreter pointer
+08C1   FD 56 FF               LD   d,(iy-1)   
+08C4   FD 5E FE               LD   e,(iy-2)   
+08C7   FD 66 FD               LD   h,(iy-3)   
+08CA   FD 6E FC               LD   l,(iy-4)   
+08CD   FD E5                  PUSH   iy   ; push base pointer
+08CF   FD 21 00 00            LD   iy,0   ; base pointer = stack pointer
+08D3   FD 39                  ADD   iy,sp   
+08D5   19                     ADD   hl,de   
+08D6   E5                     PUSH   hl   
+08D7   FD 46 FD               LD   b,(iy-3)   ; return from routine
+08DA   FD 4E FC               LD   c,(iy-4)   
+08DD   D9                     EXX      ; preserve bc
+08DE   FD 54                  LD   d,iyh   ; de = BP
+08E0   FD 5D                  LD   e,iyl   ; 
+08E2   62 6B                  LD   hl,de   ; hl = BP
+08E4   B7                     OR   a   ; bc = diff in bytes
+08E5   ED 72                  SBC   HL,SP   ; 
+08E7   44 4D                  LD   bc,hl   ; 
+08E9   EB                     EX   de,hl   ; hl = BP
+08EA   FD 56 FF               LD   d,(iy-1)   ; old BP in DE
+08ED   FD 5E FE               LD   e,(iy-2)   
+08F0   ED B8                  LDDR      ; de decremented past
+08F2   EB                     EX   de,hl   ; sp = de
+08F3   F9                     LD   sp,hl   
+08F4   D9                     EXX      ; restore bc
+08F5   C3 3C 03               JP   next   
+08F8                NEWADD2:      
+08F8   C5                     PUSH   bc   ; push IP
+08F9   FD 56 FF               LD   d,(iy-1)   
+08FC   FD 5E FE               LD   e,(iy-2)   
+08FF   FD 66 FD               LD   h,(iy-3)   
+0902   FD 6E FC               LD   l,(iy-4)   
+0905   FD E5                  PUSH   iy   ; push base pointer
+0907   FD 21 00 00            LD   iy,0   ; base pointer = stack pointer
+090B   FD 39                  ADD   iy,sp   
+090D   19                     ADD   hl,de   ; hl = hl + de
+090E   EB                     EX   de,hl   ; de = result
+090F   E1                     POP   hl   ; hl = old BP
+0910   C1                     POP   bc   ; bc = IP
+0911   F9                     LD   sp,hl   ; sp = old BP
+0912   D5                     PUSH   de   ; push result
+0913   C3 3C 03               JP   next   
 1800                          .ORG   RAMSTART   
 1800                TIB:      DS   TIBSIZE   
 1900                          DS   RSIZE   
@@ -2042,7 +2084,7 @@
 4015   ED 52                  SBC   HL,DE   
 4017   7D                     LD   A,L   
 4018   B4                     OR   H   
-4019   28 2E                  JR   Z,expectM_0_2009S31   
+4019   28 2E                  JR   Z,expectM_0_2051S31   
 401B   CD 64 06               CALL   prtstr   
 401E   31 20 32 20 2B 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "1 2 +","\r\nActual: "   
 402E   CD F6 07               CALL   prtdec   
@@ -2052,9 +2094,8 @@
 4044   CD F6 07               CALL   prtdec   
 4047   76                     HALT      
 4048   00                     .CSTR      
-4049                EXPECTM_0_2009S31:      
+4049                EXPECTM_0_2051S31:      
 4049   E1                     POP   HL   
-404A                             ; 
 404A                             ; 
 404A                             ; test "'A' @", 65
 404A                             ; test "10 $1", 10
@@ -2337,7 +2378,8 @@ NEXT:               033C DEFINED AT LINE 498 IN Siena.asm
                     > USED AT LINE 1359 IN Siena.asm
                     > USED AT LINE 1518 IN Siena.asm
                     > USED AT LINE 1538 IN Siena.asm
-                    > USED AT LINE 1541 IN Siena.asm
+                    > USED AT LINE 1570 IN Siena.asm
+                    > USED AT LINE 1592 IN Siena.asm
 INIT:               0345 DEFINED AT LINE 507 IN Siena.asm
                     > USED AT LINE 9
                     > USED AT LINE 386 IN Siena.asm
@@ -2357,7 +2399,7 @@ PRINTSTR:           0393 DEFINED AT LINE 557 IN Siena.asm
                     > USED AT LINE 387 IN Siena.asm
                     > USED AT LINE 1467 IN Siena.asm
                     > USED AT LINE 1496 IN Siena.asm
-                    > USED AT LINE 111
+                    > USED AT LINE 110
 LOOKUPREF:          039A DEFINED AT LINE 564 IN Siena.asm
 LOOKUPREF0:         039C DEFINED AT LINE 566 IN Siena.asm
 LOOKUPREF1:         03A0 DEFINED AT LINE 569 IN Siena.asm
@@ -2385,7 +2427,7 @@ NESTING4:           03E2 DEFINED AT LINE 628 IN Siena.asm
 PAGE4:              0400 DEFINED AT LINE 636 IN Siena.asm
 ARG_:               0400 DEFINED AT LINE 638 IN Siena.asm
 STRDEF_:            0403 DEFINED AT LINE 640 IN Siena.asm
-NEWADD_:            0406 DEFINED AT LINE 642 IN Siena.asm
+NEWADD2_:           0406 DEFINED AT LINE 642 IN Siena.asm
 NUM_:               0409 DEFINED AT LINE 644 IN Siena.asm
 AND_:               040C DEFINED AT LINE 647 IN Siena.asm
                     > USED AT LINE 1111 IN Siena.asm
@@ -2665,6 +2707,7 @@ A:                  0679 DEFINED AT LINE 1105 IN Siena.asm
                     > USED AT LINE 1531 IN Siena.asm
                     > USED AT LINE 1534 IN Siena.asm
                     > USED AT LINE 1535 IN Siena.asm
+                    > USED AT LINE 1559 IN Siena.asm
                     > USED AT LINE 5
                     > USED AT LINE 7
 C:                  0689 DEFINED AT LINE 1115 IN Siena.asm
@@ -2695,6 +2738,7 @@ C:                  0689 DEFINED AT LINE 1115 IN Siena.asm
                     > USED AT LINE 1430 IN Siena.asm
                     > USED AT LINE 1447 IN Siena.asm
                     > USED AT LINE 1453 IN Siena.asm
+                    > USED AT LINE 1554 IN Siena.asm
 D:                  0699 DEFINED AT LINE 1125 IN Siena.asm
                     > USED AT LINE 438 IN Siena.asm
                     > USED AT LINE 565 IN Siena.asm
@@ -2712,6 +2756,10 @@ D:                  0699 DEFINED AT LINE 1125 IN Siena.asm
                     > USED AT LINE 1338 IN Siena.asm
                     > USED AT LINE 1509 IN Siena.asm
                     > USED AT LINE 1514 IN Siena.asm
+                    > USED AT LINE 1542 IN Siena.asm
+                    > USED AT LINE 1556 IN Siena.asm
+                    > USED AT LINE 1563 IN Siena.asm
+                    > USED AT LINE 1575 IN Siena.asm
 E:                  06B3 DEFINED AT LINE 1139 IN Siena.asm
                     > USED AT LINE 397 IN Siena.asm
                     > USED AT LINE 434 IN Siena.asm
@@ -2746,6 +2794,10 @@ E:                  06B3 DEFINED AT LINE 1139 IN Siena.asm
                     > USED AT LINE 1411 IN Siena.asm
                     > USED AT LINE 1508 IN Siena.asm
                     > USED AT LINE 1516 IN Siena.asm
+                    > USED AT LINE 1543 IN Siena.asm
+                    > USED AT LINE 1557 IN Siena.asm
+                    > USED AT LINE 1564 IN Siena.asm
+                    > USED AT LINE 1576 IN Siena.asm
 F:                  06BE DEFINED AT LINE 1147 IN Siena.asm
                     > USED AT LINE 891 IN Siena.asm
 G:                  06C9 DEFINED AT LINE 1155 IN Siena.asm
@@ -2788,6 +2840,8 @@ L:                  06FC DEFINED AT LINE 1186 IN Siena.asm
                     > USED AT LINE 1484 IN Siena.asm
                     > USED AT LINE 1488 IN Siena.asm
                     > USED AT LINE 1506 IN Siena.asm
+                    > USED AT LINE 1545 IN Siena.asm
+                    > USED AT LINE 1578 IN Siena.asm
                     > USED AT LINE 7
 M:                  070C DEFINED AT LINE 1196 IN Siena.asm
                     > USED AT LINE 853 IN Siena.asm
@@ -2913,6 +2967,7 @@ STRDEF1:            08AE DEFINED AT LINE 1526 IN Siena.asm
 STRDEF2:            08B1 DEFINED AT LINE 1530 IN Siena.asm
                     > USED AT LINE 1525 IN Siena.asm
 NEWADD:             08C0 DEFINED AT LINE 1540 IN Siena.asm
+NEWADD2:            08F8 DEFINED AT LINE 1572 IN Siena.asm
                     > USED AT LINE 643 IN Siena.asm
 TIB:                1800 DEFINED AT LINE 3 IN ram.asm
                     > USED AT LINE 400 IN Siena.asm
@@ -2992,5 +3047,5 @@ HEAP:               1C28 DEFINED AT LINE 73 IN ram.asm
                     > USED AT LINE 61 IN Siena.asm
 TESTSSTART:         4000 DEFINED AT LINE 17
                     > USED AT LINE 10
-EXPECTM_0_2009S31:  4049 DEFINED AT LINE 22
+EXPECTM_0_2051S31:  4049 DEFINED AT LINE 22
                     > USED AT LINE 9
