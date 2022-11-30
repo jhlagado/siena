@@ -16,8 +16,9 @@
 
 testsStart:
 
+    ; test "1", 1
     test "(1)go", 1
-    ; test "1 2 +", 3
+    test "1 2 +", 3
 
     ; test "'A' @", 65
     ; test "10 $1", 10

@@ -364,7 +364,7 @@ macro:
     jr z,macro1
     ld d,msb(macros)
     push de
-    call ENTER		            ; Siena go operation and jump to it
+    call enter		            ; Siena go operation and jump to it
     .cstr "go"
 macro1:
     ld bc,(vTIBPtr)
@@ -447,41 +447,6 @@ init:
     ldir
     ret
     
-; initOps:
-;     ld hl, iOpcodes
-;     ld de, opcodes
-;     ld bc, 256
-
-; initOps1:
-;     ld a,(hl)
-;     inc hl
-;     sla a       
-;     ret z
-;     jr c, initOps2
-;     srl a
-;     ld c,a
-;     ld b,0
-;     ldir
-;     jr initOps1
-    
-; initOps2:    
-;     srl a
-;     ld b,a
-;     ld a,(hl)
-;     inc hl
-; initOps2a:
-;     ld (de),a
-;     inc de
-;     djnz initOps2a
-;     jr initOps1
-
-enter:     ;=9
-    ld hl,bc
-    call rpush                  ; save Instruction Pointer
-    pop bc
-    dec bc
-    jp next     
-
 printStr:        
     ex (sp),hl		            ; swap			
     call putStr		
@@ -701,12 +666,7 @@ etx_:
     jp ETX
     
 exit_:
-    inc bc			            ; store offests into a table of bytes, smaller
-    ld de,bc       
-    call rpop                   ; Restore Instruction pointer
-    ld bc,hl
-    ex de,hl
-    jp (hl)
+    jp exit
     
 fetch_:                         ; Fetch the value from the address placed on the top of the stack 
     pop hl    
@@ -1488,11 +1448,45 @@ go2:
     jp next       
 
 return:
-    pop de                      ; de = result 
+    pop hl                      ; hl = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
     pop hl                      ; hl = old BP
     pop bc                      ; bc = IP
     ld sp,hl                    ; sp = old BP
     push de                     ; push result    
     jp next    
-    
+
+enter:     
+    jp go
+    ; ld hl,bc
+    ; pop bc
+    ; dec bc
+    ; push hl                     ; save Instruction Pointer
+    ; push iy                     ; push base pointer
+    ; ld iy,0                     ; base pointer = stack pointer
+    ; add iy,sp
+    ; jp next     
+
+exit:
+    ld de,bc                    ; address of code after exit opcode
+    inc de			            
+    exx
+    pop bc                      ; bc = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    exx
+    pop hl                      ; hl = old BP
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    exx
+    push bc                     ; push result    
+    exx
+    ex de,hl
+    jp (hl)
+
     
