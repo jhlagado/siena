@@ -108,7 +108,7 @@ iOpcodes:
         DB lsb(arg_)    ;   $            
         DB lsb(nop_)    ;   %            
         DB lsb(nop_)    ;   &
-        DB lsb(nop_)    ;   '
+        DB lsb(strDef_) ;   '
         DB lsb(nop_)    ;   (        
         DB lsb(nop_)    ;   )
         DB lsb(nop_)    ;   *            
@@ -137,8 +137,8 @@ iOpcodes:
         DB lsb(nop_)    ;   <
         DB lsb(nop_)    ;   =            
         DB lsb(nop_)    ;   >            
-        DB lsb(nop_)    ;   ?   ( -- val )  read a char from input
-        DB lsb(nop_)    ;   @       
+        DB lsb(nop_)    ;   ?   
+        DB lsb(fetch_)  ;   @       
 
         ; REPDAT 26, lsb(call_)		; call a command a, b ....z
         LITDAT 26
@@ -636,6 +636,8 @@ page4:
 
 arg_:
         jp      arg
+strDef_:
+        jp      strDef
 and_:        
         pop     de          ;     Bitwise and the top 2 elements of the stack
         pop     hl          ;    
@@ -1508,3 +1510,22 @@ arg:
         ld      e,(hl)
         push    de
         jp      next
+
+strDef:                         
+        ld de,(vHeapPtr)        ; DE = heap ptr
+        push de                 ; save start of string 
+        inc bc                  ; point to next char
+        jr strDef2
+strDef1:
+        ld (de),a
+        inc de                  ; increase count
+        inc bc                  ; point to next char
+strDef2:
+        ld a,(bc)
+        cp "'"                  ; ' is the string terminator
+        jr nz,strDef1
+        xor a                   ; write null to terminate string
+        ld (de),a
+        inc de
+        ld (vHeapPtr),de        ; bump heap ptr to after definiton
+        jp next       
