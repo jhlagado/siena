@@ -635,14 +635,26 @@ nesting4:
     .align $100
 page4:
 
+num_:    
+    jp  num
+hexnum_:    
+    jp hexnum
 arg_:
     jp arg
 strDef_:
     jp strDef
 newAdd2_:
     jp newAdd2
-num_:    
-    jp  num
+go_:
+    jp go
+
+dot_:  
+    pop hl
+    call prtdec
+dot2:
+    ld a,' '       
+    call putchar
+    jp next
 
 and_:    
     pop de     ;     Bitwise and the top 2 elements of the stack
@@ -699,14 +711,6 @@ call_:
     jp go1
 
 
-dot_:  
-    pop hl
-    call prtdec
-dot2:
-    ld a,' '       
-    call putchar
-    jp next
-
 hdot_:       ; print hexadecimal
     pop hl
     call prthex
@@ -746,8 +750,6 @@ fetch1:
     push de    
     jp next       
 
-hexnum_:    
-    jp hexnum
 
 key_:
     call getchar
@@ -916,7 +918,8 @@ w_:
 x_:
     jp x
     
-div_:    jr div
+div_:    
+    jr div
 
 
 ;*******************************************************************
@@ -1039,24 +1042,6 @@ prompt_:
     call prompt
     jp next
 
-
-go_:				       ;\^
-    pop de
-go1:
-    ld a,d        ; skip if destination address is null
-    or e
-    jr z,go3
-    ld hl,bc
-    inc bc        ; read next char from source
-    ld a,(bc)    ; if ; to tail call optimise
-    cp ";"        ; by jumping to rather than calling destination
-    jr z,go2
-    call rpush    ; save Instruction Pointer
-go2:
-    ld bc,de
-    dec bc
-go3:
-    jp next       
 
 inPort_:			    ; \<
     pop hl
@@ -1322,6 +1307,48 @@ mul2:
 		jp next
 
 
+;*******************************************************************
+; Subroutines
+;*******************************************************************
+
+prompt:          
+    call printStr
+    .cstr "\r\n> "
+    ret
+
+putStr0:
+    call putchar
+    inc hl
+putStr:
+    ld a,(hl)
+    or a
+    jr nz,putStr0
+    ret
+
+rpush:     
+    dec ix    
+    ld (ix+0),h
+    dec ix
+    ld (ix+0),l
+    ret
+
+rpop:       
+    ld l,(ix+0)    
+    inc ix    
+    ld h,(ix+0)
+    inc ix    
+rpop2:
+    ret
+
+crlf:       
+    call printStr
+    .cstr "\r\n"
+    ret
+
+
+;*******************************************************************
+;*******************************************************************
+
 num:
 		ld hl,$0000				    ; Clear hl to accept the number
 		ld a,(bc)				    ; Get numeral or -
@@ -1349,12 +1376,12 @@ num1:
 num2:
     dec bc
     ex af,af'    ; restore zero flag
-    jr nz, xnum3
+    jr nz, num3
     ex de,hl     ; negate the value of hl
     ld hl,0
     or a    ; jump to sub2
     sbc hl,de    
-xnum3:
+num3:
     push hl       ; Put the number on the stack
     jp next       ; and process the next character
 
@@ -1431,9 +1458,7 @@ prtdec3:
 prtdec4:	    
     ld a,b
     jp putchar
-
                                 ; 
-
 prthex:          
                                 ; Display hl as a 16-bit number in hex.
     push bc                     ; preserve the IP
@@ -1459,43 +1484,7 @@ prthex3:
 	daa
 	jp putchar
 
-;*******************************************************************
-; Subroutines
-;*******************************************************************
 
-prompt:          
-    call printStr
-    .cstr "\r\n> "
-    ret
-
-putStr0:
-    call putchar
-    inc hl
-putStr:
-    ld a,(hl)
-    or a
-    jr nz,putStr0
-    ret
-
-rpush:     
-    dec ix    
-    ld (ix+0),h
-    dec ix
-    ld (ix+0),l
-    ret
-
-rpop:       
-    ld l,(ix+0)    
-    inc ix    
-    ld h,(ix+0)
-    inc ix    
-rpop2:
-    ret
-
-crlf:       
-    call printStr
-    .cstr "\r\n"
-    ret
                                 ; 
 arg:
     inc     bc                  ; get next char
@@ -1591,5 +1580,23 @@ newAdd2:
     
     jp next    
     
+go:				       ;\^
+    pop de
+go1:
+    ld a,d        ; skip if destination address is null
+    or e
+    jr z,go3
+    ld hl,bc
+    inc bc        ; read next char from source
+    ld a,(bc)    ; if ; to tail call optimise
+    cp ";"        ; by jumping to rather than calling destination
+    jr z,go2
+    call rpush    ; save Instruction Pointer
+go2:
+    ld bc,de
+    dec bc
+go3:
+    jp next       
+
     
     
