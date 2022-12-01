@@ -13,12 +13,12 @@
 ; *****************************************************************************
 
                                 ; 
-    DSIZE  EQU $80
-    RSIZE  EQU $80
-    TIBSIZE     EQU $100	    ; 256 bytes , along line!
-    TRUE    EQU 1		        ; not FF, for Siena
-    FALSE  EQU 0
-    EMPTY  EQU 0		        ; for an empty macro, ctrl-<something>=macro, ie ctrl-h = backspace macros (in Siena)
+    DSIZE   EQU $80
+    RSIZE   EQU $80
+    TIBSIZE EQU $100	        ; 256 bytes , along line!
+    TRUE    EQU -1		        ; C-style true
+    FALSE   EQU 0
+    EMPTY   EQU 0		        ; 
 
     DATASIZE    EQU 26*2*2	    ; a..z, a..z words
 
@@ -26,7 +26,7 @@
 ; Page 0  Initialisation
 ; **************************************************************************		
 
-.org ROMSTART + $180		; 0+180 put Siena code from here	
+.org ROMSTART + $180		    ; 0+180 put Siena code from here	
 
 ; **************************************************************************
 ; this code must not span pages
@@ -144,7 +144,7 @@ iOpcodes:
     DB lsb(nop_)                ;    ]
     DB lsb(nop_)                ;    ^
     DB lsb(nop_)                ;    _
-    DB lsb(nop_)                ;    `    	    
+    DB lsb(char_)               ;    `    	    
     DB lsb(a_)                  ;    a     
     DB lsb(var_)                ;    b  
     DB lsb(c_)                  ;    c  
@@ -453,7 +453,6 @@ go_:
     jp go
 return_:
     jp return
-
 dot_:  
     pop hl
     call prtdec
@@ -465,6 +464,8 @@ block_:
     jp block
 blockend_:
     jp blockend
+char_:
+    jp char
 a_:
     jp a
 c_:
@@ -559,7 +560,7 @@ call_:
 hdot_:                          ; print hexadecimal
     pop hl
     call prthex
-    jr    dot2
+    jp dot2
 
 drop_:                          ; Discard the top member of the stack
     pop hl
@@ -935,7 +936,11 @@ i:
     cp 'f'    
     jp z,if_
     cp 'n'    
+    jp nz,i1
+    cp 'v'
     jp z,inv_
+    jp in
+i1:
     dec bc
     jp var_
 
@@ -1355,34 +1360,6 @@ nesting4:
     dec e
     ret 
 
-; contains
-; search string for e
-; set zero flag if true
-contains:
-    pop hl                      ; hl = address of string
-    push hl                     ; save copy of hl
-    ld a,(hl)                   ; a = length
-    inc a                       ; add length + 1 to string address
-    add a,l                      
-    ld l,a
-    ld a,0
-    adc a,h
-    ld h,a
-    ex (sp),hl                  ; hl = start of string (sp) = address after string                  
-    push bc                     ; save IP
-    ld b,(hl)                   ; length of string
-    inc hl
-contains1:    
-    ld a,(hl)
-    cp e
-    jr z,contains3
-    inc hl
-    djnz contains1
-    inc b                       ; z =0
-contains3:
-    pop bc                      ; restore bc
-    ret                         ; jump to address after string
-    
                                 ; 
 arg:
     inc     bc                  ; get next char
@@ -1423,6 +1400,25 @@ strDef2:
     ld (vHeapPtr),de            ; bump heap ptr to after definiton
     jp next  
 
+char:
+    ld hl,0                     ; if `` is empty
+char1:
+    inc bc                      ; point to next char
+    ld a,(bc)
+    cp "`"                      ; ` is the string terminator
+    jr z,char3
+    cp $5c                      ; \ is the escape
+    jr nz,char2
+    inc bc
+    ld a,(bc)
+char2:
+    ld l,a
+    jr char1
+char3:
+    push hl
+    ; dec bc
+    jp next  
+
 newAdd2:
     push bc                     ; push IP
     
@@ -1445,6 +1441,7 @@ newAdd2:
     
     jp next    
 
+enter:     
 go:				                ; execute Siena lambda at pointer
     pop de                      ; de = pointer to lambda
 go1:
@@ -1497,7 +1494,7 @@ block1:                         ; Skip to end of definition
     ld a,(bc)                   ; Get the next character
     inc bc                      ; Point to next character
     ld e,a
-    call contains
+    call xcontains
     .pstr $22,"'`{}()[]"
     jr nz, block2
     inc d
@@ -1521,9 +1518,6 @@ blockend:
     push de                     ; push result    
     jp next    
 
-enter:     
-    jp go
-
 exit:
     ld de,bc                    ; address of code after exit opcode
     inc de			            
@@ -1543,4 +1537,28 @@ exit:
     ex de,hl
     jp (hl)
 
+in:
+    pop hl                      ; hl = string    
+    pop de                      ; de = char
+    call xcontains
+    ld hl,0                     ; hl = result
+    jr z,in1
+    dec hl                      ; if nz de = $ffff
+in1:
+    push hl                     ; push result    
+    jp next    
+    
+; xcontains 
+; search string for char
+; e=char hl=str
+; set zero flag if string doesn't contain char
+xcontains:
+    ld a,(hl)
+    inc hl
+    cp 0                        ; is end of string
+    ret z
+    cp e
+    jr nz,xcontains
+    or a                        ; a is never 0, or a resets zero flag 
+    ret
     

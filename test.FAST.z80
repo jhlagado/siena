@@ -13,20 +13,19 @@
     .include "ram.asm"
     
     .org $4000
-
 testsStart:
 
-    ld e,"]"
-    call contains
-    .pstr $22,"'`{}()[]"
-    jr z,found
-    halt
-found:    
-    halt
-    
-    ; test "1", 1
-    test "{1}go", 1
+    ; test "``", 0
+    ; test "`a`", $61
+    ; test "`\\``", $60
+    ; test "`b` 'cba' in", -1
+    ; test "98 'cba' in", -1
+    ; test "105 'cba' in", 0
+    test "1", 1
     ; test "1 2 +", 3
+
+    ; test "{}go", 1
+    ; test "{1}go", 1
 
     ; test "'A' @", 65
     ; test "10 $1", 10
@@ -121,3 +120,6 @@ found:
     .cstr "Done!"
     HALT
     
+nestStr:
+    .cstr $22,"'`{}()[]"
+
