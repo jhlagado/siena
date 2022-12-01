@@ -88,8 +88,8 @@ iOpcodes:
     DB lsb(nop_)                ;    %  
     DB lsb(nop_)                ;    &
     DB lsb(strDef_)             ;    '
-    DB lsb(lambda_)             ;    (    
-    DB lsb(return_)             ;    )
+    DB lsb(block_)              ;    (    
+    DB lsb(blockend_)           ;    )
     DB lsb(nop_)                ;    *  
     DB lsb(newAdd2_)            ;    +
     DB lsb(nop_)                ;    ,  
@@ -171,9 +171,9 @@ iOpcodes:
     DB lsb(x_)                  ;    x  
     DB lsb(var_)                ;    y  
     DB lsb(var_)                ;    z  
-    DB lsb(nop_)                ;    {
+    DB lsb(lambda_)             ;    {
     DB lsb(or_)                 ;    |  
-    DB lsb(nop_)                ;    }  
+    DB lsb(return_)             ;    }  
     DB lsb(nop_)                ;    ~    
     DB lsb(nop_)                ;    DEL	
     DB lsb(EMPTY)               ; NUL ^@    
@@ -208,65 +208,65 @@ iOpcodes:
     DB lsb(EMPTY)               ; ^]  
     DB lsb(EMPTY)               ; ^^  
     DB lsb(EMPTY)               ; ^_  
-    DB lsb(aNop_)  ;a0    sp  				;space
-    DB lsb(aNop_)  ;a1    \!  			; this is a bug shud be lsb(cstore_)     
-    DB lsb(aNop_)  ;a2    \"  				
-    DB lsb(aNop_)  ;a3    \#  utility command		; table of special routines ie #5 etc				
-    DB lsb(aNop_)  ;a4    \$  prints a newline to output	
-    DB lsb(aNop_)  ;     
-    DB lsb(aNop_)  ;     
-    DB lsb(aNop_)  ;     
-    DB lsb(aNop_)  ;a8    \(  ( b -- )    
-    DB lsb(aNop_)  ;a9    \)       
-    DB lsb(aNop_)  ;aa    \*       
-    DB lsb(aNop_)  ;ab    \+       
-    DB lsb(aNop_)  ;ac    \,  ( b -- ) prints a char    
-    DB lsb(aNop_)  ;ad    \-       
-    DB lsb(aNop_)  ;ae    \.  ( b -- ) prints a string from add term by null char    
-    DB lsb(aNop_)  ;af    \/       
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;ba    \:	return add of a anon def, \: 1 2 3;    \\ ret add of this       
-    DB lsb(aNop_)  ;bb    \;       
-    DB lsb(aNop_)  ;bc    \<  ( port -- val )
-    DB lsb(aNop_)  ;bd    \=    
-    DB lsb(aNop_)  ;be    \>  ( val port -- )
-    DB lsb(aNop_)  ;bf    \?
-    DB lsb(aNop_)     ;c0    \@ byte fetch
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
-    DB lsb(aNop_)    ;     
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)  
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
+    DB lsb(aNop_)    
     DB lsb(aNop_)        
     DB lsb(aNop_)                       
     DB lsb(aNop_)                           
@@ -431,97 +431,6 @@ next:
     ld h,msb(page4)             ;  Load h with the 1st page address
     jp (hl)                     ;  Jump to routine
 
-init:       
-    ld iy,DSTACK
-    ld ix,RSTACK
-    ld hl,ialtVars
-    ld de,altVars
-    ld bc,8 * 2
-    ldir
-    
-    ld hl,data                  ; init namespaces to 0 using ldir
-    ld de,hl
-    inc de
-    ld (hl),0
-    ld bc,DATASIZE
-    ldir
-    ret
-    
-printStr:        
-    ex (sp),hl		            ; swap			
-    call putStr		
-    inc hl			            ; inc past null
-    ex (sp),hl		            ; put it back	
-    ret
-
-lookupRef:
-    ld d,0
-lookupRef0:
-    cp "a"
-    jr nc,lookupRef2
-lookupRef1:
-    sub "a"
-    ld e,0
-    jr lookupRef3    
-lookupRef2:
-    sub "a"
-    ld e,26*2
-lookupRef3:
-    add a,a
-    add a,e
-    ld hl,DATA
-    add a,l
-    ld l,a
-    ld a,0
-    adc a,h
-    ld h,a
-    xor a
-    or e                        ; sets z flag if a-z
-    ret
-
-; **************************************************************************    
-; calculate nesting value
-; a is char to be tested, 
-; e is the nesting value (initially 0)
-; e is increased by ( and [ 
-; e is decreased by ) and ]
-; e has its bit 7 toggled by `
-; limited to 127 levels
-; **************************************************************************    
-
-nesting:    
-    cp $22                      ; quote char
-    jr nz,nesting1
-    bit 7,e
-    jr z,nesting1a
-    res 7,e
-    ret
-nesting1a: 
-    set 7,e
-    ret
-nesting1:
-    bit 7,e    
-    ret nz    
-    cp '{'
-    jr z,nesting2
-    cp '['
-    jr z,nesting2
-    cp '('
-    jr nz,nesting3
-nesting2:
-    inc e
-    ret
-nesting3:
-    cp '}'
-    jr z,nesting4
-    cp ']'
-    jr z,nesting4
-    cp ')'
-    ret nz
-nesting4:
-    dec e
-    ret 
-    
 ; **********************************************************************			 
 ; Page 4 primitive routines 
 ; **********************************************************************
@@ -552,6 +461,10 @@ dot2:
     ld a,' '       
     call putchar
     jp next
+block_:
+    jp block
+blockend_:
+    jp blockend
 a_:
     jp a
 c_:
@@ -1351,7 +1264,125 @@ prthex3:
 	daa
 	jp putchar
 
+init:       
+    ld iy,DSTACK
+    ld ix,RSTACK
+    ld hl,ialtVars
+    ld de,altVars
+    ld bc,8 * 2
+    ldir
+    
+    ld hl,data                  ; init namespaces to 0 using ldir
+    ld de,hl
+    inc de
+    ld (hl),0
+    ld bc,DATASIZE
+    ldir
+    ret
+    
+printStr:        
+    ex (sp),hl		            ; swap			
+    call putStr		
+    inc hl			            ; inc past null
+    ex (sp),hl		            ; put it back	
+    ret
 
+lookupRef:
+    ld d,0
+lookupRef0:
+    cp "a"
+    jr nc,lookupRef2
+lookupRef1:
+    sub "a"
+    ld e,0
+    jr lookupRef3    
+lookupRef2:
+    sub "a"
+    ld e,26*2
+lookupRef3:
+    add a,a
+    add a,e
+    ld hl,DATA
+    add a,l
+    ld l,a
+    ld a,0
+    adc a,h
+    ld h,a
+    xor a
+    or e                        ; sets z flag if a-z
+    ret
+
+; **************************************************************************    
+; calculate nesting value
+; a is char to be tested, 
+; e is the nesting value (initially 0)
+; e is increased by ( and [ 
+; e is decreased by ) and ]
+; e has its bit 7 toggled by `
+; limited to 127 levels
+; **************************************************************************    
+
+nesting:    
+    cp $22                      ; quote char
+    jr nz,nesting1
+    bit 7,e
+    jr z,nesting1a
+    res 7,e
+    ret
+nesting1a: 
+    set 7,e
+    ret
+nesting1:
+    bit 7,e    
+    ret nz    
+    cp '{'
+    jr z,nesting2
+    cp '['
+    jr z,nesting2
+    cp '('
+    jr nz,nesting3
+nesting2:
+    inc e
+    ret
+nesting3:
+    cp '}'
+    jr z,nesting4
+    cp ']'
+    jr z,nesting4
+    cp ')'
+    ret nz
+nesting4:
+    dec e
+    ret 
+
+; contains
+; search string for e
+; set zero flag if true
+contains:
+    pop hl                      ; hl = address of string
+    push hl                     ; save copy of hl
+    ld a,(hl)                   ; a = length
+    inc a                       ; add length + 1 to string address
+    add a,l                      
+    ld l,a
+    ld a,0
+    adc a,h
+    ld h,a
+    ex (sp),hl                  ; hl = start of string (sp) = address after string                  
+    push bc                     ; save IP
+    ld b,(hl)                   ; length of string
+    inc hl
+contains1:    
+    ld a,(hl)
+    cp e
+    jr z,contains3
+    inc hl
+    djnz contains1
+    inc b                       ; z =0
+contains3:
+    pop bc                      ; restore bc
+    ret                         ; jump to address after string
+    
                                 ; 
 arg:
     inc     bc                  ; get next char
@@ -1372,7 +1403,6 @@ arg:
     ld e,(hl)
     push de
     jp next
-
                                 ; 
 strDef:     
     ld de,(vHeapPtr)            ; DE = heap ptr
@@ -1415,21 +1445,6 @@ newAdd2:
     
     jp next    
 
-lambda:              
-    inc bc
-    ld de,(vHeapPtr)            ; start of lambda defintion
-    push de
-lambda1:                        ; Skip to end of definition    
-    ld a,(bc)                   ; Get the next character
-    inc bc                      ; Point to next character
-    ld (de),a
-    inc de
-    cp ")"                      ; Is it the end of the definition? 
-    jr nz, lambda1              ; get the next element
-    dec bc
-    ld (vHeapPtr),de            ; bump heap ptr to after definiton
-    jp next  
-
 go:				                ; execute Siena lambda at pointer
     pop de                      ; de = pointer to lambda
 go1:
@@ -1447,7 +1462,54 @@ go1:
 go2:
     jp next       
 
+lambda:              
+    inc bc
+    ld de,(vHeapPtr)            ; start of lambda defintion
+    push de
+lambda1:                        ; Skip to end of definition    
+    ld a,(bc)                   ; Get the next character
+    inc bc                      ; Point to next character
+    ld (de),a
+    inc de
+    cp "}"                      ; Is it the end of the definition? 
+    jr nz, lambda1              ; get the next element
+    dec bc
+    ld (vHeapPtr),de            ; bump heap ptr to after definiton
+    jp next  
+
 return:
+    pop hl                      ; hl = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    pop hl                      ; hl = old BP
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    push de                     ; push result    
+    jp next    
+
+block:
+    inc bc
+    push bc                     ; return first opcode of block    
+    ld d,1                      ; nesting: count first parenthesis
+block1:                         ; Skip to end of definition    
+    ld a,(bc)                   ; Get the next character
+    inc bc                      ; Point to next character
+    ld e,a
+    call contains
+    .pstr $22,"'`{}()[]"
+    jr nz, block2
+    inc d
+block2:
+    cp ")"
+    jr nz, block1
+    bit 0,d
+    jr nz, block1               ; get the next element
+    dec bc
+    jp next  
+
+blockend:
     pop hl                      ; hl = last result 
     ld d,iyh                    ; de = BP
     ld e,iyl
@@ -1461,14 +1523,6 @@ return:
 
 enter:     
     jp go
-    ; ld hl,bc
-    ; pop bc
-    ; dec bc
-    ; push hl                     ; save Instruction Pointer
-    ; push iy                     ; push base pointer
-    ; ld iy,0                     ; base pointer = stack pointer
-    ; add iy,sp
-    ; jp next     
 
 exit:
     ld de,bc                    ; address of code after exit opcode

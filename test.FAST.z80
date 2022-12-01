@@ -1,4 +1,4 @@
-    .engine mycomputer
+    ; .engine mycomputer
 
     .include "constants.asm"
     .include "test.fast.mac.asm"
@@ -16,9 +16,17 @@
 
 testsStart:
 
+    ld e,"]"
+    call contains
+    .pstr $22,"'`{}()[]"
+    jr z,found
+    halt
+found:    
+    halt
+    
     ; test "1", 1
-    test "(1)go", 1
-    test "1 2 +", 3
+    test "{1}go", 1
+    ; test "1 2 +", 3
 
     ; test "'A' @", 65
     ; test "10 $1", 10
