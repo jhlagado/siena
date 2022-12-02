@@ -937,7 +937,7 @@ i:
     inc bc
     ld a,(bc)
     cp 'f'    
-    jp z,if_
+    jp z,if
     cp 'n'    
     jp nz,i1
     cp 'v'
@@ -1444,17 +1444,38 @@ go3:
 
 lambda:              
     inc bc
-    ld de,(vHeapPtr)            ; start of lambda defintion
-    push de
+    ld hl,(vHeapPtr)            ; start of lambda defintion
+    push hl
+    ld d,1                      ; nesting: count first parenthesis
 lambda1:                        ; Skip to end of definition    
     ld a,(bc)                   ; Get the next character
     inc bc                      ; Point to next character
-    ld (de),a
-    inc de
+    ld (hl),a
+    inc hl
+    cp "'"
+    jr z,lambda2
+    cp "("
+    jr z,lambda2
+    cp ")"
+    jr z,lambda2
+    cp "{"
+    jr z,lambda2
+    cp "}"                      ; Is it the end of the definition? 
+    jr z,lambda2
+    cp "["
+    jr z,lambda2
+    cp "]"
+    jr z,lambda2
+    cp "`"
+    jr nz,lambda1
+lambda2:
+    inc d
+    bit 0,d                     ; balanced?
+    jr nz, lambda1              ; not balanced, get the next element
     cp "}"                      ; Is it the end of the definition? 
     jr nz, lambda1              ; get the next element
     dec bc
-    ld (vHeapPtr),de            ; bump heap ptr to after definiton
+    ld (vHeapPtr),hl            ; bump heap ptr to after definiton
     jp next  
 
 lambdaEnd:
@@ -1466,6 +1487,8 @@ lambdaEnd:
     pop hl                      ; hl = old BP
     pop bc                      ; bc = IP
     ld sp,hl                    ; sp = old BP
+    ld iy,0                     ; iy = sp
+    add iy,sp
     push de                     ; push result    
     jp next    
 
@@ -1568,17 +1591,17 @@ blockend:
     jp next    
 
 if: 
-    pop hl                      ; de = then block
-    pop de                      ; hl = condition
+    pop hl                      ; hl = then block
+    pop de                      ; de = condition
     inc de                      ; check for true
     ld a,d
     or e
-    jr nz,if2
+    jr z,if2
     jp next                     ; condition = false, continue
 if2:                            ; condition = true, hl = then block
     push bc                     ; push IP
-    ld d,(iy-1)                 ; get old BP from parent stack frame
-    ld e,(iy-2)
+    ld e,(iy+0)
+    ld d,(iy+1)                 ; get old BP from parent stack frame
     push de                     ; make this the old BP for this stack frame
     ld d,iyh                    ; so we can reference parent frame's args
     ld e,iyl
