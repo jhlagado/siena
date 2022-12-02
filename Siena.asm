@@ -305,6 +305,9 @@ iOpcodes:
     DB lsb(aNop_)    
     DB lsb(aNop_)    
 
+nestingStr:
+    .cstr $22,"'()[]{}`"
+
 etx:        
     ld hl,-DSTACK
     add hl,sp
@@ -1427,18 +1430,16 @@ go:				                ; execute Siena lambda at pointer
 go1:
     ld a,d                      ; skip if destination address is null
     or e
-    jr z,go2
-
+    jr z,go3
+go2:
     push bc                     ; save IP 
     push iy                     ; push base pointer
     ld iy,0                     ; base pointer = stack pointer
     add iy,sp
-    ; ld hl,0                     ; set result (TOS) to 0
-    ; push hl
 
     ld bc,de                    ; IP = pointer to lambda
     dec bc                      ; dec to prepare for next routine
-go2:
+go3:
     jp next       
 
 lambda:              
@@ -1488,38 +1489,6 @@ arg:
     push de
     jp next
                                 ; 
-block:
-    inc bc
-    push bc                     ; return first opcode of block    
-    ld d,1                      ; nesting: count first parenthesis
-block1:                         ; Skip to end of definition    
-    ld a,(bc)                   ; Get the next character
-    inc bc                      ; Point to next character
-    ld e,a
-    call xcontains
-    .pstr $22,"'`{}()[]"
-    jr nz, block2
-    inc d
-block2:
-    cp ")"
-    jr nz, block1
-    bit 0,d
-    jr nz, block1               ; get the next element
-    dec bc
-    jp next  
-
-blockend:
-    pop hl                      ; hl = last result 
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
-    ld sp,hl                    ; sp = BP
-    pop hl                      ; hl = old BP
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    push de                     ; push result    
-    jp next    
-
 exit:
     ld de,bc                    ; address of code after exit opcode
     inc de			            
@@ -1542,7 +1511,7 @@ exit:
 in:
     pop hl                      ; hl = string    
     pop de                      ; de = char
-    call xcontains
+    call contains
     ld hl,0                     ; hl = result
     jr z,in1
     dec hl                      ; if nz de = $ffff
@@ -1550,17 +1519,74 @@ in1:
     push hl                     ; push result    
     jp next    
     
-; xcontains 
+; contains 
 ; search string for char
 ; e=char hl=str
 ; set zero flag if string doesn't contain char
-xcontains:
+contains:
     ld a,(hl)
     inc hl
     cp 0                        ; is end of string
     ret z
     cp e
-    jr nz,xcontains
+    jr nz,contains
     or a                        ; a is never 0, or a resets zero flag 
     ret
+
+block:
+    inc bc
+    push bc                     ; return first opcode of block    
+    ld d,1                      ; nesting: count first parenthesis
+block1:                         ; Skip to end of definition    
+    ld a,(bc)                   ; Get the next character
+    inc bc                      ; Point to next character
+    ld e,a
+    ld hl,nestingStr
+    call contains
+    jr z, block1
+    inc d
+    cp ")"
+    jr nz, block1
+    bit 0,d                     ; balanced?
+    jr nz, block1               ; not balanced, get the next element
+    dec bc
+    jp next  
+
+blockend:
+    pop hl                      ; hl = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    dec sp
+    dec sp
+    pop hl                      ; hl = stack frame's old BP
+    pop bc                      ; discard parent old BP
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    push de                     ; push result    
+    jp next    
+
+if: 
+    pop hl                      ; de = then block
+    pop de                      ; hl = condition
+    inc de                      ; check for true
+    ld a,d
+    or e
+    jr nz,if2
+    jp next                     ; condition = false, continue
+if2:                            ; condition = true, hl = then block
+    push bc                     ; push IP
+    ld d,(iy-1)                 ; get old BP from parent stack frame
+    ld e,(iy-2)
+    push de                     ; make this the old BP for this stack frame
+    ld d,iyh                    ; so we can reference parent frame's args
+    ld e,iyl
+    ld iy,0                     ; base pointer = stack pointer
+    add iy,sp
+    push de                     ; save this frame's old BP immediately 
+    ld bc,hl                    ; after parent old BP
+    dec bc
+    jp next    
     
+
