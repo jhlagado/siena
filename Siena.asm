@@ -1361,26 +1361,6 @@ nesting4:
     ret 
 
                                 ; 
-arg:
-    inc     bc                  ; get next char
-    ld a,(bc)
-    sub     "1"                 ; treat as a digit, 1 based index
-    and     $07                 ; mask 
-    add     a,a                 ; double
-    ld l,a
-    ld h,0
-    ld e,iyl
-    ld d,iyh
-    ex de,hl
-    or a
-    sbc hl,de
-    dec hl
-    ld d,(hl)
-    dec hl
-    ld e,(hl)
-    push de
-    jp next
-                                ; 
 strDef:     
     ld de,(vHeapPtr)            ; DE = heap ptr
     push de                     ; save start of string 
@@ -1453,8 +1433,8 @@ go1:
     push iy                     ; push base pointer
     ld iy,0                     ; base pointer = stack pointer
     add iy,sp
-    ld hl,0                     ; set result (TOS) to 0
-    push hl
+    ; ld hl,0                     ; set result (TOS) to 0
+    ; push hl
 
     ld bc,de                    ; IP = pointer to lambda
     dec bc                      ; dec to prepare for next routine
@@ -1488,6 +1468,26 @@ lambdaEnd:
     push de                     ; push result    
     jp next    
 
+arg:
+    inc bc                  ; get next char
+    ld a,(bc)
+    sub "1"                 ; treat as a digit, 1 based index
+    and $07                 ; mask 
+    add a,a                 ; double
+    ld l,a
+    ld h,0
+    ld e,(iy+0)
+    ld d,(iy+1)
+    ex de,hl
+    or a
+    sbc hl,de
+    dec hl
+    ld d,(hl)
+    dec hl
+    ld e,(hl)
+    push de
+    jp next
+                                ; 
 block:
     inc bc
     push bc                     ; return first opcode of block    
