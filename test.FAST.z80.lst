@@ -2044,187 +2044,135 @@
 1C28                             ; 
 4000                          .ORG   $4000   
 4000                TESTSSTART:      
-4000                          ;*Macro unroll:  test "1", 1
+4000                             ; test "1", 1
+4000                             ; test "{1}go", 1
+4000                             ; test "2{$1}go", 2
+4000                          ;*Macro unroll:  test "2 4{$2}go", 4
 4000   31 00 1A               LD   SP,DSTACK   
 4003   CD 83 08               CALL   init   
 4006   CD 43 09               CALL   enter   
-4009   31 00                  .CSTR   "1"   
-400B                          ;*Macro unroll:  expect "1",1
-400B   E1                     POP   HL   
-400C   E5                     PUSH   HL   
-400D   11 01 00               LD   DE,1   
-4010   B7                     OR   A   
-4011   ED 52                  SBC   HL,DE   
-4013   7D                     LD   A,L   
-4014   B4                     OR   H   
-4015   28 2A                  JR   Z,expectM_0_2046S31   
-4017   CD 4E 06               CALL   prtstr   
-401A   31 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "1","\r\nActual: "   
-4026   CD 1C 08               CALL   prtdec   
-4029   CD 4E 06               CALL   prtstr   
-402C   0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\nExpected: "   
-4039   21 01 00               LD   HL,1   
-403C   CD 1C 08               CALL   prtdec   
-403F   76                     HALT      
-4040   00                     .CSTR      
-4041                EXPECTM_0_2046S31:      
-4041   E1                     POP   HL   
-4042                          ;*Macro unroll:  test "{1}go", 1
-4042   31 00 1A               LD   SP,DSTACK   
-4045   CD 83 08               CALL   init   
-4048   CD 43 09               CALL   enter   
-404B   7B 31 7D 67 6F 00      .CSTR   "{1}go"   
-4051                          ;*Macro unroll:  expect "{1}go",1
+4009   32 20 34 7B 24 32 7D 67 6F 00 .CSTR   "2 4{$2}go"   
+4013                          ;*Macro unroll:  expect "2 4{$2}go",4
+4013   E1                     POP   HL   
+4014   E5                     PUSH   HL   
+4015   11 04 00               LD   DE,4   
+4018   B7                     OR   A   
+4019   ED 52                  SBC   HL,DE   
+401B   7D                     LD   A,L   
+401C   B4                     OR   H   
+401D   28 32                  JR   Z,expectM_0_2049S31   
+401F   CD 4E 06               CALL   prtstr   
+4022   32 20 34 7B 24 32 7D 67 6F 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "2 4{$2}go","\r\nActual: "   
+4036   CD 1C 08               CALL   prtdec   
+4039   CD 4E 06               CALL   prtstr   
+403C   0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\nExpected: "   
+4049   21 04 00               LD   HL,4   
+404C   CD 1C 08               CALL   prtdec   
+404F   76                     HALT      
+4050   00                     .CSTR      
+4051                EXPECTM_0_2049S31:      
 4051   E1                     POP   HL   
-4052   E5                     PUSH   HL   
-4053   11 01 00               LD   DE,1   
-4056   B7                     OR   A   
-4057   ED 52                  SBC   HL,DE   
-4059   7D                     LD   A,L   
-405A   B4                     OR   H   
-405B   28 2E                  JR   Z,expectM_0_2047S31   
-405D   CD 4E 06               CALL   prtstr   
-4060   7B 31 7D 67 6F 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "{1}go","\r\nActual: "   
-4070   CD 1C 08               CALL   prtdec   
-4073   CD 4E 06               CALL   prtstr   
-4076   0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\nExpected: "   
-4083   21 01 00               LD   HL,1   
-4086   CD 1C 08               CALL   prtdec   
-4089   76                     HALT      
-408A   00                     .CSTR      
-408B                EXPECTM_0_2047S31:      
-408B   E1                     POP   HL   
-408C                          ;*Macro unroll:  test "1{$1}go", 1
-408C   31 00 1A               LD   SP,DSTACK   
-408F   CD 83 08               CALL   init   
-4092   CD 43 09               CALL   enter   
-4095   31 7B 24 31 7D 67 6F 00 .CSTR   "1{$1}go"   
-409D                          ;*Macro unroll:  expect "1{$1}go",1
-409D   E1                     POP   HL   
-409E   E5                     PUSH   HL   
-409F   11 01 00               LD   DE,1   
-40A2   B7                     OR   A   
-40A3   ED 52                  SBC   HL,DE   
-40A5   7D                     LD   A,L   
-40A6   B4                     OR   H   
-40A7   28 30                  JR   Z,expectM_0_2048S31   
-40A9   CD 4E 06               CALL   prtstr   
-40AC   31 7B 24 31 7D 67 6F 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "1{$1}go","\r\nActual: "   
-40BE   CD 1C 08               CALL   prtdec   
-40C1   CD 4E 06               CALL   prtstr   
-40C4   0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\nExpected: "   
-40D1   21 01 00               LD   HL,1   
-40D4   CD 1C 08               CALL   prtdec   
-40D7   76                     HALT      
-40D8   00                     .CSTR      
-40D9                EXPECTM_0_2048S31:      
-40D9   E1                     POP   HL   
-40DA                             ; 
-40DA                             ; test "``", 0
-40DA                             ; test "`a`", $61
-40DA                             ; test "`\\``", $60
-40DA                             ; test "`b` 'cba' in", -1
-40DA                             ; test "98 'cba' in", -1
-40DA                             ; test "105 'cba' in", 0
-40DA                             ; test "1 2 +", 3
-40DA                             ; 
-40DA                             ; 
-40DA                             ; test "'A' @", 65
-40DA                             ; test "10 $1", 10
-40DA                             ; test "10 20 $1", 10
-40DA                             ; test "10 20 $2", 20
-40DA                             ; test "10 20 30 $3", 30
-40DA                             ; 
-40DA                             ; test "1", 1
-40DA                             ; test "0", 0
-40DA                             ; test "10", 10
-40DA                             ; test "123", 123
-40DA                             ; test "$10", $10
-40DA                             ; test "$FF", $FF
-40DA                             ; test "2 3 =", 0
-40DA                             ; test "3 3 =", 1
-40DA                             ; test "2 3 <", 1
-40DA                             ; test "3 3 <", 0
-40DA                             ; test "3 3 >", 0
-40DA                             ; test "4 3 >", 1
-40DA                             ; test "1 2 +", 3
-40DA                             ; test "123 456 +", 123+456
-40DA                             ; test "64 128 +", 64+128
-40DA                             ; test "5 3 -", 2
-40DA                             ; test "3 5 &", 1
-40DA                             ; test "3 5 |", 7
-40DA                             ; test "2 3 *", 6
-40DA                             ; test "1 2 3 + *", 5
-40DA                             ; 
-40DA                             ; ; test "1 2 3 ' +", 3
-40DA                             ; ; test "1_ 2 +",1
-40DA                             ; ; test "1_ 1 +",0
-40DA                             ; ; call enter
-40DA                             ; ;     .cstr "1 3",$22,"+"
-40DA                             ; ; expect "1 3 DUP +", 6
-40DA                             ; 
-40DA                             ; ; test "5 2/'", 2
-40DA                             ; ; test "3 5$ -", 2
-40DA                             ; ; test "5 2/$ '", 1
-40DA                             ; ; test "2 3%++", 7
-40DA                             ; ; test "1 2 3~''", 2
-40DA                             ; ; test "1 2 3~+*", 8
-40DA                             ; ; test "2a!a@",2
-40DA                             ; ; test "3x! 1 x@+x! x@", 4
-40DA                             ; ; test "3x! 1_ x@+x! x@", 2
-40DA                             ; 
-40DA                             ; 
-40DA                             ; 
-40DA                             ; ; test "1{", 2
-40DA                             ; ; test "1}", 0
-40DA                             ; ; test "2}", 1
-40DA                             ; ; test "10 11 12\\#3$ '$ '$ '", 4
-40DA                             ; ; test "(2) \\^", 2
-40DA                             ; ; test ":X1; X", 1
-40DA                             ; ; test ":A100;A", 100
-40DA                             ; ; test ":Aa!; 3A a@", 3
-40DA                             ; ; test ":Aa!;:Ba@;4AB", 4
-40DA                             ; ; test "[]$ '", 0
-40DA                             ; ; test "[3]$ '", 1
-40DA                             ; ; test "[3]'@", 3
-40DA                             ; ; test "[1 2 3]'@", 1
-40DA                             ; ; test "[1 2 3]'2+@", 2
-40DA                             ; ; test "\\h@[1]''\\h@$-", 2
-40DA                             ; ; test "\\h@[1 2 3]''\\h@$-", 6
-40DA                             ; ; test "\\[]$ '", 0
-40DA                             ; ; test "\\[3]'\\@", 3
-40DA                             ; ; test "\\[3]$ '", 1
-40DA                             ; ; test "\\[1 2 3]'\\@", 1
-40DA                             ; ; test "\\[1 2 3]'1+\\@", 2
-40DA                             ; ; test "\\h@\\[1 2 3]''\\h@$-", 3
-40DA                             ; ; test "\\h@\\[1]''\\h@$-", 1
-40DA                             ; ; test "\\`A`\\@",65
-40DA                             ; ; test "0 0(1+)", 0
-40DA                             ; ; test "0 1(1+)", 1
-40DA                             ; ; test "0 2(1+)", 2
-40DA                             ; ; test "0 1(0(1+))", 0
-40DA                             ; ; test "0 1(1(1+))", 1
-40DA                             ; ; test "0 2(1(1+))", 2
-40DA                             ; ; test "0 2(2(1+))", 4
-40DA                             ; ; test "0 1(\\i@+)", 0
-40DA                             ; ; test "0 2(\\i@+)", 1
-40DA                             ; ; test "0 3(\\i@+)", 3
-40DA                             ; ; test "0 2(2(\\i@ \\i6+@ ++))", 4
-40DA                             ; ; test "0t! 10(1 t@+t!) t@",10
-40DA                             ; ; test "0(100)(200)",200
-40DA                             ; ; test "1(100)(200)",100
-40DA                             ; ; test "0t! 10(\\i@ 4>\\~ \\i@ 1 t@+t!) t@",5
-40DA                             ; ; test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t@+t! ) t@", 6
-40DA                             ; ; test ":X10;\\0X", 10
-40DA                             ; ; test "2 \\1x! \\1x@", 2
-40DA                             ; 
-40DA   CD A4 08               CALL   printStr   
-40DD   44 6F 6E 65 21 00      .CSTR   "Done!"   
-40E3   76                     HALT      
-40E4                             ; 
-40E4                NESTSTR:      
-40E4   22 27 60 7B 7D 28 29 5B 5D 00 .CSTR   $22,"'`{}()[]"   
-40EE                             ; 
+4052                             ; 
+4052                             ; test "``", 0
+4052                             ; test "`a`", $61
+4052                             ; test "`\\``", $60
+4052                             ; test "`b` 'cba' in", -1
+4052                             ; test "`x` 'cba' in", 0
+4052                             ; test "1 2 +", 3
+4052                             ; 
+4052                             ; 
+4052                             ; test "'A' @", 65
+4052                             ; 
+4052                             ; test "1", 1
+4052                             ; test "0", 0
+4052                             ; test "10", 10
+4052                             ; test "123", 123
+4052                             ; test "$10", $10
+4052                             ; test "$FF", $FF
+4052                             ; test "2 3 =", 0
+4052                             ; test "3 3 =", 1
+4052                             ; test "2 3 <", 1
+4052                             ; test "3 3 <", 0
+4052                             ; test "3 3 >", 0
+4052                             ; test "4 3 >", 1
+4052                             ; test "1 2 +", 3
+4052                             ; test "123 456 +", 123+456
+4052                             ; test "64 128 +", 64+128
+4052                             ; test "5 3 -", 2
+4052                             ; test "3 5 &", 1
+4052                             ; test "3 5 |", 7
+4052                             ; test "2 3 *", 6
+4052                             ; test "1 2 3 + *", 5
+4052                             ; 
+4052                             ; ; test "1 2 3 ' +", 3
+4052                             ; ; test "1_ 2 +",1
+4052                             ; ; test "1_ 1 +",0
+4052                             ; ; call enter
+4052                             ; ;     .cstr "1 3",$22,"+"
+4052                             ; ; expect "1 3 DUP +", 6
+4052                             ; 
+4052                             ; ; test "5 2/'", 2
+4052                             ; ; test "3 5$ -", 2
+4052                             ; ; test "5 2/$ '", 1
+4052                             ; ; test "2 3%++", 7
+4052                             ; ; test "1 2 3~''", 2
+4052                             ; ; test "1 2 3~+*", 8
+4052                             ; ; test "2a!a@",2
+4052                             ; ; test "3x! 1 x@+x! x@", 4
+4052                             ; ; test "3x! 1_ x@+x! x@", 2
+4052                             ; 
+4052                             ; 
+4052                             ; 
+4052                             ; ; test "1{", 2
+4052                             ; ; test "1}", 0
+4052                             ; ; test "2}", 1
+4052                             ; ; test "10 11 12\\#3$ '$ '$ '", 4
+4052                             ; ; test "(2) \\^", 2
+4052                             ; ; test ":X1; X", 1
+4052                             ; ; test ":A100;A", 100
+4052                             ; ; test ":Aa!; 3A a@", 3
+4052                             ; ; test ":Aa!;:Ba@;4AB", 4
+4052                             ; ; test "[]$ '", 0
+4052                             ; ; test "[3]$ '", 1
+4052                             ; ; test "[3]'@", 3
+4052                             ; ; test "[1 2 3]'@", 1
+4052                             ; ; test "[1 2 3]'2+@", 2
+4052                             ; ; test "\\h@[1]''\\h@$-", 2
+4052                             ; ; test "\\h@[1 2 3]''\\h@$-", 6
+4052                             ; ; test "\\[]$ '", 0
+4052                             ; ; test "\\[3]'\\@", 3
+4052                             ; ; test "\\[3]$ '", 1
+4052                             ; ; test "\\[1 2 3]'\\@", 1
+4052                             ; ; test "\\[1 2 3]'1+\\@", 2
+4052                             ; ; test "\\h@\\[1 2 3]''\\h@$-", 3
+4052                             ; ; test "\\h@\\[1]''\\h@$-", 1
+4052                             ; ; test "\\`A`\\@",65
+4052                             ; ; test "0 0(1+)", 0
+4052                             ; ; test "0 1(1+)", 1
+4052                             ; ; test "0 2(1+)", 2
+4052                             ; ; test "0 1(0(1+))", 0
+4052                             ; ; test "0 1(1(1+))", 1
+4052                             ; ; test "0 2(1(1+))", 2
+4052                             ; ; test "0 2(2(1+))", 4
+4052                             ; ; test "0 1(\\i@+)", 0
+4052                             ; ; test "0 2(\\i@+)", 1
+4052                             ; ; test "0 3(\\i@+)", 3
+4052                             ; ; test "0 2(2(\\i@ \\i6+@ ++))", 4
+4052                             ; ; test "0t! 10(1 t@+t!) t@",10
+4052                             ; ; test "0(100)(200)",200
+4052                             ; ; test "1(100)(200)",100
+4052                             ; ; test "0t! 10(\\i@ 4>\\~ \\i@ 1 t@+t!) t@",5
+4052                             ; ; test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t@+t! ) t@", 6
+4052                             ; ; test ":X10;\\0X", 10
+4052                             ; ; test "2 \\1x! \\1x@", 2
+4052                             ; 
+4052   CD A4 08               CALL   printStr   
+4055   44 6F 6E 65 21 00      .CSTR   "Done!"   
+405B   76                     HALT      
+405C                             ; 
+405C                NESTSTR:      
+405C   22 27 60 7B 7D 28 29 5B 5D 00 .CSTR   $22,"'`{}()[]"   
+4066                             ; 
 
 
 TEC_1:              0001 DEFINED AT LINE 1 IN constants.asm
@@ -2565,10 +2513,6 @@ PRTSTR_:            064E DEFINED AT LINE 850 IN Siena.asm
 PRTSTR:             064E DEFINED AT LINE 851 IN Siena.asm
                     > USED AT LINE 11
                     > USED AT LINE 15
-                    > USED AT LINE 11
-                    > USED AT LINE 15
-                    > USED AT LINE 11
-                    > USED AT LINE 15
 RPUSH_:             0655 DEFINED AT LINE 857 IN Siena.asm
 RPOP_:              065C DEFINED AT LINE 862 IN Siena.asm
 A:                  0663 DEFINED AT LINE 871 IN Siena.asm
@@ -2697,10 +2641,6 @@ A:                  0663 DEFINED AT LINE 871 IN Siena.asm
                     > USED AT LINE 1498 IN Siena.asm
                     > USED AT LINE 1558 IN Siena.asm
                     > USED AT LINE 1564 IN Siena.asm
-                    > USED AT LINE 5
-                    > USED AT LINE 7
-                    > USED AT LINE 5
-                    > USED AT LINE 7
                     > USED AT LINE 5
                     > USED AT LINE 7
 C:                  0673 DEFINED AT LINE 881 IN Siena.asm
@@ -2837,8 +2777,6 @@ L:                  06EE DEFINED AT LINE 956 IN Siena.asm
                     > USED AT LINE 1408 IN Siena.asm
                     > USED AT LINE 1477 IN Siena.asm
                     > USED AT LINE 7
-                    > USED AT LINE 7
-                    > USED AT LINE 7
 M:                  06FE DEFINED AT LINE 966 IN Siena.asm
                     > USED AT LINE 488 IN Siena.asm
                     > USED AT LINE 691 IN Siena.asm
@@ -2929,10 +2867,6 @@ PRTDEC:             081C DEFINED AT LINE 1196 IN Siena.asm
                     > USED AT LINE 458 IN Siena.asm
                     > USED AT LINE 13
                     > USED AT LINE 18
-                    > USED AT LINE 13
-                    > USED AT LINE 18
-                    > USED AT LINE 13
-                    > USED AT LINE 18
 PRTDEC0:            082B DEFINED AT LINE 1211 IN Siena.asm
                     > USED AT LINE 1202 IN Siena.asm
 PRTDEC1:            084D DEFINED AT LINE 1227 IN Siena.asm
@@ -2958,13 +2892,11 @@ INIT:               0883 DEFINED AT LINE 1272 IN Siena.asm
                     > USED AT LINE 9
                     > USED AT LINE 318 IN Siena.asm
                     > USED AT LINE 28
-                    > USED AT LINE 28
-                    > USED AT LINE 28
 PRINTSTR:           08A4 DEFINED AT LINE 1288 IN Siena.asm
                     > USED AT LINE 319 IN Siena.asm
                     > USED AT LINE 1100 IN Siena.asm
                     > USED AT LINE 1129 IN Siena.asm
-                    > USED AT LINE 119
+                    > USED AT LINE 115
 LOOKUPREF:          08AB DEFINED AT LINE 1295 IN Siena.asm
 LOOKUPREF0:         08AD DEFINED AT LINE 1297 IN Siena.asm
 LOOKUPREF1:         08B1 DEFINED AT LINE 1300 IN Siena.asm
@@ -3007,8 +2939,6 @@ NEWADD2:            0925 DEFINED AT LINE 1402 IN Siena.asm
                     > USED AT LINE 449 IN Siena.asm
 ENTER:              0943 DEFINED AT LINE 1424 IN Siena.asm
                     > USED AT LINE 367 IN Siena.asm
-                    > USED AT LINE 29
-                    > USED AT LINE 29
                     > USED AT LINE 29
 GO:                 0943 DEFINED AT LINE 1425 IN Siena.asm
                     > USED AT LINE 453 IN Siena.asm
@@ -3057,8 +2987,6 @@ DSTACK:             1A00 DEFINED AT LINE 9 IN ram.asm
                     > USED AT LINE 312 IN Siena.asm
                     > USED AT LINE 317 IN Siena.asm
                     > USED AT LINE 1273 IN Siena.asm
-                    > USED AT LINE 27
-                    > USED AT LINE 27
                     > USED AT LINE 27
 STACK:              1A00 DEFINED AT LINE 10 IN ram.asm
                     > USED AT LINE 445 IN IOSerial.asm
@@ -3122,10 +3050,6 @@ HEAP:               1C28 DEFINED AT LINE 73 IN ram.asm
                     > USED AT LINE 47 IN Siena.asm
 TESTSSTART:         4000 DEFINED AT LINE 16
                     > USED AT LINE 10
-EXPECTM_0_2046S31:  4041 DEFINED AT LINE 22
+EXPECTM_0_2049S31:  4051 DEFINED AT LINE 22
                     > USED AT LINE 9
-EXPECTM_0_2047S31:  408B DEFINED AT LINE 22
-                    > USED AT LINE 9
-EXPECTM_0_2048S31:  40D9 DEFINED AT LINE 22
-                    > USED AT LINE 9
-NESTSTR:            40E4 DEFINED AT LINE 123
+NESTSTR:            405C DEFINED AT LINE 119
