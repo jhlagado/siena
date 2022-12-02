@@ -1144,11 +1144,11 @@ num0:
     ex af,af'                   ; save zero flag = 0 for later
 num1:
     ld a,(bc)                   ; read digit    
-    inc bc                      ; inc IP
     sub "0"                     ; less than 0?
     jr c, num2                  ; not a digit, exit loop 
-    cp "9"+1                    ; greater that 9?
+    cp 10                       ; greater that 9?
     jr nc, num2                 ; not a digit, exit loop
+    inc bc                      ; inc IP
     ld de,hl                    ; multiply hl * 10
     add hl,hl    
     add hl,hl    

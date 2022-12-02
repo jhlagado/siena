@@ -1,4 +1,4 @@
-0000                          .ENGINE   mycomputer   
+0000                             ; .engine mycomputer
 0000                             ; 
 0000                TEC_1:    EQU   1   
 0000                RC2014:   EQU   0   
@@ -1584,11 +1584,11 @@
 07D7   08                     EX   af,af'   ; save zero flag = 0 for later
 07D8                NUM1:        
 07D8   0A                     LD   a,(bc)   ; read digit
-07D9   03                     INC   bc   ; inc IP
-07DA   D6 30                  SUB   "0"   ; less than 0?
-07DC   38 12                  JR   c,num2   ; not a digit, exit loop
-07DE   FE 3A                  CP   "9"+1   ; greater that 9?
-07E0   30 0E                  JR   nc,num2   ; not a digit, exit loop
+07D9   D6 30                  SUB   "0"   ; less than 0?
+07DB   38 13                  JR   c,num2   ; not a digit, exit loop
+07DD   FE 0A                  CP   10   ; greater that 9?
+07DF   30 0F                  JR   nc,num2   ; not a digit, exit loop
+07E1   03                     INC   bc   ; inc IP
 07E2   54 5D                  LD   de,hl   ; multiply hl * 10
 07E4   29                     ADD   hl,hl   
 07E5   29                     ADD   hl,hl   
@@ -2664,7 +2664,7 @@ C:                  0673 DEFINED AT LINE 881 IN Siena.asm
                     > USED AT LINE 846 IN Siena.asm
                     > USED AT LINE 847 IN Siena.asm
                     > USED AT LINE 1076 IN Siena.asm
-                    > USED AT LINE 1149 IN Siena.asm
+                    > USED AT LINE 1148 IN Siena.asm
                     > USED AT LINE 1185 IN Siena.asm
                     > USED AT LINE 1213 IN Siena.asm
                     > USED AT LINE 1222 IN Siena.asm
@@ -2855,8 +2855,8 @@ NUM0:               07D7 DEFINED AT LINE 1143 IN Siena.asm
 NUM1:               07D8 DEFINED AT LINE 1145 IN Siena.asm
                     > USED AT LINE 1162 IN Siena.asm
 NUM2:               07F0 DEFINED AT LINE 1163 IN Siena.asm
-                    > USED AT LINE 1149 IN Siena.asm
-                    > USED AT LINE 1151 IN Siena.asm
+                    > USED AT LINE 1148 IN Siena.asm
+                    > USED AT LINE 1150 IN Siena.asm
                     > USED AT LINE 1185 IN Siena.asm
                     > USED AT LINE 1187 IN Siena.asm
 NUM3:               07FB DEFINED AT LINE 1171 IN Siena.asm

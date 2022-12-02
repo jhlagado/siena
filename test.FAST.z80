@@ -1,4 +1,4 @@
-    .engine mycomputer
+    ; .engine mycomputer
 
     .include "constants.asm"
     .include "test.fast.mac.asm"
