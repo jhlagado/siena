@@ -173,7 +173,7 @@ iOpcodes:
     DB lsb(var_)                ;    z  
     DB lsb(lambda_)             ;    {
     DB lsb(or_)                 ;    |  
-    DB lsb(return_)             ;    }  
+    DB lsb(lambdaEnd_)             ;    }  
     DB lsb(nop_)                ;    ~    
     DB lsb(nop_)                ;    DEL	
     DB lsb(EMPTY)               ; NUL ^@    
@@ -451,8 +451,8 @@ lambda_:
     jp lambda
 go_:
     jp go
-return_:
-    jp return
+lambdaEnd_:
+    jp lambdaEnd
 dot_:  
     pop hl
     call prtdec
@@ -1135,42 +1135,42 @@ crlf:
 ;*******************************************************************
 
 num:
-		ld hl,$0000				    ; Clear hl to accept the number
-		ld a,(bc)				    ; Get numeral or -
+	ld hl,$0000				    ; Clear hl to accept the number
+	ld a,(bc)				    ; Get numeral or -
     cp '-'
     jr nz,num0
-    inc bc        ; no flags are affected
+    inc bc                      ; move to next char, no flags affected
 num0:
-    ex af,af'    ; save zero flag = 0 for later
+    ex af,af'                   ; save zero flag = 0 for later
 num1:
-    ld a,(bc)    
-    sub 30h       
-    jr c, num2    ; not a number, exit loop 
-    inc bc  
-    ld d,h  
-    ld e,l  
+    ld a,(bc)                   ; read digit    
+    inc bc                      ; inc IP
+    sub "0"                     ; less than 0?
+    jr c, num2                  ; not a digit, exit loop 
+    cp "9"+1                    ; greater that 9?
+    jr nc, num2                 ; not a digit, exit loop
+    ld de,hl                    ; multiply hl * 10
     add hl,hl    
     add hl,hl    
     add hl,de    
     add hl,hl    
-    add a,l       
-    ld l,a  
-    jr nc,num1    
-    inc h    
+    add a,l                     ; add digit in a to hl
+    ld l,a
+    ld a,0
+    adc a,h
+    ld h,a
     jr num1 
 num2:
     dec bc
-    ex af,af'    ; restore zero flag
+    ex af,af'                   ; restore zero flag
     jr nz, num3
-    ex de,hl     ; negate the value of hl
+    ex de,hl                    ; negate the value of hl
     ld hl,0
-    or a    ; jump to sub2
+    or a                        ; jump to sub2
     sbc hl,de    
 num3:
     push hl       ; Put the number on the stack
     jp next       ; and process the next character
-
-
 
 hexnum:        ;
 	    ld hl,0	    		    ; Clear hl to accept the number
@@ -1453,6 +1453,8 @@ go1:
     push iy                     ; push base pointer
     ld iy,0                     ; base pointer = stack pointer
     add iy,sp
+    ld hl,0                     ; set result (TOS) to 0
+    push hl
 
     ld bc,de                    ; IP = pointer to lambda
     dec bc                      ; dec to prepare for next routine
@@ -1474,7 +1476,7 @@ lambda1:                        ; Skip to end of definition
     ld (vHeapPtr),de            ; bump heap ptr to after definiton
     jp next  
 
-return:
+lambdaEnd:
     pop hl                      ; hl = last result 
     ld d,iyh                    ; de = BP
     ld e,iyl
