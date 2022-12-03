@@ -2187,158 +2187,191 @@
 4000                             ; test "1 2 +", 3
 4000                             ; test "4 1 2 +", 3
 4000                             ; test "5 0 (1) if", 5
-4000                          ;*Macro unroll:  test "5 -1 (1) if", 1
+4000                             ; test "5 -1 (1) if", 1
+4000                          ;*Macro unroll:  test "0 (1) (2) ife", 2
 4000   31 00 1A               LD   SP,DSTACK   
 4003   CD 85 08               CALL   init   
 4006   CD 27 09               CALL   enter   
-4009   35 20 2D 31 20 28 31 29 20 69 66 00 .CSTR   "5 -1 (1) if"   
-4015                          ;*Macro unroll:  expect "5 -1 (1) if",1
-4015   E1                     POP   HL   
-4016   E5                     PUSH   HL   
-4017   11 01 00               LD   DE,1   
-401A   B7                     OR   A   
-401B   ED 52                  SBC   HL,DE   
-401D   7D                     LD   A,L   
-401E   B4                     OR   H   
-401F   28 56                  JR   Z,expectM_0_2189S43   
-4021   CD A6 08               CALL   printStr   
-4024   43 6F 64 65 3A 20 35 20 2D 31 20 28 31 29 20 69 66 00 .CSTR   "Code: ","5 -1 (1) if"   
-4036   CD A6 08               CALL   printStr   
-4039   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
-4048   21 01 00               LD   HL,1   
-404B   CD 1E 08               CALL   prtdec   
-404E   CD A6 08               CALL   printStr   
-4051   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
-405E   E1                     POP   hl   
-405F   E5                     PUSH   hl   
-4060   CD 1E 08               CALL   prtdec   
-4063   E1                     POP   hl   
-4064   CD A6 08               CALL   printStr   
-4067   20 28 23 00            .CSTR   " (#"   
-406B   CD 66 08               CALL   prthex   
-406E   CD A6 08               CALL   printStr   
-4071   29 0D 0A 00            .CSTR   ")\r\n"   
-4075   76                     HALT      
-4076   00                     .CSTR      
-4077                EXPECTM_0_2189S43:      
-4077   E1                     POP   HL   
-4078                             ; 
-4078                             ; 
-4078                             ; test "0 (1) (2) sw", 1
-4078                             ; test "1 (1) (2) sw", 2
-4078                             ; test "0 (1) (2) ife", 2
-4078                             ; test "-1 (1) (2) ife", 1
-4078                             ; 
-4078                             ; test "1", 1
-4078                             ; test "2", 2
-4078                             ; test "``", 0
-4078                             ; test "`a`", $61
-4078                             ; test "`\\``", $60
-4078                             ; test "`b` 'cba' in", -1
-4078                             ; test "`x` 'cba' in", 0
-4078                             ; test "1 2 +", 3
-4078                             ; test "5 -1 (2) if", 2
-4078                             ; test "5 0 (2) if", 5
-4078                             ; test "5 0 (0 (2) if) if", 5
-4078                             ; test "5 0 (-1 (2) if) if", 5
-4078                             ; test "5 -1 (2) if", 2
-4078                             ; test "5 -1 (-1 (2) if) if", 2
-4078                             ; test "{1} go", 1
-4078                             ; test "2 {$1} go", 2
-4078                             ; test "2 4 {$2} go", 4
-4078                             ; test "{{1} go} go", 1
-4078                             ; test "5 {-1 ($1) if} go", 5
-4078                             ; 
-4078                             ; 
-4078                             ; test "'A' @", 65
-4078                             ; 
-4078                             ; test "1", 1
-4078                             ; test "0", 0
-4078                             ; test "10", 10
-4078                             ; test "123", 123
-4078                             ; test "$10", $10
-4078                             ; test "$FF", $FF
-4078                             ; test "2 3 =", 0
-4078                             ; test "3 3 =", 1
-4078                             ; test "2 3 <", 1
-4078                             ; test "3 3 <", 0
-4078                             ; test "3 3 >", 0
-4078                             ; test "4 3 >", 1
-4078                             ; test "1 2 +", 3
-4078                             ; test "123 456 +", 123+456
-4078                             ; test "64 128 +", 64+128
-4078                             ; test "5 3 -", 2
-4078                             ; test "3 5 &", 1
-4078                             ; test "3 5 |", 7
-4078                             ; test "2 3 *", 6
-4078                             ; test "1 2 3 + *", 5
-4078                             ; 
-4078                             ; ; test "1 2 3 ' +", 3
-4078                             ; ; test "1_ 2 +",1
-4078                             ; ; test "1_ 1 +",0
-4078                             ; ; call enter
-4078                             ; ;     .cstr "1 3",$22,"+"
-4078                             ; ; expect "1 3 DUP +", 6
-4078                             ; 
-4078                             ; ; test "5 2/'", 2
-4078                             ; ; test "3 5$ -", 2
-4078                             ; ; test "5 2/$ '", 1
-4078                             ; ; test "2 3%++", 7
-4078                             ; ; test "1 2 3~''", 2
-4078                             ; ; test "1 2 3~+*", 8
-4078                             ; ; test "2a!a@",2
-4078                             ; ; test "3x! 1 x@+x! x@", 4
-4078                             ; ; test "3x! 1_ x@+x! x@", 2
-4078                             ; 
-4078                             ; 
-4078                             ; 
-4078                             ; ; test "1{", 2
-4078                             ; ; test "1}", 0
-4078                             ; ; test "2}", 1
-4078                             ; ; test "10 11 12\\#3$ '$ '$ '", 4
-4078                             ; ; test "(2) \\^", 2
-4078                             ; ; test ":X1; X", 1
-4078                             ; ; test ":A100;A", 100
-4078                             ; ; test ":Aa!; 3A a@", 3
-4078                             ; ; test ":Aa!;:Ba@;4AB", 4
-4078                             ; ; test "[]$ '", 0
-4078                             ; ; test "[3]$ '", 1
-4078                             ; ; test "[3]'@", 3
-4078                             ; ; test "[1 2 3]'@", 1
-4078                             ; ; test "[1 2 3]'2+@", 2
-4078                             ; ; test "\\h@[1]''\\h@$-", 2
-4078                             ; ; test "\\h@[1 2 3]''\\h@$-", 6
-4078                             ; ; test "\\[]$ '", 0
-4078                             ; ; test "\\[3]'\\@", 3
-4078                             ; ; test "\\[3]$ '", 1
-4078                             ; ; test "\\[1 2 3]'\\@", 1
-4078                             ; ; test "\\[1 2 3]'1+\\@", 2
-4078                             ; ; test "\\h@\\[1 2 3]''\\h@$-", 3
-4078                             ; ; test "\\h@\\[1]''\\h@$-", 1
-4078                             ; ; test "\\`A`\\@",65
-4078                             ; ; test "0 0(1+)", 0
-4078                             ; ; test "0 1(1+)", 1
-4078                             ; ; test "0 2(1+)", 2
-4078                             ; ; test "0 1(0(1+))", 0
-4078                             ; ; test "0 1(1(1+))", 1
-4078                             ; ; test "0 2(1(1+))", 2
-4078                             ; ; test "0 2(2(1+))", 4
-4078                             ; ; test "0 1(\\i@+)", 0
-4078                             ; ; test "0 2(\\i@+)", 1
-4078                             ; ; test "0 3(\\i@+)", 3
-4078                             ; ; test "0 2(2(\\i@ \\i6+@ ++))", 4
-4078                             ; ; test "0t! 10(1 t@+t!) t@",10
-4078                             ; ; test "0(100)(200)",200
-4078                             ; ; test "1(100)(200)",100
-4078                             ; ; test "0t! 10(\\i@ 4>\\~ \\i@ 1 t@+t!) t@",5
-4078                             ; ; test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t@+t! ) t@", 6
-4078                             ; ; test ":X10;\\0X", 10
-4078                             ; ; test "2 \\1x! \\1x@", 2
-4078                             ; 
-4078   CD A6 08               CALL   printStr   
-407B   44 6F 6E 65 21 00      .CSTR   "Done!"   
-4081   76                     HALT      
-4082                             ; 
+4009   30 20 28 31 29 20 28 32 29 20 69 66 65 00 .CSTR   "0 (1) (2) ife"   
+4017                          ;*Macro unroll:  expect "0 (1) (2) ife",2
+4017   E1                     POP   HL   
+4018   E5                     PUSH   HL   
+4019   11 02 00               LD   DE,2   
+401C   B7                     OR   A   
+401D   ED 52                  SBC   HL,DE   
+401F   7D                     LD   A,L   
+4020   B4                     OR   H   
+4021   28 58                  JR   Z,expectM_0_2190S43   
+4023   CD A6 08               CALL   printStr   
+4026   43 6F 64 65 3A 20 30 20 28 31 29 20 28 32 29 20 69 66 65 00 .CSTR   "Code: ","0 (1) (2) ife"   
+403A   CD A6 08               CALL   printStr   
+403D   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+404C   21 02 00               LD   HL,2   
+404F   CD 1E 08               CALL   prtdec   
+4052   CD A6 08               CALL   printStr   
+4055   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+4062   E1                     POP   hl   
+4063   E5                     PUSH   hl   
+4064   CD 1E 08               CALL   prtdec   
+4067   E1                     POP   hl   
+4068   CD A6 08               CALL   printStr   
+406B   20 28 23 00            .CSTR   " (#"   
+406F   CD 66 08               CALL   prthex   
+4072   CD A6 08               CALL   printStr   
+4075   29 0D 0A 00            .CSTR   ")\r\n"   
+4079   76                     HALT      
+407A   00                     .CSTR      
+407B                EXPECTM_0_2190S43:      
+407B   E1                     POP   HL   
+407C                          ;*Macro unroll:  test "-1 (1) (2) ife", 1
+407C   31 00 1A               LD   SP,DSTACK   
+407F   CD 85 08               CALL   init   
+4082   CD 27 09               CALL   enter   
+4085   2D 31 20 28 31 29 20 28 32 29 20 69 66 65 00 .CSTR   "-1 (1) (2) ife"   
+4094                          ;*Macro unroll:  expect "-1 (1) (2) ife",1
+4094   E1                     POP   HL   
+4095   E5                     PUSH   HL   
+4096   11 01 00               LD   DE,1   
+4099   B7                     OR   A   
+409A   ED 52                  SBC   HL,DE   
+409C   7D                     LD   A,L   
+409D   B4                     OR   H   
+409E   28 59                  JR   Z,expectM_0_2191S43   
+40A0   CD A6 08               CALL   printStr   
+40A3   43 6F 64 65 3A 20 2D 31 20 28 31 29 20 28 32 29 20 69 66 65 00 .CSTR   "Code: ","-1 (1) (2) ife"   
+40B8   CD A6 08               CALL   printStr   
+40BB   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+40CA   21 01 00               LD   HL,1   
+40CD   CD 1E 08               CALL   prtdec   
+40D0   CD A6 08               CALL   printStr   
+40D3   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+40E0   E1                     POP   hl   
+40E1   E5                     PUSH   hl   
+40E2   CD 1E 08               CALL   prtdec   
+40E5   E1                     POP   hl   
+40E6   CD A6 08               CALL   printStr   
+40E9   20 28 23 00            .CSTR   " (#"   
+40ED   CD 66 08               CALL   prthex   
+40F0   CD A6 08               CALL   printStr   
+40F3   29 0D 0A 00            .CSTR   ")\r\n"   
+40F7   76                     HALT      
+40F8   00                     .CSTR      
+40F9                EXPECTM_0_2191S43:      
+40F9   E1                     POP   HL   
+40FA                             ; 
+40FA                             ; test "0 (1) (2) sw", 1
+40FA                             ; test "1 (1) (2) sw", 2
+40FA                             ; 
+40FA                             ; test "1", 1
+40FA                             ; test "2", 2
+40FA                             ; test "``", 0
+40FA                             ; test "`a`", $61
+40FA                             ; test "`\\``", $60
+40FA                             ; test "`b` 'cba' in", -1
+40FA                             ; test "`x` 'cba' in", 0
+40FA                             ; test "1 2 +", 3
+40FA                             ; test "5 -1 (2) if", 2
+40FA                             ; test "5 0 (2) if", 5
+40FA                             ; test "5 0 (0 (2) if) if", 5
+40FA                             ; test "5 0 (-1 (2) if) if", 5
+40FA                             ; test "5 -1 (2) if", 2
+40FA                             ; test "5 -1 (-1 (2) if) if", 2
+40FA                             ; test "{1} go", 1
+40FA                             ; test "2 {$1} go", 2
+40FA                             ; test "2 4 {$2} go", 4
+40FA                             ; test "{{1} go} go", 1
+40FA                             ; test "5 {-1 ($1) if} go", 5
+40FA                             ; 
+40FA                             ; 
+40FA                             ; test "'A' @", 65
+40FA                             ; 
+40FA                             ; test "1", 1
+40FA                             ; test "0", 0
+40FA                             ; test "10", 10
+40FA                             ; test "123", 123
+40FA                             ; test "$10", $10
+40FA                             ; test "$FF", $FF
+40FA                             ; test "2 3 =", 0
+40FA                             ; test "3 3 =", 1
+40FA                             ; test "2 3 <", 1
+40FA                             ; test "3 3 <", 0
+40FA                             ; test "3 3 >", 0
+40FA                             ; test "4 3 >", 1
+40FA                             ; test "1 2 +", 3
+40FA                             ; test "123 456 +", 123+456
+40FA                             ; test "64 128 +", 64+128
+40FA                             ; test "5 3 -", 2
+40FA                             ; test "3 5 &", 1
+40FA                             ; test "3 5 |", 7
+40FA                             ; test "2 3 *", 6
+40FA                             ; test "1 2 3 + *", 5
+40FA                             ; 
+40FA                             ; ; test "1 2 3 ' +", 3
+40FA                             ; ; test "1_ 2 +",1
+40FA                             ; ; test "1_ 1 +",0
+40FA                             ; ; call enter
+40FA                             ; ;     .cstr "1 3",$22,"+"
+40FA                             ; ; expect "1 3 DUP +", 6
+40FA                             ; 
+40FA                             ; ; test "5 2/'", 2
+40FA                             ; ; test "3 5$ -", 2
+40FA                             ; ; test "5 2/$ '", 1
+40FA                             ; ; test "2 3%++", 7
+40FA                             ; ; test "1 2 3~''", 2
+40FA                             ; ; test "1 2 3~+*", 8
+40FA                             ; ; test "2a!a@",2
+40FA                             ; ; test "3x! 1 x@+x! x@", 4
+40FA                             ; ; test "3x! 1_ x@+x! x@", 2
+40FA                             ; 
+40FA                             ; 
+40FA                             ; 
+40FA                             ; ; test "1{", 2
+40FA                             ; ; test "1}", 0
+40FA                             ; ; test "2}", 1
+40FA                             ; ; test "10 11 12\\#3$ '$ '$ '", 4
+40FA                             ; ; test "(2) \\^", 2
+40FA                             ; ; test ":X1; X", 1
+40FA                             ; ; test ":A100;A", 100
+40FA                             ; ; test ":Aa!; 3A a@", 3
+40FA                             ; ; test ":Aa!;:Ba@;4AB", 4
+40FA                             ; ; test "[]$ '", 0
+40FA                             ; ; test "[3]$ '", 1
+40FA                             ; ; test "[3]'@", 3
+40FA                             ; ; test "[1 2 3]'@", 1
+40FA                             ; ; test "[1 2 3]'2+@", 2
+40FA                             ; ; test "\\h@[1]''\\h@$-", 2
+40FA                             ; ; test "\\h@[1 2 3]''\\h@$-", 6
+40FA                             ; ; test "\\[]$ '", 0
+40FA                             ; ; test "\\[3]'\\@", 3
+40FA                             ; ; test "\\[3]$ '", 1
+40FA                             ; ; test "\\[1 2 3]'\\@", 1
+40FA                             ; ; test "\\[1 2 3]'1+\\@", 2
+40FA                             ; ; test "\\h@\\[1 2 3]''\\h@$-", 3
+40FA                             ; ; test "\\h@\\[1]''\\h@$-", 1
+40FA                             ; ; test "\\`A`\\@",65
+40FA                             ; ; test "0 0(1+)", 0
+40FA                             ; ; test "0 1(1+)", 1
+40FA                             ; ; test "0 2(1+)", 2
+40FA                             ; ; test "0 1(0(1+))", 0
+40FA                             ; ; test "0 1(1(1+))", 1
+40FA                             ; ; test "0 2(1(1+))", 2
+40FA                             ; ; test "0 2(2(1+))", 4
+40FA                             ; ; test "0 1(\\i@+)", 0
+40FA                             ; ; test "0 2(\\i@+)", 1
+40FA                             ; ; test "0 3(\\i@+)", 3
+40FA                             ; ; test "0 2(2(\\i@ \\i6+@ ++))", 4
+40FA                             ; ; test "0t! 10(1 t@+t!) t@",10
+40FA                             ; ; test "0(100)(200)",200
+40FA                             ; ; test "1(100)(200)",100
+40FA                             ; ; test "0t! 10(\\i@ 4>\\~ \\i@ 1 t@+t!) t@",5
+40FA                             ; ; test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t@+t! ) t@", 6
+40FA                             ; ; test ":X10;\\0X", 10
+40FA                             ; ; test "2 \\1x! \\1x@", 2
+40FA                             ; 
+40FA   CD A6 08               CALL   printStr   
+40FD   44 6F 6E 65 21 00      .CSTR   "Done!"   
+4103   76                     HALT      
+4104                             ; 
 
 
 TEC_1:              0001 DEFINED AT LINE 1 IN constants.asm
@@ -2813,6 +2846,8 @@ A:                  0663 DEFINED AT LINE 874 IN Siena.asm
                     > USED AT LINE 1663 IN Siena.asm
                     > USED AT LINE 6
                     > USED AT LINE 8
+                    > USED AT LINE 6
+                    > USED AT LINE 8
 C:                  0673 DEFINED AT LINE 884 IN Siena.asm
                     > USED AT LINE 345 IN Siena.asm
                     > USED AT LINE 475 IN Siena.asm
@@ -2966,6 +3001,7 @@ L:                  06F0 DEFINED AT LINE 963 IN Siena.asm
                     > USED AT LINE 1658 IN Siena.asm
                     > USED AT LINE 1664 IN Siena.asm
                     > USED AT LINE 8
+                    > USED AT LINE 8
 M:                  0700 DEFINED AT LINE 973 IN Siena.asm
                     > USED AT LINE 491 IN Siena.asm
                     > USED AT LINE 694 IN Siena.asm
@@ -3053,6 +3089,8 @@ PRTDEC:             081E DEFINED AT LINE 1202 IN Siena.asm
                     > USED AT LINE 461 IN Siena.asm
                     > USED AT LINE 18
                     > USED AT LINE 24
+                    > USED AT LINE 18
+                    > USED AT LINE 24
 PRTDEC0:            082D DEFINED AT LINE 1217 IN Siena.asm
                     > USED AT LINE 1208 IN Siena.asm
 PRTDEC1:            084F DEFINED AT LINE 1233 IN Siena.asm
@@ -3070,6 +3108,7 @@ PRTDEC4:            0862 DEFINED AT LINE 1249 IN Siena.asm
 PRTHEX:             0866 DEFINED AT LINE 1253 IN Siena.asm
                     > USED AT LINE 565 IN Siena.asm
                     > USED AT LINE 28
+                    > USED AT LINE 28
 PRTHEX2:            0871 DEFINED AT LINE 1262 IN Siena.asm
                     > USED AT LINE 1257 IN Siena.asm
                     > USED AT LINE 1259 IN Siena.asm
@@ -3078,6 +3117,7 @@ PRTHEX3:            087A DEFINED AT LINE 1270 IN Siena.asm
 INIT:               0885 DEFINED AT LINE 1278 IN Siena.asm
                     > USED AT LINE 9
                     > USED AT LINE 321 IN Siena.asm
+                    > USED AT LINE 40
                     > USED AT LINE 40
 PRINTSTR:           08A6 DEFINED AT LINE 1294 IN Siena.asm
                     > USED AT LINE 322 IN Siena.asm
@@ -3088,7 +3128,12 @@ PRINTSTR:           08A6 DEFINED AT LINE 1294 IN Siena.asm
                     > USED AT LINE 20
                     > USED AT LINE 26
                     > USED AT LINE 29
-                    > USED AT LINE 135
+                    > USED AT LINE 12
+                    > USED AT LINE 15
+                    > USED AT LINE 20
+                    > USED AT LINE 26
+                    > USED AT LINE 29
+                    > USED AT LINE 134
 LOOKUPREF:          08AD DEFINED AT LINE 1301 IN Siena.asm
 LOOKUPREF0:         08AF DEFINED AT LINE 1303 IN Siena.asm
 LOOKUPREF1:         08B3 DEFINED AT LINE 1306 IN Siena.asm
@@ -3129,6 +3174,7 @@ CHAR3:              0923 DEFINED AT LINE 1403 IN Siena.asm
                     > USED AT LINE 1395 IN Siena.asm
 ENTER:              0927 DEFINED AT LINE 1408 IN Siena.asm
                     > USED AT LINE 370 IN Siena.asm
+                    > USED AT LINE 41
                     > USED AT LINE 41
 CALL_:              0927 DEFINED AT LINE 1409 IN Siena.asm
                     > USED AT LINE 456 IN Siena.asm
@@ -3214,6 +3260,7 @@ DSTACK:             1A00 DEFINED AT LINE 9 IN ram.asm
                     > USED AT LINE 320 IN Siena.asm
                     > USED AT LINE 1279 IN Siena.asm
                     > USED AT LINE 39
+                    > USED AT LINE 39
 STACK:              1A00 DEFINED AT LINE 10 IN ram.asm
                     > USED AT LINE 445 IN IOSerial.asm
 OPCODES:            1A00 DEFINED AT LINE 12 IN ram.asm
@@ -3276,5 +3323,7 @@ HEAP:               1C28 DEFINED AT LINE 73 IN ram.asm
                     > USED AT LINE 47 IN Siena.asm
 TESTSSTART:         4000 DEFINED AT LINE 16
                     > USED AT LINE 10
-EXPECTM_0_2189S43:  4077 DEFINED AT LINE 34
+EXPECTM_0_2190S43:  407B DEFINED AT LINE 34
+                    > USED AT LINE 10
+EXPECTM_0_2191S43:  40F9 DEFINED AT LINE 34
                     > USED AT LINE 10

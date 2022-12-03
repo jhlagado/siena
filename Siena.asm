@@ -107,7 +107,7 @@ iOpcodes:
     DB lsb(num_)                ;    8    
     DB lsb(num_)                ;    9    
     DB lsb(nop_)                ;    :    
-    DB lsb(nop_)                ;    ;
+    DB lsb(mark_)               ;    ;
     DB lsb(nop_)                ;    <
     DB lsb(nop_)                ;    =  
     DB lsb(nop_)                ;    >  
@@ -367,7 +367,7 @@ macro:
     jr z,macro1
     ld d,msb(macros)
     push de
-    call enter		            ; Siena call_ operation and jump to it
+    call exec		            ; Siena exec_ operation and jump to it
     .cstr "ca"
 macro1:
     ld bc,(vTIBPtr)
@@ -452,8 +452,6 @@ newAdd2_:
     jp newAdd2
 lambda_:    
     jp lambda
-go_:
-    jp call_
 lambdaEnd_:
     jp lambdaEnd
 dot_:  
@@ -469,6 +467,8 @@ blockend_:
     jp blockend
 char_:
     jp char
+mark_:
+    jp mark
 a_:
     jp a
 c_:
@@ -558,7 +558,7 @@ kall_:
     ld e,(hl)
     inc hl
     ld d,(hl)
-    jp call1
+    jp exec1
 
 hdot_:                          ; print hexadecimal
     pop hl
@@ -605,7 +605,7 @@ key_:
 mul_:    jp mul 
 
 nop_:  
-    jp next                     ; hardwire white space to always call_ to next (important for arrays)
+    jp next                     ; hardwire white space to always exec_ to next (important for arrays)
 
 
 over_:  
@@ -885,7 +885,7 @@ c:
     inc bc
     ld a,(bc)
     cp 'a'    
-    jp z, call_
+    jp z, exec_
     dec bc
     jp var_
 c1:
@@ -925,8 +925,6 @@ g:
     ld a,(bc)
     cp 'e'    
     jp z,get_
-    cp 'o'    
-    jp z,go_
     cp 't'    
     jp z,gt_
     dec bc
@@ -1405,23 +1403,22 @@ char3:
     ; dec bc
     jp next  
 
-enter:     
-call_:				                ; execute Siena lambda at pointer
-    pop de                      ; de = pointer to lambda
-call1:
-    ld a,d                      ; skip if destination address is null
-    or e
-    jr z,call3
-call2:
+exec:				            ; execute lambda at pointer
+    pop hl                      ; hl = pointer to lambda
+exec1:
+    ld a,h                      ; skip if destination address is null
+    or l
+    jr z,exec3
+exec2:
     push bc                     ; push IP 
     push iy                     ; push SCP (scope pointer)
     push iy                     ; push BP
     ld iy,0                     ; BP = SP
     add iy,sp
 
-    ld bc,de                    ; IP = pointer to lambda
+    ld bc,hl                    ; IP = pointer to lambda
     dec bc                      ; dec to prepare for next routine
-call3:
+exec3:
     jp next       
 
 lambda:              
@@ -1471,6 +1468,53 @@ lambdaEnd:
     pop bc                      ; bc = IP
     ld sp,hl                    ; sp = old BP
     ld iy,0                     ; iy = sp = old BP
+    add iy,sp
+    push de                     ; push result    
+    jp next    
+
+block:
+    inc bc
+    push bc                     ; return first opcode of block    
+    ld d,1                      ; nesting: count first parenthesis
+block1:                         ; Skip to end of definition    
+    ld a,(bc)                   ; Get the next character
+    inc bc                      ; Point to next character
+    cp "'"
+    jr z,block2
+    cp "("
+    jr z,block2
+    cp ")"
+    jr z,block2
+    cp "{"
+    jr z,block2
+    cp "}"                       
+    jr z,block2
+    cp "["
+    jr z,block2
+    cp "]"
+    jr z,block2
+    cp "`"
+    jr nz,block1
+block2:
+    inc d
+    bit 0,d                     ; balanced?
+    jr nz, block1               ; not balanced, get the next element
+    cp ")"                      ; Is it the end of the block? 
+    jr nz, block1               ; get the next element
+    dec bc
+    jp next  
+
+blockend:
+    pop hl                      ; hl = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    ld iy,0                     ; iy = sp
     add iy,sp
     push de                     ; push result    
     jp next    
@@ -1534,53 +1578,6 @@ in3:
     push hl                     ; push result    
     jp next    
     
-block:
-    inc bc
-    push bc                     ; return first opcode of block    
-    ld d,1                      ; nesting: count first parenthesis
-block1:                         ; Skip to end of definition    
-    ld a,(bc)                   ; Get the next character
-    inc bc                      ; Point to next character
-    cp "'"
-    jr z,block2
-    cp "("
-    jr z,block2
-    cp ")"
-    jr z,block2
-    cp "{"
-    jr z,block2
-    cp "}"                       
-    jr z,block2
-    cp "["
-    jr z,block2
-    cp "]"
-    jr z,block2
-    cp "`"
-    jr nz,block1
-block2:
-    inc d
-    bit 0,d                     ; balanced?
-    jr nz, block1               ; not balanced, get the next element
-    cp ")"                      ; Is it the end of the block? 
-    jr nz, block1               ; get the next element
-    dec bc
-    jp next  
-
-blockend:
-    pop hl                      ; hl = last result 
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
-    ld sp,hl                    ; sp = BP
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    ld iy,0                     ; iy = sp
-    add iy,sp
-    push de                     ; push result    
-    jp next    
-
 switch: 
     ld h,(iy-1)                 ; hl = selector
     ld l,(iy-2)
@@ -1675,25 +1672,12 @@ ife3:
     dec bc
     jp next    
 
-
-; if: 
-;     pop hl                      ; hl = then block
-;     pop de                      ; de = condition
-;     inc de                      ; check for true
-;     ld a,d
-;     or e
-;     jr z,if2
-;     jp next                     ; condition = false, continue
-; if2:                            ; condition = true, hl = then block
-;     push bc                     ; push IP
-;     ld e,(iy+2)                 ; get SCP from parent stack frame
-;     ld d,(iy+3)                 ; make this the old BP for this stack frame
-;     push de                     ; push SCP
-;     push iy                     ; push BP  
-;     ld iy,0                     ; iy = sp
-;     add iy,sp
-;     ld bc,hl                    ; IP = then
-;     dec bc
-;     jp next    
+mark:
+    push bc
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP  
+    
     
     
