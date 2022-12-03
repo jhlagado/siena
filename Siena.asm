@@ -885,7 +885,15 @@ c:
     inc bc
     ld a,(bc)
     cp 'a'    
-    jp z,case_
+    jp nz,c1
+    inc bc
+    ld a,(bc)
+    cp 'l'
+    jp z, xcall
+    cp 's'
+    jp z, case
+    jp var_
+c1:
     cp 'l'    
     jp z,closure_
     dec bc
@@ -1049,7 +1057,6 @@ x:
     dec bc
     jp var_
 
-case_:
 closure_:
 def_:
 filter_:
@@ -1424,6 +1431,7 @@ newAdd2:
     
     jp next    
 
+xcall:
 enter:     
 go:				                ; execute Siena lambda at pointer
     pop de                      ; de = pointer to lambda
@@ -1432,9 +1440,10 @@ go1:
     or e
     jr z,go3
 go2:
-    push bc                     ; save IP 
-    push iy                     ; push base pointer
-    ld iy,0                     ; base pointer = stack pointer
+    push bc                     ; push IP 
+    push iy                     ; push SCP (scope pointer)
+    push iy                     ; push BP
+    ld iy,0                     ; BP = SP
     add iy,sp
 
     ld bc,de                    ; IP = pointer to lambda
@@ -1485,31 +1494,32 @@ lambdaEnd:
     ex de,hl                    ; hl = BP, de = result
     ld sp,hl                    ; sp = BP
     pop hl                      ; hl = old BP
+    pop bc                      ; pop scope ptr (discard)
     pop bc                      ; bc = IP
     ld sp,hl                    ; sp = old BP
-    ld iy,0                     ; iy = sp
+    ld iy,0                     ; iy = sp = old BP
     add iy,sp
     push de                     ; push result    
     jp next    
 
 arg:
-    inc bc                  ; get next char
+    inc bc                      ; get next char
     ld a,(bc)
-    sub "1"                 ; treat as a digit, 1 based index
-    and $07                 ; mask 
-    add a,a                 ; double
-    ld l,a
+    sub "1"                     ; treat as a digit, 1 based index
+    and $07                     ; mask 
+    add a,a                     ; double
+    ld l,a                      ; hl = offset into args
     ld h,0
-    ld e,(iy+0)
-    ld d,(iy+1)
-    ex de,hl
+    ld e,(iy+2)                 ; de = SCP (scope ptr)
+    ld d,(iy+3)
+    ex de,hl                    ; hl = SCP - offset
     or a
     sbc hl,de
-    dec hl
-    ld d,(hl)
+    dec hl                      ; de = arg 
+    ld d,(hl)                   
     dec hl
     ld e,(hl)
-    push de
+    push de                     ; push arg
     jp next
                                 ; 
 exit:
@@ -1523,6 +1533,7 @@ exit:
     ld sp,hl                    ; sp = BP
     exx
     pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
     pop bc                      ; bc = IP
     ld sp,hl                    ; sp = old BP
     exx
@@ -1534,28 +1545,22 @@ exit:
 in:
     pop hl                      ; hl = string    
     pop de                      ; de = char
-    call contains
-    ld hl,0                     ; hl = result
-    jr z,in1
-    dec hl                      ; if nz de = $ffff
 in1:
-    push hl                     ; push result    
-    jp next    
-    
-; contains 
-; search string for char
-; e=char hl=str
-; set zero flag if string doesn't contain char
-contains:
     ld a,(hl)
     inc hl
     cp 0                        ; is end of string
-    ret z
+    jr z,in2
     cp e
-    jr nz,contains
+    jr nz,in1
     or a                        ; a is never 0, or a resets zero flag 
-    ret
-
+in2:
+    ld hl,0                     ; hl = result
+    jr z,in3
+    dec hl                      ; if nz de = $ffff
+in3:
+    push hl                     ; push result    
+    jp next    
+    
 block:
     inc bc
     push bc                     ; return first opcode of block    
@@ -1594,16 +1599,12 @@ blockend:
     ld e,iyl
     ex de,hl                    ; hl = BP, de = result
     ld sp,hl                    ; sp = BP
-    dec sp
-    dec sp
-    pop hl                      ; hl = stack frame's old BP
-    pop bc                      ; discard parent old BP
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
     pop bc                      ; bc = IP
     ld sp,hl                    ; sp = old BP
     ld iy,0                     ; iy = sp
     add iy,sp
-    dec sp                      ; preserve old BP if present
-    dec sp
     push de                     ; push result    
     jp next    
 
@@ -1617,18 +1618,39 @@ if:
     jp next                     ; condition = false, continue
 if2:                            ; condition = true, hl = then block
     push bc                     ; push IP
-    ld e,(iy+0)
-    ld d,(iy+1)                 ; get old BP from parent stack frame
-    push de                     ; make this the old BP for this stack frame
-    ld d,iyh                    ; so we can reference parent frame's args
-    ld e,iyl
-    ld iy,0                     ; base pointer = stack pointer
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP  
+    ld iy,0                     ; iy = sp
     add iy,sp
-    push de                     ; save this frame's old BP immediately 
-    ld bc,hl                    ; after parent old BP
+    ld bc,hl                    ; IP = then
     dec bc
     jp next    
     
-
-
-
+case: 
+    ld h,(iy-1)                 ; hl = selector
+    ld l,(iy-2)
+    inc hl                      ; index from second arg    
+    add hl,hl                   ; word offset
+    ld d,iyh
+    ld e,iyl
+    ex de,hl
+    or a
+    sbc hl,de
+    dec hl                      ; de = arg 
+    ld d,(hl)                   
+    dec hl
+    ld e,(hl)
+    ex de,hl                    ; hl = arg
+    push bc                     ; push IP
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP  
+    ld iy,0                     ; iy = sp
+    add iy,sp
+    ld bc,hl                    ; IP = arg
+    dec bc
+    jp next    
+    
