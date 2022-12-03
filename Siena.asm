@@ -1563,15 +1563,28 @@ block:
 block1:                         ; Skip to end of definition    
     ld a,(bc)                   ; Get the next character
     inc bc                      ; Point to next character
-    ld e,a
-    ld hl,nestingStr
-    call contains
-    jr z, block1
-    inc d
+    cp "'"
+    jr z,block2
+    cp "("
+    jr z,block2
     cp ")"
-    jr nz, block1
+    jr z,block2
+    cp "{"
+    jr z,block2
+    cp "}"                       
+    jr z,block2
+    cp "["
+    jr z,block2
+    cp "]"
+    jr z,block2
+    cp "`"
+    jr nz,block1
+block2:
+    inc d
     bit 0,d                     ; balanced?
     jr nz, block1               ; not balanced, get the next element
+    cp ")"                      ; Is it the end of the block? 
+    jr nz, block1               ; get the next element
     dec bc
     jp next  
 
@@ -1587,6 +1600,10 @@ blockend:
     pop bc                      ; discard parent old BP
     pop bc                      ; bc = IP
     ld sp,hl                    ; sp = old BP
+    ld iy,0                     ; iy = sp
+    add iy,sp
+    dec sp                      ; preserve old BP if present
+    dec sp
     push de                     ; push result    
     jp next    
 
@@ -1612,4 +1629,6 @@ if2:                            ; condition = true, hl = then block
     dec bc
     jp next    
     
+
+
 

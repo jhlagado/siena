@@ -1,32 +1,44 @@
 .macro expect,msg1,val1
-    POP HL
-    PUSH HL
-    LD DE,val1
-    OR A
-    SBC HL,DE
-    LD A,L
-    OR H
-    JR Z,expect%%M
 
-    CALL prtstr
-    .cstr msg1,"\r\nActual: "
-    CALL prtdec
+    pop HL
+    push HL
+    ld DE,val1
+    or A
+    sbc HL,DE
+    ld A,L
+    or H
+    jr Z,expect%%M
 
-    CALL prtstr
-    .cstr "\r\nExpected: "
-    LD HL,val1
-    CALL prtdec
+    call printStr
+    .cstr "Code: ",msg1
 
-    HALT
+    call printStr
+    .cstr "\r\n\r\nExpected: "
+    ld HL,val1
+    call prtdec
+
+    call printStr
+    .cstr "\r\n\r\nActual: "
+    pop hl
+    push hl
+    call prtdec
+    pop hl
+    call printStr
+    .cstr " (#"
+    call prthex
+    call printStr
+    .cstr ")\r\n"
+
+    halt
     .cstr
 expect%%M:
-    POP HL
+    pop HL
 .endm
 
 .macro test,code1,val1
-    LD SP,DSTACK
-    CALL init
-    CALL enter
+    ld SP,DSTACK
+    call init
+    call enter
     .cstr code1
     expect code1,val1
 .endm
