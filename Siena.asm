@@ -113,32 +113,32 @@ iOpcodes:
     DB lsb(nop_)                ;    >  
     DB lsb(nop_)                ;    ?    
     DB lsb(fetch_)              ;    @  
-    DB lsb(call_)               ;    A     
-    DB lsb(call_)               ;    B     
-    DB lsb(call_)               ;    C     
-    DB lsb(call_)               ;    D     
-    DB lsb(call_)               ;    E     
-    DB lsb(call_)               ;    F     
-    DB lsb(call_)               ;    G     
-    DB lsb(call_)               ;    h     
-    DB lsb(call_)               ;    I     
-    DB lsb(call_)               ;    J     
-    DB lsb(call_)               ;    K     
-    DB lsb(call_)               ;    L     
-    DB lsb(call_)               ;    M     
-    DB lsb(call_)               ;    N     
-    DB lsb(call_)               ;    O     
-    DB lsb(call_)               ;    p     
-    DB lsb(call_)               ;    Q     
-    DB lsb(call_)               ;    R     
-    DB lsb(call_)               ;    S     
-    DB lsb(call_)               ;    T     
-    DB lsb(call_)               ;    U     
-    DB lsb(call_)               ;    V     
-    DB lsb(call_)               ;    W     
-    DB lsb(call_)               ;    X     
-    DB lsb(call_)               ;    Y     
-    DB lsb(call_)               ;    Z    
+    DB lsb(kall_)               ;    A     
+    DB lsb(kall_)               ;    B     
+    DB lsb(kall_)               ;    C     
+    DB lsb(kall_)               ;    D     
+    DB lsb(kall_)               ;    E     
+    DB lsb(kall_)               ;    F     
+    DB lsb(kall_)               ;    G     
+    DB lsb(kall_)               ;    h     
+    DB lsb(kall_)               ;    I     
+    DB lsb(kall_)               ;    J     
+    DB lsb(kall_)               ;    K     
+    DB lsb(kall_)               ;    L     
+    DB lsb(kall_)               ;    M     
+    DB lsb(kall_)               ;    N     
+    DB lsb(kall_)               ;    O     
+    DB lsb(kall_)               ;    p     
+    DB lsb(kall_)               ;    Q     
+    DB lsb(kall_)               ;    R     
+    DB lsb(kall_)               ;    S     
+    DB lsb(kall_)               ;    T     
+    DB lsb(kall_)               ;    U     
+    DB lsb(kall_)               ;    V     
+    DB lsb(kall_)               ;    W     
+    DB lsb(kall_)               ;    X     
+    DB lsb(kall_)               ;    Y     
+    DB lsb(kall_)               ;    Z    
     DB lsb(nop_)                ;    [
     DB lsb(nop_)                ;    \
     DB lsb(nop_)                ;    ]
@@ -367,8 +367,8 @@ macro:
     jr z,macro1
     ld d,msb(macros)
     push de
-    call enter		            ; Siena go operation and jump to it
-    .cstr "go"
+    call enter		            ; Siena call_ operation and jump to it
+    .cstr "ca"
 macro1:
     ld bc,(vTIBPtr)
     jr interpret2
@@ -453,7 +453,7 @@ newAdd2_:
 lambda_:    
     jp lambda
 go_:
-    jp go
+    jp call_
 lambdaEnd_:
     jp lambdaEnd
 dot_:  
@@ -552,13 +552,13 @@ add_:                           ; add the top 2 members of the stack
     push hl        
     jp next    
         
-call_:
+kall_:
     ld a,(bc)
     call lookupRef1
     ld e,(hl)
     inc hl
     ld d,(hl)
-    jp go1
+    jp call1
 
 hdot_:                          ; print hexadecimal
     pop hl
@@ -605,7 +605,7 @@ key_:
 mul_:    jp mul 
 
 nop_:  
-    jp next                     ; hardwire white space to always go to next (important for arrays)
+    jp next                     ; hardwire white space to always call_ to next (important for arrays)
 
 
 over_:  
@@ -885,13 +885,8 @@ c:
     inc bc
     ld a,(bc)
     cp 'a'    
-    jp nz,c1
-    inc bc
-    ld a,(bc)
-    cp 'l'
-    jp z, xcall
-    cp 's'
-    jp z, case
+    jp z, call_
+    dec bc
     jp var_
 c1:
     cp 'l'    
@@ -906,10 +901,6 @@ d:
     jp z,def_
     cp 'i'    
     jp z,div_
-    cp 'r'    
-    jp z,drop_
-    cp 'u'    
-    jp z,dup_
     dec bc
     jp var_
 
@@ -944,13 +935,18 @@ g:
 i:
     inc bc
     ld a,(bc)
-    cp 'f'    
-    jp z,if
     cp 'n'    
-    jp nz,i1
+    jp z,in
     cp 'v'
     jp z,inv_
-    jp in
+    cp 'f'    
+    jp nz,i1
+    inc bc
+    ld a,(bc)
+    cp 'e'    
+    jp z,ife
+    dec bc
+    jp if
 i1:
     dec bc
     jp var_
@@ -1029,7 +1025,7 @@ s:
     cp 'u'    
     jp z,sub_
     cp 'w'    
-    jp z,swap_
+    jp z,switch
     dec bc
     jp var_
 
@@ -1409,37 +1405,14 @@ char3:
     ; dec bc
     jp next  
 
-newAdd2:
-    push bc                     ; push IP
-    
-    ld d,(iy-1)
-    ld e,(iy-2)
-    ld h,(iy-3)
-    ld l,(iy-4)
-    
-    push iy                     ; push base pointer
-    ld iy,0                     ; base pointer = stack pointer
-    add iy,sp
-    
-    add hl,de                   ; hl = hl + de   
-    ex de,hl                    ; de = result
-
-    pop hl                      ; hl = old BP
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    push de                     ; push result    
-    
-    jp next    
-
-xcall:
 enter:     
-go:				                ; execute Siena lambda at pointer
+call_:				                ; execute Siena lambda at pointer
     pop de                      ; de = pointer to lambda
-go1:
+call1:
     ld a,d                      ; skip if destination address is null
     or e
-    jr z,go3
-go2:
+    jr z,call3
+call2:
     push bc                     ; push IP 
     push iy                     ; push SCP (scope pointer)
     push iy                     ; push BP
@@ -1448,7 +1421,7 @@ go2:
 
     ld bc,de                    ; IP = pointer to lambda
     dec bc                      ; dec to prepare for next routine
-go3:
+call3:
     jp next       
 
 lambda:              
@@ -1608,29 +1581,10 @@ blockend:
     push de                     ; push result    
     jp next    
 
-if: 
-    pop hl                      ; hl = then block
-    pop de                      ; de = condition
-    inc de                      ; check for true
-    ld a,d
-    or e
-    jr z,if2
-    jp next                     ; condition = false, continue
-if2:                            ; condition = true, hl = then block
-    push bc                     ; push IP
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
-    push iy                     ; push BP  
-    ld iy,0                     ; iy = sp
-    add iy,sp
-    ld bc,hl                    ; IP = then
-    dec bc
-    jp next    
-    
-case: 
+switch: 
     ld h,(iy-1)                 ; hl = selector
     ld l,(iy-2)
+switch0:
     inc hl                      ; index from second arg    
     add hl,hl                   ; word offset
     ld d,iyh
@@ -1642,6 +1596,15 @@ case:
     ld d,(hl)                   
     dec hl
     ld e,(hl)
+    ld a,h                      ; is arg == 0 ?
+    or l
+    jr nz,switch1
+    ld d,iyh                    ; yes pop args
+    ld e,iyl
+    ex de,hl
+    ld sp,hl 
+    jp next                     
+switch1:
     ex de,hl                    ; hl = arg
     push bc                     ; push IP
     ld e,(iy+2)                 ; get SCP from parent stack frame
@@ -1653,4 +1616,84 @@ case:
     ld bc,hl                    ; IP = arg
     dec bc
     jp next    
+    
+newAdd2:
+    push bc                     ; push IP
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push base pointer
+    ld iy,(3+2)*2               ; base pointer = stack pointer - (stack frame vars) - 2 args
+    add iy,sp                   ;
+    
+    ld d,(iy-1)
+    ld e,(iy-2)
+    ld h,(iy-3)
+    ld l,(iy-4)
+
+    add hl,de                   ; hl = hl + de   
+    ex de,hl                    ; de = result
+
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    ld iy,0
+    add iy,sp
+    
+    push de                     ; push result    
+    jp next    
+
+    
+if:
+    ld de,0                      ; null pointer for else
+    jr ife1
+ife: 
+    pop de                      ; de = else
+ife1:
+    pop hl                      ; hl = then
+    ex (sp),hl                  ; hl = condition, (sp) = then
+    inc hl                      ; check for true
+    ld a,h
+    or l
+    pop hl                      ; hl = then
+    jr z,ife2                   
+    ex de,hl                    ; condition = false, hl = else  
+ife2:                           
+    ld a,h                      ; check if hl is null
+    or l
+    jr z,ife3
+    push bc                     ; push IP
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP  
+    ld iy,0                     ; iy = sp
+    add iy,sp
+    ld bc,hl                    ; IP = then
+ife3:
+    dec bc
+    jp next    
+
+
+; if: 
+;     pop hl                      ; hl = then block
+;     pop de                      ; de = condition
+;     inc de                      ; check for true
+;     ld a,d
+;     or e
+;     jr z,if2
+;     jp next                     ; condition = false, continue
+; if2:                            ; condition = true, hl = then block
+;     push bc                     ; push IP
+;     ld e,(iy+2)                 ; get SCP from parent stack frame
+;     ld d,(iy+3)                 ; make this the old BP for this stack frame
+;     push de                     ; push SCP
+;     push iy                     ; push BP  
+;     ld iy,0                     ; iy = sp
+;     add iy,sp
+;     ld bc,hl                    ; IP = then
+;     dec bc
+;     jp next    
+    
     
