@@ -1669,12 +1669,13 @@ case:
     or a                        ; arg ptr - stack pointer
     sbc hl,sp
     jr nc,case0
-    ld d,iyh                    ; yes pop stack frame
+    ld d,iyh                    ; yes pop stack frame, de = BP
     ld e,iyl
-    ex de,hl
-    ld sp,hl 
-    ld iy,0
-    add iy,sp
+    ex de,hl                    ; hl = BP
+    ld sp,hl                    ; sp = BP
+    pop iy                      ; iy = old BP
+    pop de                      ; pop SCP (discard)    
+    pop de                      ; bc = IP (discard)
     jp next                     
 case0:
     ex de,hl
