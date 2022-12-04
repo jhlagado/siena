@@ -107,7 +107,7 @@ iOpcodes:
     DB lsb(num_)                ;    8    
     DB lsb(num_)                ;    9    
     DB lsb(nop_)                ;    :    
-    DB lsb(mark_)               ;    ;
+    DB lsb(nop_)                ;    ;
     DB lsb(nop_)                ;    <
     DB lsb(nop_)                ;    =  
     DB lsb(nop_)                ;    >  
@@ -467,8 +467,8 @@ blockend_:
     jp blockend
 char_:
     jp char
-mark_:
-    jp mark
+; exec_:
+;     jp exec
 a_:
     jp a
 c_:
@@ -814,13 +814,13 @@ emit_:
     call putchar
     jp next
 
-exec_:
-    call exec1
-    jp next
-exec1:
-    pop hl
-    ex (sp),hl
-    jp (hl)
+; exec_:
+;     call exec1
+;     jp next
+; exec1:
+;     pop hl
+;     ex (sp),hl
+;     jp (hl)
 
 prompt_:
     call prompt
@@ -885,12 +885,7 @@ c:
     inc bc
     ld a,(bc)
     cp 'a'    
-    jp z, exec_
-    dec bc
-    jp var_
-c1:
-    cp 'l'    
-    jp z,closure_
+    jp z, case
     dec bc
     jp var_
     
@@ -907,6 +902,8 @@ d:
 e:
     inc bc
     ld a,(bc)
+    cp 'x'    
+    jp z, exec
     cp 'q'    
     jp z,eq_
     dec bc
@@ -1017,7 +1014,15 @@ s:
     cp 'c'    
     jp z,scan_
     cp 'e'    
+    ; jp nz,s1
+    ; inc bc
+    ; ld a,(bc)
+    ; cp 'l'    
+    ; jp z,select
+    ; cp 't'    
     jp z,set_
+    ; dec bc
+; s1:
     cp 'h'    
     jp z,shift_
     cp 'u'    
@@ -1578,42 +1583,6 @@ in3:
     push hl                     ; push result    
     jp next    
     
-switch: 
-    ld h,(iy-1)                 ; hl = selector
-    ld l,(iy-2)
-switch0:
-    inc hl                      ; index from second arg    
-    add hl,hl                   ; word offset
-    ld d,iyh
-    ld e,iyl
-    ex de,hl
-    or a
-    sbc hl,de
-    dec hl                      ; de = arg 
-    ld d,(hl)                   
-    dec hl
-    ld e,(hl)
-    ld a,h                      ; is arg == 0 ?
-    or l
-    jr nz,switch1
-    ld d,iyh                    ; yes pop args
-    ld e,iyl
-    ex de,hl
-    ld sp,hl 
-    jp next                     
-switch1:
-    ex de,hl                    ; hl = arg
-    push bc                     ; push IP
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
-    push iy                     ; push BP  
-    ld iy,0                     ; iy = sp
-    add iy,sp
-    ld bc,hl                    ; IP = arg
-    dec bc
-    jp next    
-    
 newAdd2:
     push bc                     ; push IP
     ld e,(iy+2)                 ; get SCP from parent stack frame
@@ -1672,12 +1641,47 @@ ife3:
     dec bc
     jp next    
 
-mark:
-    push bc
+switch:
+    pop hl                      ; get condition from stack
+    push bc                     ; create stack frame, push IP (replace later)
     ld e,(iy+2)                 ; get SCP from parent stack frame
     ld d,(iy+3)                 ; make this the old BP for this stack frame
     push de                     ; push SCP
     push iy                     ; push BP  
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    push hl                     ; push condition as first arg of new frame
+    jp next
     
+case:
+    ld h,(iy-1)                 ; hl = selector
+    ld l,(iy-2)
+    inc hl                      ; hl -= 1 index from second arg    
+    add hl,hl                   ; hl *= 2 word offset
+    ld d,iyh                    ; hl = BP, de = offset
+    ld e,iyl
+    ex de,hl
+    or a                        ; hl = BP - offset
+    sbc hl,de
+    dec hl                      ; de = arg 
+    ld d,(hl)                   
+    dec hl
+    ld e,(hl)
+    ld a,d                      ; is arg == null ?
+    or e
+    jr nz,case1
+    ld d,iyh                    ; yes pop stack frame
+    ld e,iyl
+    ex de,hl
+    ld sp,hl 
+    jp next                     
+case1:
+    ld (iy+4),c                 ; update return address in stack frame
+    ld (iy+5),b                  
+    ld bc,de                    ; IP = arg
+    dec bc
+    jp next    
     
+  
+  
     

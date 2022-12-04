@@ -38,7 +38,7 @@ expect%%M:
 .macro test,code1,val1
     ld SP,DSTACK
     call init
-    call enter
+    call exec
     .cstr code1
     expect code1,val1
 .endm
