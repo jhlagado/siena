@@ -15,6 +15,7 @@
     .org $4000
 testsStart:
 
+    test "5 1 sw (1) ca", 5
     test "0 sw (1) ca", 1
     test "1 sw (1) (2) (3) ca", 2
 
