@@ -1669,28 +1669,23 @@ case:
     or a                        ; arg ptr - stack pointer
     sbc hl,sp
     jr nc,case0
-    ld d,iyh                    ; yes pop stack frame, de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP
-    ld sp,hl                    ; sp = BP
-    pop iy                      ; iy = old BP
-    pop de                      ; pop SCP (discard)    
-    pop de                      ; bc = IP (discard)
-    jp next                     
+    pop de                      ; pop last arg
+    jr case1
 case0:
     ex de,hl
     dec hl                      ; de = arg 
     ld d,(hl)                   
     dec hl
     ld e,(hl)
+case1:
     ld a,d                      ; is arg == null ? then skip
     or e
-    jr nz,case1
-case1:
+    jr z,case2
     ld (iy+4),c                 ; update return address in stack frame
     ld (iy+5),b                  
     ld bc,de                    ; IP = arg
     dec bc
+case2:
     jp next    
     
   
