@@ -1663,18 +1663,28 @@ case:
     ex de,hl
     or a                        ; hl = BP - offset
     sbc hl,de
-    dec hl                      ; de = arg 
-    ld d,(hl)                   
+    ld de,hl                    ; save arg ptr
+    dec hl                      ; hl += 2
     dec hl
-    ld e,(hl)
-    ld a,d                      ; is arg == null ?
-    or e
-    jr nz,case1
+    or a                        ; arg ptr - stack pointer
+    sbc hl,sp
+    jr nc,case0
     ld d,iyh                    ; yes pop stack frame
     ld e,iyl
     ex de,hl
     ld sp,hl 
+    ld iy,0
+    add iy,sp
     jp next                     
+case0:
+    ex de,hl
+    dec hl                      ; de = arg 
+    ld d,(hl)                   
+    dec hl
+    ld e,(hl)
+    ld a,d                      ; is arg == null ? then skip
+    or e
+    jr nz,case1
 case1:
     ld (iy+4),c                 ; update return address in stack frame
     ld (iy+5),b                  
