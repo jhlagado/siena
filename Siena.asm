@@ -1628,7 +1628,7 @@ ife1:
 ife2:                           
     ld a,h                      ; check if hl is null
     or l
-    jr z,ife3
+    jp z,next
     push bc                     ; push IP
     ld e,(iy+2)                 ; get SCP from parent stack frame
     ld d,(iy+3)                 ; make this the old BP for this stack frame
@@ -1637,7 +1637,6 @@ ife2:
     ld iy,0                     ; iy = sp
     add iy,sp
     ld bc,hl                    ; IP = then
-ife3:
     dec bc
     jp next    
 
