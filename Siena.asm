@@ -37,8 +37,8 @@ macros:
 ; Initial values for user mintVars		
 ; ***********************************************************************		
 iAltVars:			            ; value copied into tables
-    DW dStack                   ; a vS0 start of datastack			
-    DW 0                        ; b  
+    DW 0                        ; a 			
+    DW 1                        ; b width in bytes of array operations (default 1 byte) 
     DW 0                        ; c vTIBPtr an offset to the tib
     DW 0                        ; d 
     DW 0                        ; e 
@@ -139,14 +139,14 @@ iOpcodes:
     DB lsb(kall_)               ;    X     
     DB lsb(kall_)               ;    Y     
     DB lsb(kall_)               ;    Z    
-    DB lsb(nop_)                ;    [
+    DB lsb(array_)              ;    [
     DB lsb(nop_)                ;    \
-    DB lsb(nop_)                ;    ]
+    DB lsb(arrayEnd_)           ;    ]
     DB lsb(nop_)                ;    ^
     DB lsb(nop_)                ;    _
     DB lsb(char_)               ;    `    	    
     DB lsb(a_)                  ;    a     
-    DB lsb(var_)                ;    b  
+    DB lsb(b_)                  ;    b  
     DB lsb(c_)                  ;    c  
     DB lsb(d_)                  ;    d  
     DB lsb(e_)                  ;    e  
@@ -881,6 +881,14 @@ a:
     dec bc
     jp var_
     
+b:
+    inc bc
+    ld a,(bc)
+    cp 'y'    
+    jp z,bytes_
+    dec bc
+    jp var_
+
 c:    
     inc bc
     ld a,(bc)
@@ -1045,6 +1053,8 @@ w:
     ld a,(bc)
     cp 'h'    
     jp z,while_
+    cp 'o'    
+    jp z,words_
     dec bc
     jp var_
 
@@ -1687,6 +1697,123 @@ case1:
 case2:
     jp next    
     
-  
-  
+words:
+    ld hl,2
+    jp bytes
+    
+bytes:
+    ld hl,1
+bytes1:
+    ld (vDataWidth),dl
+    jp next
+    
+array:
+    push bc                     ; create stack frame, push IP
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP  
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    jp next
+
+arrayEnd:
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ld hl,de                    ; hl = de
+    or a 
+    sbc hl,sp                   ; hl = array count (items on stack)
+    push bc                     ; bc' = IP
+    exx
+    pop bc                       
+    exx
+    ld bc,hl                    ; bc = count
+    ld hl,(vHeapPtr)            ; hl = heap ptr
+    ld (hl),c                   ; write count before array data
+    inc hl
+    ld (hl),b
+    inc hl
+    push hl                     ; hl = ptr to array (index 0)
+    exx
+    pop hl                      ; hl' = ptr to array (index 0)
+    exx
+    ld a,(vDataWidth)
+    cp 1                        ; byte?
+    jr nz, arrayEnd2
+    ex de,hl
+
+arrayEnd1:
+    dec de
+    dec de
+    ld a,(de)
+    ld (hl),a
+    inc hl
+    dec bc
+    ld a,c
+    or b
+    jr nz,arrayEnd1
+    jr arrayEnd4
+
+arrayEnd2:
+    dec de
+    ld a,(de)
+    ex af,af'
+    dec de
+    ld a,(de)
+    ld (hl),a
+    inc hl
+    ex af,af'
+    ld a,(de)
+    ld (hl),a
+    inc hl
+    dec bc
+    ld a,c
+    or b
+    jr nz,arrayEnd2
+    
+arrayEnd4:
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    ld iy,0                     ; iy = sp
+    add iy,sp
+    exx
+    push hl
+    push bc
+    exx
+    pop bc
+    jp next
+
+
+
+
+
+
+
+arrayEnd3:                      ; word
+    add hl,hl
+    add hl,de
+    pop de
+    cp 2
+    ld (hl),d
+    dec hl
+    ld (hl),e
+    dec hl
+    dec bc
+    ex af,af'
+    ld a,c
+    or b
+    jr nz
+    
+    
+    
+    add hl,sp
+    pop 
+    cp 2
+    jr nz, 
     

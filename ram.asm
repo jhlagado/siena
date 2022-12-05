@@ -37,8 +37,8 @@ PUTCVEC:    DS 2                ;
             DS 26*2
 altVars:
 
-vS0:        DS 2                ; a
-            DS 2                ; b
+            DS 2                ; a
+vDataWidth: DS 2                ; b
 vTIBPtr:    DS 2                ; c
             DS 2                ; d
 vLastDef:   DS 2                ; e
