@@ -146,7 +146,7 @@ iOpcodes:
     DB lsb(nop_)                ;    _
     DB lsb(char_)               ;    `    	    
     DB lsb(a_)                  ;    a     
-    DB lsb(b_)                  ;    b  
+    DB lsb(var_)                ;    b  
     DB lsb(c_)                  ;    c  
     DB lsb(d_)                  ;    d  
     DB lsb(e_)                  ;    e  
@@ -467,8 +467,10 @@ blockend_:
     jp blockend
 char_:
     jp char
-; exec_:
-;     jp exec
+array_:
+    jp array
+arrayEnd_:
+    jp arrayEnd
 a_:
     jp a
 c_:
@@ -885,7 +887,7 @@ b:
     inc bc
     ld a,(bc)
     cp 'y'    
-    jp z,bytes_
+    jp z,bytes
     dec bc
     jp var_
 
@@ -1054,7 +1056,7 @@ w:
     cp 'h'    
     jp z,while_
     cp 'o'    
-    jp z,words_
+    jp z,words
     dec bc
     jp var_
 
@@ -1704,7 +1706,7 @@ words:
 bytes:
     ld hl,1
 bytes1:
-    ld (vDataWidth),dl
+    ld (vDataWidth),hl
     jp next
     
 array:
@@ -1790,30 +1792,22 @@ arrayEnd4:
     jp next
 
 
-
-
-
-
-
-arrayEnd3:                      ; word
-    add hl,hl
-    add hl,de
-    pop de
-    cp 2
-    ld (hl),d
-    dec hl
-    ld (hl),e
-    dec hl
-    dec bc
-    ex af,af'
-    ld a,c
-    or b
-    jr nz
-    
-    
-    
-    add hl,sp
-    pop 
-    cp 2
-    jr nz, 
+; arrayEnd3:                      ; word
+;     add hl,hl
+;     add hl,de
+;     pop de
+;     cp 2
+;     ld (hl),d
+;     dec hl
+;     ld (hl),e
+;     dec hl
+;     dec bc
+;     ex af,af'
+;     ld a,c
+;     or b
+;     jr nz
+    ; add hl,sp
+    ; pop 
+    ; cp 2
+    ; jr nz, 
     
