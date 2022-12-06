@@ -11,7 +11,9 @@
     
     .include "Siena.asm"
     .include "ram.asm"
-    
+
+base:   .set 37
+
     .org $4000
 testsStart:
 

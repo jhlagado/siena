@@ -1791,23 +1791,13 @@ arrayEnd4:
     pop bc
     jp next
 
+updateEntry:
+    ld bc, 
+    pop hl                          ; pointer to args
+    ld e,(hl) 
+    ret
 
-; arrayEnd3:                      ; word
-;     add hl,hl
-;     add hl,de
-;     pop de
-;     cp 2
-;     ld (hl),d
-;     dec hl
-;     ld (hl),e
-;     dec hl
-;     dec bc
-;     ex af,af'
-;     ld a,c
-;     or b
-;     jr nz
-    ; add hl,sp
-    ; pop 
-    ; cp 2
-    ; jr nz, 
-    
+call updateEntry
+db 0
+dw newAdd2
+.pstr "add"
