@@ -152,7 +152,7 @@ iOpcodes:
     DB lsb(e_)                  ;    e  
     DB lsb(f_)                  ;    f  
     DB lsb(g_)                  ;    g  
-    DB lsb(var_)                ;    h  
+    DB lsb(h_)                  ;    h  
     DB lsb(i_)                  ;    i  
     DB lsb(var_)                ;    j  
     DB lsb(k_)                  ;    k  
@@ -483,6 +483,8 @@ f_:
     jp f
 g_:
     jp g
+h_:
+    jp h
 i_:
     jp i
 k_:
@@ -934,6 +936,14 @@ g:
     jp z,get_
     cp 't'    
     jp z,gt_
+    dec bc
+    jp var_
+
+h:
+    inc bc
+    ld a,(bc)
+    cp 'a'    
+    jp z,hash
     dec bc
     jp var_
 
@@ -1791,13 +1801,74 @@ arrayEnd4:
     pop bc
     jp next
 
-updateEntry:
-    ld bc, 
-    pop hl                          ; pointer to args
-    ld e,(hl) 
+; updateEntry:
+;     ld bc, 
+;     pop hl                          ; pointer to args
+;     ld e,(hl) 
+;     ret
+
+.align $100
+pearsonTable:
+    db 46, 7, 26, 16, 20, 32, 38, 42, 40, 55, 56, 4, 0, 1, 5, 41, 27, 51, 2, 48, 59 
+    db 3, 9, 49, 19, 39, 29, 45, 13, 10, 33, 8, 34, 63, 12, 52, 18, 23, 24, 14, 61 
+    db 31, 50, 30, 36, 15, 44, 60, 47, 25, 28, 43, 21, 53, 6, 37, 54, 17, 62, 35, 57 
+    db 22, 11, 58
+
+; hash C-string in HL, result in HL 
+hashStr:
+    ld bc,0                             
+hashStr1:    
+    ld a,(hl)                           ; load next char
+    inc hl
+    or a                                 
+    jr z,hashStr5                       ; if null exit
+    cp ("z" + 1)
+    jr nc, hashStr5                     ; is it > "z"? exit (invalid) 
+    cp "a"
+    jr c,hashStr2
+    sub ("a" - 36)
+    jr hashStr4
+hashStr2:
+    cp ("Z" + 1)
+    jr nc, hashStr5
+    cp "A"
+    jr c, hashStr3
+    sub ("A" - 10)
+    jr hashStr4
+hashStr3:    
+    cp ("9" + 1)
+    jr nc, hashStr5
+    sub "0"
+    jr c, hashStr5
+hashStr4:
+    ld d,a                              ; d = a
+    inc a                               
+    and $3f                             
+    ex af,af'
+    ld a,d                              ; a = code a = code + 1                        
+    xor b
+    ex de,hl                            
+    ld h,msb(pearsonTable)              
+    ld l,a                              ; look up A in pearson table
+    ld b,(hl)                           ; b = result
+    ex af,af'                           ; a = code
+    xor c
+    ld l,a                              ; look up A in pearson table
+    ld c,(hl)                           ; c = result
+    ex de,hl
+    jr hashStr1
+hashStr5:
+    ld hl,bc                            ; hl = hash
     ret
 
-call updateEntry
-db 0
-dw newAdd2
-.pstr "add"
+; offset str -- number
+hash:
+    pop hl                              ; hl = str pointer
+    push bc
+    call hashStr
+    pop bc                              ; hl = old bc, (sp) = result
+    push hl
+    jp next
+    
+    
+    
