@@ -19,7 +19,8 @@
     TRUE    EQU -1		        ; C-style true
     FALSE   EQU 0
     EMPTY   EQU 0		        ; 
-
+    UNUSED  EQU $ff
+    
     DATASIZE    EQU 26*2*2	    ; a..z, a..z words
 
 ; **************************************************************************
@@ -304,9 +305,6 @@ iOpcodes:
     DB lsb(aNop_)        
     DB lsb(aNop_)    
     DB lsb(aNop_)    
-
-nestingStr:
-    .cstr $22,"'()[]{}`"
 
 etx:        
     ld hl,-DSTACK
@@ -905,7 +903,7 @@ d:
     inc bc
     ld a,(bc)
     cp 'e'    
-    jp z,def_
+    jp z,def
     cp 'i'    
     jp z,div_
     dec bc
@@ -942,8 +940,6 @@ g:
 h:
     inc bc
     ld a,(bc)
-    cp 'a'    
-    jp z,hash
     dec bc
     jp var_
 
@@ -980,6 +976,8 @@ l:
     ld a,(bc)
     cp 'e'    
     jp z,let_
+    cp 'o'    
+    jp z,lookup
     cp 't'    
     jp z,lt_
     dec bc
@@ -1079,7 +1077,6 @@ x:
     jp var_
 
 closure_:
-def_:
 filter_:
 get_:
 if_:
@@ -1165,6 +1162,31 @@ crlf:
 ;*******************************************************************
 ;*******************************************************************
 
+init:       
+    ld iy,DSTACK
+    ld ix,RSTACK
+    ld hl,ialtVars
+    ld de,altVars
+    ld bc,8 * 2
+    ldir
+    
+    ld hl,data                  ; init namespaces to 0 using ldir
+    ld de,hl
+    inc de
+    ld (hl),0
+    ld bc,DATASIZE
+    ldir
+
+    ld a,UNUSED
+    ld b,0
+    ld hl, hashSlots
+init1:
+    ld (hl),a
+    djnz init1 
+    ld a,0
+    ld (hashWordsPtr),a
+    ret
+    
 num:
 	ld hl,$0000				    ; Clear hl to accept the number
 	ld a,(bc)				    ; Get numeral or -
@@ -1300,22 +1322,6 @@ prthex3:
 	daa
 	jp putchar
 
-init:       
-    ld iy,DSTACK
-    ld ix,RSTACK
-    ld hl,ialtVars
-    ld de,altVars
-    ld bc,8 * 2
-    ldir
-    
-    ld hl,data                  ; init namespaces to 0 using ldir
-    ld de,hl
-    inc de
-    ld (hl),0
-    ld bc,DATASIZE
-    ldir
-    ret
-    
 printStr:        
     ex (sp),hl		            ; swap			
     call putStr		
@@ -1822,53 +1828,104 @@ hashStr1:
     inc hl
     or a                                 
     jr z,hashStr5                       ; if null exit
-    cp ("z" + 1)
-    jr nc, hashStr5                     ; is it > "z"? exit (invalid) 
-    cp "a"
+    cp "a"                              ; compress into the rang 0-63
     jr c,hashStr2
     sub ("a" - 36)
     jr hashStr4
 hashStr2:
-    cp ("Z" + 1)
-    jr nc, hashStr5
     cp "A"
     jr c, hashStr3
     sub ("A" - 10)
     jr hashStr4
 hashStr3:    
-    cp ("9" + 1)
-    jr nc, hashStr5
     sub "0"
-    jr c, hashStr5
 hashStr4:
-    ld d,a                              ; d = a
-    inc a                               
-    and $3f                             
+    and $3f                             ; modulus 64
+    ld d,msb(pearsonTable)              ; hl = offset into pearson table
+    ld e,a                              ; copy A to A' 
     ex af,af'
-    ld a,d                              ; a = code a = code + 1                        
-    xor b
-    ex de,hl                            
-    ld h,msb(pearsonTable)              
-    ld l,a                              ; look up A in pearson table
-    ld b,(hl)                           ; b = result
-    ex af,af'                           ; a = code
+    ld a,e                               
+    
+    xor b                                
+    ld e,a                              ; look up A in pearson table
+    ld a,(de)                           ; b = result
+    ld b,a
+
+    ex af,af'                           ; restore a
+    inc a                               ; add 1, modulus 64
+    and $3f                             
     xor c
-    ld l,a                              ; look up A in pearson table
-    ld c,(hl)                           ; c = result
-    ex de,hl
+    ld e,a                              ; look up A in pearson table
+    ld a,(de)                           ; c = result
+    ld c,a
+
     jr hashStr1
 hashStr5:
     ld hl,bc                            ; hl = hash
     ret
 
-; offset str -- number
-hash:
+; add entry to hash slots and hash pointers
+; bc = hash, de = addr
+; sets carry if successful
+addEntry: 
+    ld a,c                              ; b = hi, c = lo, a = lo
+    sla a                               ; a = lo * 3
+    add c
+    ld l,a                              ; l = a 
+    ld h,msb(hashSlots)                 ; hl = slots[lo*3]
+    ld a,(hl)                           ; a = (hl), slot
+    cp UNUSED                           ; is it unused?
+    jr nz,addEntry1
+    inc l
+    jr addEntry2
+addEntry1:
+    cp c                                ; no, compare a with hi
+    jr nz,addEntry1a                    ; collision, exit 
+    inc l                               
+    ld a,(hl)
+    cp b
+    jr z,addEntry3                      ; collision, exit
+    dec l                               ; point to start of slot
+    jr addEntry2
+addEntry1a:
+    inc l                               ; skip to next slot, modulus 256
+    inc l                               
+    inc l                               
+    inc l                               
+    jr addEntry1
+addEntry2:                              ; new entry
+    ld (hl),c                           ; (slot + 0) = hash lo
+    inc hl
+    ld (hl),b                           ; (slot + 1) = hash hi
+    inc hl
+    ld (hl),e                           ; (slot + 2) = address
+    inc hl
+    ld (hl),d
+    scf
+    ret
+addEntry3:
+    ccf
+    ret
+
+; str addr -- bool
+def:
+    pop de                              ; de = address
     pop hl                              ; hl = str pointer
     push bc
-    call hashStr
-    pop bc                              ; hl = old bc, (sp) = result
+    push de
+    call hashStr                        ; hl = hash
+    ld bc,hl                            ; bc = hash
+    pop de                              ; de = addr
+    call addEntry
+    ld hl,0                             ; if c return TRUE
+    jr nc,def1
+    dec hl
+def1:
+    pop bc
     push hl
     jp next
     
-    
+; str -- addr
+lookup:
+    jp next
     
