@@ -83,6 +83,15 @@ const getChar = (code: number) => {
 //     console.log(i, getChar(i), pearson[i]);
 // }
 
+const hash = (s: string) => {
+    let hash = 0;
+    for (var c of s) {
+        let code = c.charCodeAt(0);
+        hash = (hash << 5 + hash) ^ code;
+    }
+    return hash;
+}
+
 const hash2 = (pearson: number[], s: string, offset: number) => {
     let hash = 0;
     for (var c of s) {
@@ -119,6 +128,19 @@ const addEntry2 = (pearson: number[], key: string) => {
     table[lo1] = [key, lo, lo1];
     avgMissSize = Math.floor(totalMissedBy / wordCount)
     return lo1;
+}
+
+
+const lookupEntry = (s: string, prime: number) => {
+    let hi = hash2(pearson, s, 1);
+    const lo = (hash2(pearson, s, 0)) * 2;
+    if (buckets[lo] === unused) return unused;
+    let lo1 = lo;
+    while (buckets[lo1] !== hi) {
+        lo1 = (lo1 + 1) % 0xff;
+        if (lo === lo1) return unused;
+    }
+    return table[lo];
 }
 
 const tableInit2 = (pearson: number[], wordList: string[]) => {

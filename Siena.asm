@@ -1868,36 +1868,31 @@ hashStr5:
 ; bc = hash, de = addr
 ; sets carry if successful
 addEntry: 
-    ld a,c                              ; b = hi, c = lo, a = lo
-    sla a                               ; a = lo * 3
-    add c
-    ld l,a                              ; l = a 
-    ld h,msb(hashSlots)                 ; hl = slots[lo*3]
+    ld l,b                              ; b = hi, c = lo, a = hi
+    sla l                               ; l = lo * 4, maps 0-63 to 0-127 * words
+    sla l                               ; 
+    ld h,msb(hashSlots)                 ; hl = slots[lo*4]
+addEntry0:
     ld a,(hl)                           ; a = (hl), slot
     cp UNUSED                           ; is it unused?
-    jr nz,addEntry1
-    inc l
-    jr addEntry2
-addEntry1:
-    cp c                                ; no, compare a with hi
-    jr nz,addEntry1a                    ; collision, exit 
+    jr z,addEntry2
+    cp c                                ; no, compare a with lo
+    jr nz,addEntry1                    ; same lo, check hi 
     inc l                               
     ld a,(hl)
-    cp b
-    jr z,addEntry3                      ; collision, exit
-    dec l                               ; point to start of slot
-    jr addEntry2
-addEntry1a:
+    cp b                                ; compare with hi
+    jr z,addEntry3                      ; same hi, collision, exit
+    dec l
+addEntry1:
     inc l                               ; skip to next slot, modulus 256
-    inc l                               
-    inc l                               
-    inc l                               
-    jr addEntry1
+    inc l
+    jr addEntry0
 addEntry2:                              ; new entry
     ld (hl),c                           ; (slot + 0) = hash lo
     inc hl
     ld (hl),b                           ; (slot + 1) = hash hi
-    inc hl
+    dec hl
+    ld h,msb(hashWords)                 ; hl = slots[lo*4]
     ld (hl),e                           ; (slot + 2) = address
     inc hl
     ld (hl),d

@@ -76,6 +76,5 @@ hashSlots:      ds $100
 
             .align $100
 hashWords:      ds $100
-hashWordsPtr:   db 0
 
 HEAP:         
