@@ -1826,16 +1826,18 @@ hashStr2:
     ld h,0
     ld l,a 
     add de,hl
-    ld de,hl                            ; hl *= 224
+    ld de,hl                            ; hl *= 193 (11000001)
     add hl,hl                           ; shift left
     add hl,de                           ; add
     add hl,hl                           ; shift left
+
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
     add hl,de                           ; add
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
     jr hashStr1
 hashStr5:
     ld hl,bc                            ; hl = hash
@@ -1844,31 +1846,31 @@ hashStr5:
 ; add entry to hash slots and hash pointers
 ; bc = hash (b = hi, c = lo), de = addr
 ; sets carry if successful
-addEntry:               
+defineEntry:               
     sla c                               ; lo = lo * 2
     sla c                                
     ld l,c                              ; lo1 = lo
     ld h,msb(hashSlots)                 ; hl = slots[lo*4]
-addEntry0:
+defineEntry0:
     ld a,(hl)                           ; a = (lo1)
     cp UNUSED                           ; is it unused?
-    jr addEntry2                        ; yes terminate loop
+    jr defineEntry2                        ; yes terminate loop
     ld a,c                              ; a = lo
     cp (hl)                             ; compare (lo1) with lo
-    jr nz,addEntry1                     ; no match loop around
+    jr nz,defineEntry1                     ; no match loop around
     inc l 
     ld a,b                              ; a = hi
     cp (hl)                             ; compare (lo1+1) with hi
-    jr nz,addEntry3                     ; identical hash, collision, exit
+    jr nz,defineEntry3                     ; identical hash, collision, exit
     dec l                               ; restore l
-addEntry1:
+defineEntry1:
     inc l                               ; try next entry
     inc l 
     ld a,c                              ; compare lo and lo1
     cp l 
-    jr z,addEntry3                      ; if equal then there's no space left, reject 
-    jr addEntry0
-addEntry2:                              ; new entry
+    jr z,defineEntry3                      ; if equal then there's no space left, reject 
+    jr defineEntry0
+defineEntry2:                              ; new entry
     ld (hl),c                           ; (lo1) = hash lo
     inc hl
     ld (hl),b                           ; (lo1 + 1) = hash hi
@@ -1879,7 +1881,7 @@ addEntry2:                              ; new entry
     ld (hl),d
     scf                                 ; set carry flag, success
     ret
-addEntry3:
+defineEntry3:
     ccf                                 ; clear carry flag, failure
     ret
 
@@ -1894,7 +1896,7 @@ lookupEntry:
 lookupEntry0:
     ld a,(hl)                           ; a = (hl), slot
     cp UNUSED                           ; is it unused?
-    jr addEntry3                        ; yes, does not exist
+    jr defineEntry3                        ; yes, does not exist
     ld a,c                              ; a = lo
     cp (hl)                             ; compare (lo1) with lo
     jr nz,lookupEntry1                 ; no match loop around
@@ -1909,9 +1911,13 @@ lookupEntry1a:
     inc l 
     ld a,c 
     cp l 
-    jr z,addEntry3                      ; no space left, reject 
+    jr z,defineEntry3                      ; no space left, reject 
     jr lookupEntry0
 lookupEntry2:
+    ld h,msb(hashWords)                 ; hl = slots[lo*4]
+    ld e,(hl)                           ; (slot + 2) = address
+    inc hl
+    ld d,(hl)
     scf
     ret
 lookupEntry3:
@@ -1927,7 +1933,7 @@ def:
     call hashStr                        ; hl = hash
     ld bc,hl                            ; bc = hash
     pop de                              ; de = addr
-    call addEntry
+    call defineEntry
     ld hl,0                             ; if c return TRUE
     jr nc,def1
     dec hl

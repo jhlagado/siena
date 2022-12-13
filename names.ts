@@ -34,7 +34,7 @@ const hash = (s: string, factor: number) => {
     return Math.floor(h);
 }
 
-const addEntry = (s: string, factor: number) => {
+const defineEntry = (s: string, factor: number) => {
     const h = hash(s, factor);
     const hi = msb(h);
     const lo = lsb(h) * 2;
@@ -86,7 +86,7 @@ const lookupEntry = (s: string, factor: number) => {
 
 const tableInit2 = (wordList: string[], factor: number) => {
     for (const w of wordList) {
-        const index = addEntry(w, factor);
+        const index = defineEntry(w, factor);
         if (index === unused) break;
         const index1 = lookupEntry(w, factor);
         if (index !== index1) {
@@ -134,5 +134,6 @@ wl.forEach((n, i) => { if (n / 10 > 120) console.log(i, n / 10, i.toString(2))})
 console.log(65, wl[65] / 10);
 console.log(72, wl[72] / 10);
 console.log(149, wl[49] / 10);
+console.log(193, wl[193] / 10);
 console.log(224, wl[224] / 10);
 
