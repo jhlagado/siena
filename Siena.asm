@@ -1813,93 +1813,109 @@ arrayEnd4:
 ;     ld e,(hl) 
 ;     ret
 
-.align $100
-pearsonTable:
-    db 46, 7, 26, 16, 20, 32, 38, 42, 40, 55, 56, 4, 0, 1, 5, 41, 27, 51, 2, 48, 59 
-    db 3, 9, 49, 19, 39, 29, 45, 13, 10, 33, 8, 34, 63, 12, 52, 18, 23, 24, 14, 61 
-    db 31, 50, 30, 36, 15, 44, 60, 47, 25, 28, 43, 21, 53, 6, 37, 54, 17, 62, 35, 57 
-    db 22, 11, 58
-
-; hash C-string in HL, result in HL 
+; hash C-string in BC, result in HL 
 hashStr:
-    ld bc,0                             
+    ld hl,0                             
 hashStr1:    
-    ld a,(hl)                           ; load next char
-    inc hl
-    or a                                 
-    jr z,hashStr5                       ; if null exit
-    cp "a"                              ; compress into the rang 0-63
-    jr c,hashStr2
-    sub ("a" - 36)
-    jr hashStr4
+    ld a,(bc)                           ; load next char
+    inc bc
+    cp 0                                ; null?
+    jr c,hashStr5                     
 hashStr2:
-    cp "A"
-    jr c, hashStr3
-    sub ("A" - 10)
-    jr hashStr4
-hashStr3:    
-    sub "0"
-hashStr4:
-    and $3f                             ; modulus 64
-    ld d,msb(pearsonTable)              ; hl = offset into pearson table
-    ld e,a                              ; copy A to A' 
-    ex af,af'
-    ld a,e                               
-    
-    xor b                                
-    ld e,a                              ; look up A in pearson table
-    ld a,(de)                           ; b = result
-    ld b,a
-
-    ex af,af'                           ; restore a
-    inc a                               ; add 1, modulus 64
-    and $3f                             
-    xor c
-    ld e,a                              ; look up A in pearson table
-    ld a,(de)                           ; c = result
-    ld c,a
-
+    ex de,hl                            ; hl += a
+    ld h,0
+    ld l,a 
+    add de,hl
+    ld de,hl                            ; hl *= 224
+    add hl,hl                           ; shift left
+    add hl,de                           ; add
+    add hl,hl                           ; shift left
+    add hl,de                           ; add
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
     jr hashStr1
 hashStr5:
     ld hl,bc                            ; hl = hash
     ret
 
 ; add entry to hash slots and hash pointers
-; bc = hash, de = addr
+; bc = hash (b = hi, c = lo), de = addr
 ; sets carry if successful
-addEntry: 
-    ld l,b                              ; b = hi, c = lo, a = hi
-    sla l                               ; l = lo * 4, maps 0-63 to 0-127 * words
-    sla l                               ; 
+addEntry:               
+    sla c                               ; lo = lo * 2
+    sla c                                
+    ld l,c                              ; lo1 = lo
     ld h,msb(hashSlots)                 ; hl = slots[lo*4]
 addEntry0:
-    ld a,(hl)                           ; a = (hl), slot
+    ld a,(hl)                           ; a = (lo1)
     cp UNUSED                           ; is it unused?
-    jr z,addEntry2
-    cp c                                ; no, compare a with lo
-    jr nz,addEntry1                    ; same lo, check hi 
-    inc l                               
-    ld a,(hl)
-    cp b                                ; compare with hi
-    jr z,addEntry3                      ; same hi, collision, exit
-    dec l
+    jr addEntry2                        ; yes terminate loop
+    ld a,c                              ; a = lo
+    cp (hl)                             ; compare (lo1) with lo
+    jr nz,addEntry1                     ; no match loop around
+    inc l 
+    ld a,b                              ; a = hi
+    cp (hl)                             ; compare (lo1+1) with hi
+    jr nz,addEntry3                     ; identical hash, collision, exit
+    dec l                               ; restore l
 addEntry1:
-    inc l                               ; skip to next slot, modulus 256
-    inc l
+    inc l                               ; try next entry
+    inc l 
+    ld a,c                              ; compare lo and lo1
+    cp l 
+    jr z,addEntry3                      ; if equal then there's no space left, reject 
     jr addEntry0
 addEntry2:                              ; new entry
-    ld (hl),c                           ; (slot + 0) = hash lo
+    ld (hl),c                           ; (lo1) = hash lo
     inc hl
-    ld (hl),b                           ; (slot + 1) = hash hi
+    ld (hl),b                           ; (lo1 + 1) = hash hi
     dec hl
     ld h,msb(hashWords)                 ; hl = slots[lo*4]
     ld (hl),e                           ; (slot + 2) = address
     inc hl
     ld (hl),d
-    scf
+    scf                                 ; set carry flag, success
     ret
 addEntry3:
-    ccf
+    ccf                                 ; clear carry flag, failure
+    ret
+
+; looks up hash and returns address
+; bc = hash
+; returns addr in hl, sets carry if successful
+lookupEntry:
+    sla c                               ; lo = lo * 2
+    sla c                                
+    ld l,c                              ; lo1 = lo
+    ld h,msb(hashSlots)                 ; hl = slots[lo*4]
+lookupEntry0:
+    ld a,(hl)                           ; a = (hl), slot
+    cp UNUSED                           ; is it unused?
+    jr addEntry3                        ; yes, does not exist
+    ld a,c                              ; a = lo
+    cp (hl)                             ; compare (lo1) with lo
+    jr nz,lookupEntry1                 ; no match loop around
+    inc l 
+    ld a,b                              ; a = hi
+    cp (hl)                             ; compare (lo1+1) with hi
+    jr nz,lookupEntry1a                 ; identical hash, collision, exit
+    dec l                               ; restore l
+lookupEntry1:
+    inc l 
+lookupEntry1a:
+    inc l 
+    ld a,c 
+    cp l 
+    jr z,addEntry3                      ; no space left, reject 
+    jr lookupEntry0
+lookupEntry2:
+    scf
+    ret
+lookupEntry3:
+    ccf                                 ; clear carry flag, failure
     ret
 
 ; str addr -- bool
@@ -1922,5 +1938,15 @@ def1:
     
 ; str -- addr
 lookup:
+    pop hl                              ; hl = str pointer
+    push bc
+    call hashStr                        ; hl = hash
+    ld bc,hl
+    call lookupEntry
+    jr c, lookup1
+    ld hl,0
+lookup1:    
+    pop bc
+    push hl
     jp next
     
