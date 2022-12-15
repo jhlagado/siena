@@ -130,10 +130,10 @@ for (let factor = 1; factor <= len; factor++) {
     }
 }
 console.log('------------------------------------------------------------');
-wl.forEach((n, i) => { if (n / 10 > 120) console.log(i, n / 10, i.toString(2))})
-console.log(65, wl[65] / 10);
-console.log(72, wl[72] / 10);
-console.log(149, wl[49] / 10);
-console.log(193, wl[193] / 10);
-console.log(224, wl[224] / 10);
+// wl.forEach((n, i) => { if (n / 10 > 120) console.log(i, n / 10, i.toString(2))})
+console.log(65, wl[65] / 10, (65).toString(2));
+console.log(72, wl[72] / 10, (72).toString(2));
+console.log(149, wl[49] / 10, (149).toString(2));
+console.log(193, wl[193] / 10, (193).toString(2));
+console.log(224, wl[224] / 10, (224).toString(2));
 

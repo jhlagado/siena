@@ -940,6 +940,8 @@ g:
 h:
     inc bc
     ld a,(bc)
+    cp 'a'    
+    jp z,hash
     dec bc
     jp var_
 
@@ -1182,9 +1184,8 @@ init:
     ld hl, hashSlots
 init1:
     ld (hl),a
+    inc hl
     djnz init1 
-    ld a,0
-    ld (hashWordsPtr),a
     ret
     
 num:
@@ -1820,17 +1821,14 @@ hashStr1:
     ld a,(bc)                           ; load next char
     inc bc
     cp 0                                ; null?
-    jr c,hashStr5                     
+    ret z                     
 hashStr2:
-    ex de,hl                            ; hl += a
-    ld h,0
-    ld l,a 
-    add de,hl
+    ld d,0
+    ld e,a 
+    add hl,de
     ld de,hl                            ; hl *= 193 (11000001)
     add hl,hl                           ; shift left
     add hl,de                           ; add
-    add hl,hl                           ; shift left
-
     add hl,hl                           ; shift left
     add hl,hl                           ; shift left
     add hl,hl                           ; shift left
@@ -1839,50 +1837,44 @@ hashStr2:
     add hl,hl                           ; shift left
     add hl,de                           ; add
     jr hashStr1
-hashStr5:
-    ld hl,bc                            ; hl = hash
-    ret
 
 ; add entry to hash slots and hash pointers
 ; bc = hash (b = hi, c = lo), de = addr
 ; sets carry if successful
 defineEntry:               
     sla c                               ; lo = lo * 2
-    sla c                                
     ld l,c                              ; lo1 = lo
     ld h,msb(hashSlots)                 ; hl = slots[lo*4]
 defineEntry0:
     ld a,(hl)                           ; a = (lo1)
     cp UNUSED                           ; is it unused?
-    jr defineEntry2                        ; yes terminate loop
+    jr z,defineEntry3                   ; yes, add entry
     ld a,c                              ; a = lo
     cp (hl)                             ; compare (lo1) with lo
-    jr nz,defineEntry1                     ; no match loop around
+    jr nz,defineEntry1                  ; no match loop around
     inc l 
     ld a,b                              ; a = hi
     cp (hl)                             ; compare (lo1+1) with hi
-    jr nz,defineEntry3                     ; identical hash, collision, exit
+    jr z,defineEntry2                   ; identical hash, collision, exit
     dec l                               ; restore l
 defineEntry1:
     inc l                               ; try next entry
     inc l 
     ld a,c                              ; compare lo and lo1
-    cp l 
-    jr z,defineEntry3                      ; if equal then there's no space left, reject 
-    jr defineEntry0
-defineEntry2:                              ; new entry
+    cp l                                ; if equal then there's no space left, reject 
+    jr nz,defineEntry0
+defineEntry2:
+    ccf                                 ; clear carry flag, failure
+    ret
+defineEntry3:                           ; new entry
     ld (hl),c                           ; (lo1) = hash lo
     inc hl
     ld (hl),b                           ; (lo1 + 1) = hash hi
-    dec hl
     ld h,msb(hashWords)                 ; hl = slots[lo*4]
-    ld (hl),e                           ; (slot + 2) = address
-    inc hl
     ld (hl),d
+    dec hl
+    ld (hl),e                           ; (slot + 2) = address
     scf                                 ; set carry flag, success
-    ret
-defineEntry3:
-    ccf                                 ; clear carry flag, failure
     ret
 
 ; looks up hash and returns address
@@ -1890,49 +1882,59 @@ defineEntry3:
 ; returns addr in hl, sets carry if successful
 lookupEntry:
     sla c                               ; lo = lo * 2
-    sla c                                
     ld l,c                              ; lo1 = lo
     ld h,msb(hashSlots)                 ; hl = slots[lo*4]
 lookupEntry0:
     ld a,(hl)                           ; a = (hl), slot
     cp UNUSED                           ; is it unused?
-    jr defineEntry3                        ; yes, does not exist
+    jr z,defineEntry3                   ; yes, does not exist
     ld a,c                              ; a = lo
     cp (hl)                             ; compare (lo1) with lo
-    jr nz,lookupEntry1                 ; no match loop around
+    jr nz,lookupEntry1                  ; no match loop around
     inc l 
     ld a,b                              ; a = hi
     cp (hl)                             ; compare (lo1+1) with hi
-    jr nz,lookupEntry1a                 ; identical hash, collision, exit
-    dec l                               ; restore l
+    jr z,lookupEntry2a
+    dec l
 lookupEntry1:
     inc l 
-lookupEntry1a:
     inc l 
     ld a,c 
-    cp l 
-    jr z,defineEntry3                      ; no space left, reject 
-    jr lookupEntry0
-lookupEntry2:
-    ld h,msb(hashWords)                 ; hl = slots[lo*4]
-    ld e,(hl)                           ; (slot + 2) = address
-    inc hl
-    ld d,(hl)
-    scf
-    ret
+    cp l                                ; no space left, reject 
+    jr nz,lookupEntry0
 lookupEntry3:
     ccf                                 ; clear carry flag, failure
     ret
+lookupEntry2a:
+    ld h,msb(hashWords)                 ; hl = slots[lo*4]
+    ld d,(hl)
+    dec l                               ; restore l
+    ld e,(hl)                           ; (slot + 2) = address
+    ex de,hl
+    scf
+    ret
+
+; str -- num
+hash:
+    pop hl
+    push bc
+    ld bc,hl
+    call hashStr
+    pop bc
+    push hl
+    jp next
 
 ; str addr -- bool
 def:
-    pop de                              ; de = address
-    pop hl                              ; hl = str pointer
+    pop hl                              ; hl = addr
+    ex (sp),hl                          ; hl = str pointer (sp) = addr
     push bc
-    push de
+    ld bc,hl
     call hashStr                        ; hl = hash
     ld bc,hl                            ; bc = hash
-    pop de                              ; de = addr
+    pop hl                              ; hl = old BC
+    ex (sp),hl                          ; hl = addr
+    ex de,hl                            ; de = addr
     call defineEntry
     ld hl,0                             ; if c return TRUE
     jr nc,def1
@@ -1946,6 +1948,7 @@ def1:
 lookup:
     pop hl                              ; hl = str pointer
     push bc
+    ld bc,hl
     call hashStr                        ; hl = hash
     ld bc,hl
     call lookupEntry

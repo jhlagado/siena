@@ -17,7 +17,10 @@ base:   .set 37
     .org $4000
 testsStart:
 
-    test "'H' {10} de 'H' lo", 10
+    test "'H' 2 de 'H' lo", 2
+    ; test "'H' 2 de", TRUE
+    ; test "'H' ha", $3648
+    ; test "'H' {1} de 'H' lo", 1
 
     ; test "by [`A` `B` `C`]", 0
     ; test "by [`A` `B` `C`] 1 ge", 'B'
