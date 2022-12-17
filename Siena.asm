@@ -13,15 +13,16 @@
 ; *****************************************************************************
 
                                 ; 
-    DSIZE   EQU $80
-    RSIZE   EQU $80
-    TIBSIZE EQU $100	        ; 256 bytes , along line!
-    TRUE    EQU -1		        ; C-style true
-    FALSE   EQU 0
-    EMPTY   EQU 0		        ; 
-    UNUSED  EQU $ff
-    
-    DATASIZE    EQU 26*2*2	    ; a..z, a..z words
+    DSIZE   EQU     $80
+    RSIZE   EQU     $80
+    TIBSIZE EQU     $100	        ; 256 bytes , along line!
+    TRUE    EQU     -1		        ; C-style true
+    FALSE   EQU     0
+    EMPTY   EQU     0		        ; 
+    UNUSED  EQU     $ff
+    NULL    EQU     0
+    ENDTEXT EQU     3
+    DATASIZE EQU    26*2*2	    ; a..z, a..z words
 
 ; **************************************************************************
 ; Page 0  Initialisation
@@ -35,9 +36,9 @@
 macros:
 
 ; ***********************************************************************
-; Initial values for user mintVars		
+; Initial values for system vars		
 ; ***********************************************************************		
-iAltVars:			            ; value copied into tables
+isysVars:			            
     DW 0                        ; a 			
     DW 1                        ; b width in bytes of array operations (default 1 byte) 
     DW 0                        ; c vTIBPtr an offset to the tib
@@ -49,54 +50,21 @@ iAltVars:			            ; value copied into tables
 
     .align $100
 opcodes:
-    DB lsb(exit_)               ; NUL 
-    DB lsb(nop_)                ; SOH 
-    DB lsb(nop_)                ; STX 
-    DB lsb(etx_)                ; ETX 
-    DB lsb(nop_)                ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)    ;     
-    DB lsb(nop_)                ;    !  
+    DB lsb(inv_)                ;    !  
     DB lsb(nop_)                ;    "
     DB lsb(hexnum_)             ;    #
     DB lsb(arg_)                ;    $  
-    DB lsb(nop_)                ;    %  
+    DB lsb(mod_)                ;    %  
     DB lsb(nop_)                ;    &
     DB lsb(strDef_)             ;    '
     DB lsb(block_)              ;    (    
     DB lsb(blockend_)           ;    )
-    DB lsb(nop_)                ;    *  
-    DB lsb(newAdd2_)            ;    +
+    DB lsb(mul_)                ;    *  
+    DB lsb(add_)                ;    +
     DB lsb(nop_)                ;    ,  
-    DB lsb(num_)                ;    -
+    DB lsb(sub_)                ;    -
     DB lsb(dot_)                ;    .
-    DB lsb(nop_)                ;    /	
+    DB lsb(div_)                ;    /	
     DB lsb(num_)                ;    0     
     DB lsb(num_)                ;    1    
     DB lsb(num_)                ;    2    
@@ -109,109 +77,124 @@ opcodes:
     DB lsb(num_)                ;    9    
     DB lsb(nop_)                ;    :    
     DB lsb(nop_)                ;    ;
-    DB lsb(nop_)                ;    <
-    DB lsb(nop_)                ;    =  
-    DB lsb(nop_)                ;    >  
+    DB lsb(lt_)                 ;    <
+    DB lsb(eq_)                 ;    =  
+    DB lsb(gt_)                 ;    >  
     DB lsb(nop_)                ;    ?    
     DB lsb(fetch_)              ;    @  
-    DB lsb(ident_)               ;    A     
-    DB lsb(ident_)               ;    B     
-    DB lsb(ident_)               ;    C     
-    DB lsb(ident_)               ;    D     
-    DB lsb(ident_)               ;    E     
-    DB lsb(ident_)               ;    F     
-    DB lsb(ident_)               ;    G     
-    DB lsb(ident_)               ;    h     
-    DB lsb(ident_)               ;    I     
-    DB lsb(ident_)               ;    J     
-    DB lsb(ident_)               ;    K     
-    DB lsb(ident_)               ;    L     
-    DB lsb(ident_)               ;    M     
-    DB lsb(ident_)               ;    N     
-    DB lsb(ident_)               ;    O     
-    DB lsb(ident_)               ;    p     
-    DB lsb(ident_)               ;    Q     
-    DB lsb(ident_)               ;    R     
-    DB lsb(ident_)               ;    S     
-    DB lsb(ident_)               ;    T     
-    DB lsb(ident_)               ;    U     
-    DB lsb(ident_)               ;    V     
-    DB lsb(ident_)               ;    W     
-    DB lsb(ident_)               ;    X     
-    DB lsb(ident_)               ;    Y     
-    DB lsb(ident_)               ;    Z    
+    DB lsb(ident_)              ;    A     
+    DB lsb(ident_)              ;    B     
+    DB lsb(ident_)              ;    C     
+    DB lsb(ident_)              ;    D     
+    DB lsb(ident_)              ;    E     
+    DB lsb(ident_)              ;    F     
+    DB lsb(ident_)              ;    G     
+    DB lsb(ident_)              ;    h     
+    DB lsb(ident_)              ;    I     
+    DB lsb(ident_)              ;    J     
+    DB lsb(ident_)              ;    K     
+    DB lsb(ident_)              ;    L     
+    DB lsb(ident_)              ;    M     
+    DB lsb(ident_)              ;    N     
+    DB lsb(ident_)              ;    O     
+    DB lsb(ident_)              ;    p     
+    DB lsb(ident_)              ;    Q     
+    DB lsb(ident_)              ;    R     
+    DB lsb(ident_)              ;    S     
+    DB lsb(ident_)              ;    T     
+    DB lsb(ident_)              ;    U     
+    DB lsb(ident_)              ;    V     
+    DB lsb(ident_)              ;    W     
+    DB lsb(ident_)              ;    X     
+    DB lsb(ident_)              ;    Y     
+    DB lsb(ident_)              ;    Z    
     DB lsb(array_)              ;    [
     DB lsb(nop_)                ;    \
     DB lsb(arrayEnd_)           ;    ]
-    DB lsb(nop_)                ;    ^
-    DB lsb(ident_)         ;    _
+    DB lsb(xor_)                ;    ^
+    DB lsb(ident_)              ;    _
     DB lsb(char_)               ;    `    	    
-    DB lsb(ident_)                  ;    a     
-    DB lsb(ident_)                ;    b  
-    DB lsb(ident_)                  ;    c  
-    DB lsb(ident_)                  ;    d  
-    DB lsb(ident_)                  ;    e  
-    DB lsb(ident_)                  ;    f  
-    DB lsb(ident_)                  ;    g  
-    DB lsb(ident_)                  ;    h  
-    DB lsb(ident_)                  ;    i  
-    DB lsb(ident_)                ;    j  
-    DB lsb(ident_)                  ;    k  
-    DB lsb(ident_)                  ;    l  
-    DB lsb(ident_)                  ;    m  
-    DB lsb(ident_)                  ;    n  
-    DB lsb(ident_)                  ;    o  
-    DB lsb(ident_)                  ;    p  
-    DB lsb(ident_)                ;    q  
-    DB lsb(ident_)                  ;    r  
-    DB lsb(ident_)                  ;    s  
-    DB lsb(ident_)                ;    t  
-    DB lsb(ident_)                  ;    u  
-    DB lsb(ident_)                ;    v  
-    DB lsb(ident_)                  ;    w  
-    DB lsb(ident_)                  ;    x  
-    DB lsb(ident_)                ;    y  
-    DB lsb(ident_)                ;    z  
+    DB lsb(ident_)              ;    a     
+    DB lsb(ident_)              ;    b  
+    DB lsb(ident_)              ;    c  
+    DB lsb(ident_)              ;    d  
+    DB lsb(ident_)              ;    e  
+    DB lsb(ident_)              ;    f  
+    DB lsb(ident_)              ;    g  
+    DB lsb(ident_)              ;    h  
+    DB lsb(ident_)              ;    i  
+    DB lsb(ident_)              ;    j  
+    DB lsb(ident_)              ;    k  
+    DB lsb(ident_)              ;    l  
+    DB lsb(ident_)              ;    m  
+    DB lsb(ident_)              ;    n  
+    DB lsb(ident_)              ;    o  
+    DB lsb(ident_)              ;    p  
+    DB lsb(ident_)              ;    q  
+    DB lsb(ident_)              ;    r  
+    DB lsb(ident_)              ;    s  
+    DB lsb(ident_)              ;    t  
+    DB lsb(ident_)              ;    u  
+    DB lsb(ident_)              ;    v  
+    DB lsb(ident_)              ;    w  
+    DB lsb(ident_)              ;    x  
+    DB lsb(ident_)              ;    y  
+    DB lsb(ident_)              ;    z  
     DB lsb(lambda_)             ;    {
     DB lsb(or_)                 ;    |  
-    DB lsb(lambdaEnd_)             ;    }  
+    DB lsb(lambdaEnd_)          ;    }  
     DB lsb(nop_)                ;    ~    
     DB lsb(nop_)                ;    DEL	
 
-ctrlCodes:
-    DB lsb(EMPTY)               ; NUL ^@    
-    DB lsb(EMPTY)               ; SOH ^a  1
-    DB lsb(EMPTY)               ; STX ^b  2
-    DB lsb(EMPTY)               ; ETX ^c  3
-    DB lsb(EMPTY)               ; EOT ^d  4
-    DB lsb(EMPTY)               ; ENQ ^e  5
-    DB lsb(EMPTY)               ; ACK ^F  6
-    DB lsb(EMPTY)               ; BEL ^G  7 
-    DB lsb(EMPTY)               ; BS  ^h  8
-    DB lsb(EMPTY)               ; TAB ^I  9
-    DB lsb(EMPTY)               ; LF  ^J 10
-    DB lsb(EMPTY)               ; VT  ^K 11
-    DB lsb(EMPTY)               ; FF  ^l 12
-    DB lsb(EMPTY)               ; CR  ^m 13
-    DB lsb(EMPTY)               ; SO  ^N 14
-    DB lsb(EMPTY)               ; SI  ^O 15
-    DB lsb(EMPTY)               ; DLE ^p 16
-    DB lsb(EMPTY)               ; ^Q     
-    DB lsb(EMPTY)               ; ^R     
-    DB lsb(EMPTY)               ; ^S    
-    DB lsb(EMPTY)               ; ^T    
-    DB lsb(EMPTY)               ; ^U       
-    DB lsb(EMPTY)               ; ^V  
-    DB lsb(EMPTY)               ; ^W    
-    DB lsb(EMPTY)               ; ^X    
-    DB lsb(EMPTY)               ; ^Y    
-    DB lsb(EMPTY)               ; ^Z    
-    DB lsb(EMPTY)               ; ^[  
-    DB lsb(EMPTY)               ; ^\  
-    DB lsb(EMPTY)               ; ^]  
-    DB lsb(EMPTY)               ; ^^  
-    DB lsb(EMPTY)               ; ^_  
+; ctrlCodes:
+;     DB lsb(EMPTY)               ; NUL ^@    
+;     DB lsb(EMPTY)               ; SOH ^a  1
+;     DB lsb(EMPTY)               ; STX ^b  2
+;     DB lsb(EMPTY)               ; ETX ^c  3
+;     DB lsb(EMPTY)               ; EOT ^d  4
+;     DB lsb(EMPTY)               ; ENQ ^e  5
+;     DB lsb(EMPTY)               ; ACK ^F  6
+;     DB lsb(EMPTY)               ; BEL ^G  7 
+;     DB lsb(EMPTY)               ; BS  ^h  8
+;     DB lsb(EMPTY)               ; TAB ^I  9
+;     DB lsb(EMPTY)               ; LF  ^J 10
+;     DB lsb(EMPTY)               ; VT  ^K 11
+;     DB lsb(EMPTY)               ; FF  ^l 12
+;     DB lsb(EMPTY)               ; CR  ^m 13
+;     DB lsb(EMPTY)               ; SO  ^N 14
+;     DB lsb(EMPTY)               ; SI  ^O 15
+;     DB lsb(EMPTY)               ; DLE ^p 16
+;     DB lsb(EMPTY)               ; ^Q     
+;     DB lsb(EMPTY)               ; ^R     
+;     DB lsb(EMPTY)               ; ^S    
+;     DB lsb(EMPTY)               ; ^T    
+;     DB lsb(EMPTY)               ; ^U       
+;     DB lsb(EMPTY)               ; ^V  
+;     DB lsb(EMPTY)               ; ^W    
+;     DB lsb(EMPTY)               ; ^X    
+;     DB lsb(EMPTY)               ; ^Y    
+;     DB lsb(EMPTY)               ; ^Z    
+;     DB lsb(EMPTY)               ; ^[  
+;     DB lsb(EMPTY)               ; ^\  
+;     DB lsb(EMPTY)               ; ^]  
+;     DB lsb(EMPTY)               ; ^^  
+;     DB lsb(EMPTY)               ; ^_  
 
+next:        
+    inc bc                      ; Increment the IP
+    ld a,(bc)                   ; Get the next character and dispatch
+    sub " " + 1                 ; whitespace?
+    jr c,next1
+    ld l,a                      ; index into table
+    ld h,msb(opcodes)           ; start address of jump table    
+    ld l,(hl)                   ; get low jump address
+    ld h,msb(page4)             ; Load h with the 1st page address
+    jp (hl)                     ; Jump to routine
+next1:
+    cp NULL - (" " + 1)           ; is it end of text?
+    jr z,exit
+    cp ENDTEXT - (" " + 1)        ; is it end of text?
+    jr nz,next                  ; no, other whitespace, ignore
 etx:        
     ld hl,-DSTACK
     add hl,sp
@@ -219,6 +202,25 @@ etx:
     ld sp,DSTACK
 etx1:
     jr interpret
+exit:
+    ld de,bc                    ; address of code after exit opcode
+    inc de			            
+    exx
+    pop bc                      ; bc = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    exx
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    exx
+    push bc                     ; push result    
+    exx
+    ex de,hl
+    jp (hl)
 
 start:
     ld sp,DSTACK		        ; start of Siena
@@ -261,20 +263,20 @@ waitchar:
     jr z,waitchar3		        ; if anything else its macro/control 
 
 macro:       
-    ld (vTIBPtr),bc
-    ld hl,ctrlCodes
-    add a,l			            ; look up key of macros
-    ld l,a
-    ld e,(hl)
-    ld a,e
-    or a
-    jr z,macro1
-    ld d,msb(macros)
-    push de
-    call exec		            ; Siena exec_ operation and jump to it
-    .cstr "ca"
-macro1:
-    ld bc,(vTIBPtr)
+;     ld (vTIBPtr),bc
+;     ld hl,ctrlCodes
+;     add a,l			            ; look up key of macros
+;     ld l,a
+;     ld e,(hl)
+;     ld a,e
+;     or a
+;     jr z,macro1
+;     ld d,msb(macros)
+;     push de
+;     call exec		            ; Siena exec_ operation and jump to it
+;     .cstr "ca"
+; macro1:
+;     ld bc,(vTIBPtr)
     jr interpret2
 
 waitchar1:
@@ -306,37 +308,6 @@ waitchar4:
     ld (vTIBPtr),bc
     ld bc,TIB                   ; Instructions stored on heap at address HERE, we pressed enter
     dec bc
-
-; ********************************************************************************
-;
-; Dispatch Routine.
-;
-; Get the next character and form a 1 byte jump address
-;
-; This target jump address is loaded into hl, and using jp (hl) to quickly 
-; jump to the selected function.
-;
-; Individual handler routines will deal with each category:
-;
-; 1. Detect characters a-z and jump to the User Command handler routine
-;
-; 2. Detect characters a-z and jump to the variable handler routine
-;
-; 3. All other characters are punctuation and cause a jump to the associated
-; primitive code.
-;
-; Instruction Pointer IP bc is incremented
-;
-; *********************************************************************************
-
-next:        
-    inc bc                      ;  Increment the IP
-    ld a, (bc)                  ;  Get the next character and dispatch
-    ld l,a                      ;  Index into table
-    ld h,msb(opcodes)          ;  Start address of jump table    
-    ld l,(hl)                   ;  get low jump address
-    ld h,msb(page4)             ;  Load h with the 1st page address
-    jp (hl)                     ;  Jump to routine
 
 ; **********************************************************************			 
 ; Page 4 primitive routines 
@@ -378,45 +349,6 @@ arrayEnd_:
 ident_:
     jp ident
     
-a_:
-    jp a
-c_:
-    jp c
-d_:
-    jp d
-e_:
-    jp e
-f_:
-    jp f
-g_:
-    jp g
-h_:
-    jp h
-i_:
-    jp i
-k_:
-    jp k
-l_:
-    jp l
-m_:
-    jp m
-n_:
-    jp n
-o_:
-    jp o
-p_:
-    jp p
-r_:
-    jp r
-s_:
-    jp s
-u_:
-    jp u
-w_:
-    jp w
-x_:
-    jp x
-
 and_:    
     pop de                      ; Bitwise and the top 2 elements of the stack
     pop hl     
@@ -430,7 +362,6 @@ and1:
     push hl         
     jp next        
     
-         
 or_: 		 
     pop de                      ; Bitwise or the top 2 elements of the stack
     pop hl
@@ -468,20 +399,6 @@ hdot_:                          ; print hexadecimal
     call prthex
     jp dot2
 
-drop_:                          ; Discard the top member of the stack
-    pop hl
-    jp next
-
-undrop_:
-    dec sp
-    dec sp
-    jp next
-    
-dup_:    
-    pop hl                      ; Duplicate the top member of the stack
-    push    hl
-    push    hl
-    jp next
 etx_:
     jp ETX
     
@@ -511,23 +428,6 @@ nop_:
     jp next                     ; hardwire white space to always exec_ to next (important for arrays)
 
 
-over_:  
-    pop hl                      ; Duplicate 2nd element of the stack
-    pop de
-    push de
-    push hl
-    push de                     ; and push it to top of stack
-    jp next    
-    
-rot_:                           ; a b c -- b c a
-    pop de                      ; a b    de = c
-    pop hl                      ; a       hl = b
-    ex (sp),hl                  ; b       hl = a
-    push de                     ; b c    
-    push hl                     ; b c a     
-    jp next
-
-                                ;  Left shift { is multiply by 2		
 shl_:    
     pop hl                      ; Duplicate the top member of the stack
     add hl,hl
@@ -551,12 +451,6 @@ store_:                         ; Store the value at the address placed on the t
     ld (hl),d     
     jp next  
           
-swap_:                          ; a b -- b a Swap the top 2 elements of the stack
-    pop hl
-    ex (sp),hl
-    push hl
-    jp next
-    
 neg_:    
     ld hl, 0    		        ; NEGate the value on top of stack (2's complement)
     pop de       
@@ -613,6 +507,7 @@ lte1:
     jp m,false_
     jp true
 
+mod_:                           ; todo
 div_:    
     jr div
 
@@ -652,17 +547,6 @@ div4:
     push hl       ; push remainder    
 
     jp next
-
-    	     ;=57       
-
-; **************************************************************************
-; Page 6 Alt primitives
-; **************************************************************************
-    .align $100
-page6:
-
-anop_:
-    jp next     
 
 cFetch_:
     pop hl     
@@ -726,229 +610,19 @@ prtstr:
     jp next
 
 
-rpush_:
-    pop hl
-    call rpush
-    jp next
+; rpush_:
+;     pop hl
+;     call rpush
+;     jp next
 
-rpop_:
-    call rpop
-    push hl
-    jp next
-
-; **************************************************************************
-; Page 6 primitive routines continued  (page 7) 
-; **************************************************************************
-    ; falls through to following page
-a:
-    inc bc
-    ld a,(bc)
-    cp 'd'    
-    jp z,add_
-    cp 'n'    
-    jp z,and_
-    dec bc
-    jp var_
-    
-b:
-    inc bc
-    ld a,(bc)
-    cp 'y'    
-    jp z,bytes
-    dec bc
-    jp var_
-
-c:    
-    inc bc
-    ld a,(bc)
-    cp 'a'    
-    jp z, case
-    dec bc
-    jp var_
-    
-d:    
-    inc bc
-    ld a,(bc)
-    cp 'e'    
-    jp z,def
-    cp 'i'    
-    jp z,div_
-    dec bc
-    jp var_
-
-e:
-    inc bc
-    ld a,(bc)
-    cp 'x'    
-    jp z, exec
-    cp 'q'    
-    jp z,eq_
-    dec bc
-    jp var_
-
-f:
-    inc bc
-    ld a,(bc)
-    cp 'i'    
-    jp z,filter_
-    dec bc
-    jp var_
-
-g:
-    inc bc
-    ld a,(bc)
-    cp 'e'    
-    jp z,get_
-    cp 't'    
-    jp z,gt_
-    dec bc
-    jp var_
-
-h:
-    inc bc
-    ld a,(bc)
-    cp 'a'    
-    jp z,hash
-    dec bc
-    jp var_
-
-i:
-    inc bc
-    ld a,(bc)
-    cp 'n'    
-    jp z,in
-    cp 'v'
-    jp z,inv_
-    cp 'f'    
-    jp nz,i1
-    inc bc
-    ld a,(bc)
-    cp 'e'    
-    jp z,ifte
-    dec bc
-    jp if
-i1:
-    dec bc
-    jp var_
-
-k:
-    jp x
-    inc bc
-    ld a,(bc)
-    cp 'e'    
-    jp z,key_
-    dec bc
-    jp var_
-
-l:
-    inc bc
-    ld a,(bc)
-    cp 'e'    
-    jp z,let_
-    cp 'o'    
-    jp z,lookup
-    cp 't'    
-    jp z,lt_
-    dec bc
-    jp var_
-
-m:
-    inc bc
-    ld a,(bc)
-    cp 'a'    
-    jp z,map_
-    cp 'u'    
-    jp z,mul_
-    dec bc
-    jp var_
-
-n:
-    inc bc
-    ld a,(bc)
-    cp 'e'    
-    jp z,neg_
-    dec bc
-    jp var_
-
-o:
-    inc bc
-    ld a,(bc)
-    cp 'v'    
-    jp z,over_
-    cp 'r'    
-    jp z,or_
-    dec bc
-    jp var_
-
-p:
-    inc bc
-    ld a,(bc)
-    cp 'r'    
-    jp z,print_
-    dec bc
-    jp var_
-r:
-    inc bc
-    ld a,(bc)
-    cp 'o'    
-    jp z,rot_
-    dec bc
-    jp var_
-
-s:
-    inc bc
-    ld a,(bc)
-    cp 'c'    
-    jp z,scan_
-    cp 'e'    
-    ; jp nz,s1
-    ; inc bc
-    ; ld a,(bc)
-    ; cp 'l'    
-    ; jp z,select
-    ; cp 't'    
-    jp z,set_
-    ; dec bc
-; s1:
-    cp 'h'    
-    jp z,shift_
-    cp 'u'    
-    jp z,sub_
-    cp 'w'    
-    jp z,switch
-    dec bc
-    jp var_
-
-u:
-    inc bc
-    ld a,(bc)
-    cp 'n'    
-    jp z,undrop_
-    dec bc
-    jp var_
-
-w:
-    inc bc
-    ld a,(bc)
-    cp 'h'    
-    jp z,while_
-    cp 'o'    
-    jp z,words
-    dec bc
-    jp var_
-
-x:
-    inc bc
-    ld a,(bc)
-    cp 'x'    
-    jp z,xor_
-    dec bc
-    jp var_
+; rpop_:
+;     call rpop
+;     push hl
+;     jp next
 
 closure_:
 filter_:
 get_:
-if_:
 let_:
 map_:
 print_:
@@ -1008,35 +682,31 @@ putStr:
     jr nz,putStr0
     ret
 
-rpush:     
-    dec ix    
-    ld (ix+0),h
-    dec ix
-    ld (ix+0),l
-    ret
+; rpush:     
+;     dec ix    
+;     ld (ix+0),h
+;     dec ix
+;     ld (ix+0),l
+;     ret
 
-rpop:       
-    ld l,(ix+0)    
-    inc ix    
-    ld h,(ix+0)
-    inc ix    
-rpop2:
-    ret
+; rpop:       
+;     ld l,(ix+0)    
+;     inc ix    
+;     ld h,(ix+0)
+;     inc ix    
+; rpop2:
+;     ret
 
 crlf:       
     call printStr
     .cstr "\r\n"
     ret
 
-
-;*******************************************************************
-;*******************************************************************
-
 init:       
     ld iy,DSTACK
     ld ix,RSTACK
-    ld hl,ialtVars
-    ld de,altVars
+    ld hl,isysVars
+    ld de,sysVars
     ld bc,8 * 2
     ldir
     
@@ -1058,6 +728,10 @@ init1:
     call define
     .pstr "add",0                       ; muat have length and null terminator
     dw add_
+
+    call define
+    .pstr "addr",0                       
+    dw addr
 
     call define
     .pstr "and",0                       
@@ -1126,10 +800,6 @@ init1:
     call define
     .pstr "let",0                       
     dw let_
-
-    call define
-    .pstr "lookup",0                       
-    dw lookup
 
     call define
     .pstr "lt",0                       
@@ -1574,26 +1244,6 @@ arg:
     push de                     ; push arg
     jp next
                                 ; 
-exit:
-    ld de,bc                    ; address of code after exit opcode
-    inc de			            
-    exx
-    pop bc                      ; bc = last result 
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
-    ld sp,hl                    ; sp = BP
-    exx
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    exx
-    push bc                     ; push result    
-    exx
-    ex de,hl
-    jp (hl)
-
 in:
     pop hl                      ; hl = string    
     pop de                      ; de = char
@@ -1946,16 +1596,16 @@ def1:
     jp next
     
 ; str -- addr
-lookup:
+addr:
     pop hl                              ; hl = str pointer
     push bc
     ld bc,hl
     call hashStr                        ; hl = hash
     ld bc,hl
     call lookupEntry
-    jr c, lookup1
+    jr c, addr1
     ld hl,0
-lookup1:    
+addr1:    
     pop bc
     push hl
     jp next
@@ -1980,18 +1630,25 @@ define:
     jp defineEntry
   
 ident:
-    ld hl,PAD
+    ld de,PAD
     jr ident1
-ident0:
-    inc bc
-ident1:
+    ld h,msb(opcodes)                   ; this table identifies the char type
+ident0:                                 ; copy to PAD area 
+    inc bc                              ; characters that are part of the identifier  
+ident1:                                 ; 0-9 A-Z a-z _
     ld a,(bc)
-    cp " "+1
-    jr c,ident2
-    ld (hl),a
-    inc hl
+    ld l,a
+    ld a,(hl)
+    sub " "+1                           ; opcodes start above white space 
+    cp lsb(ident_)
+    jr nz,ident2
+    cp lsb(num_)
+    jr nz,ident2
+    ld a,l    
+    ld (de),a
+    inc de
     jr ident0
-ident2:
+ident2:                                 ; non identifier char detected
     dec bc
     xor a
     ld (hl),a                           ; terminate string with null

@@ -30,7 +30,7 @@ GETCVEC:    DS 2                ;
 PUTCVEC:    DS 2                ;   
 
             DS 26*2
-altVars:
+sysVars:
 
             DS 2                ; a
 vDataWidth: DS 2                ; b
