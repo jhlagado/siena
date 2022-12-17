@@ -55,7 +55,7 @@ opcodes:
     DB lsb(hexnum_)             ;    #
     DB lsb(arg_)                ;    $  
     DB lsb(mod_)                ;    %  
-    DB lsb(nop_)                ;    &
+    DB lsb(and_)                ;    &
     DB lsb(strDef_)             ;    '
     DB lsb(block_)              ;    (    
     DB lsb(blockend_)           ;    )
@@ -335,7 +335,7 @@ dot_:
 dot2:
     ld a,' '       
     call putchar
-    jp next
+    jp (ix)
 block_:
     jp block
 blockend_:
@@ -360,7 +360,7 @@ and_:
 and1:
     ld h,a        
     push hl         
-    jp next        
+    jp (ix)        
     
 or_: 		 
     pop de                      ; Bitwise or the top 2 elements of the stack
@@ -392,7 +392,7 @@ add_:                           ; add the top 2 members of the stack
     pop hl        
     add hl,de    
     push hl        
-    jp next    
+    jp (ix)    
         
 hdot_:                          ; print hexadecimal
     pop hl
@@ -412,27 +412,26 @@ fetch1:
     inc hl    
     ld d,(hl)    
     push de    
-    jp next       
-
+    jp (ix)       
 
 key_:
     call getchar
     ld h,0
     ld l,a
     push hl
-    jp next
+    jp (ix)
 
 mul_:    jp mul 
 
 nop_:  
-    jp next                     ; hardwire white space to always exec_ to next (important for arrays)
+    jp (ix)                     ; hardwire white space to always exec_ to next (important for arrays)
 
 
 shl_:    
     pop hl                      ; Duplicate the top member of the stack
     add hl,hl
     push hl                     ; shift left fallthrough into add_     
-    jp next            
+    jp (ix)            
     
 				                ;  Right shift } is a divide by 2		
 shr_:    
@@ -441,7 +440,7 @@ shr1:
     srl h
     RR l
     push hl
-    jp next            
+    jp (ix)            
 
 store_:                         ; Store the value at the address placed on the top of the stack
     pop hl     
@@ -449,7 +448,7 @@ store_:                         ; Store the value at the address placed on the t
     ld (hl),e     
     inc hl    
     ld (hl),d     
-    jp next  
+    jp (ix)  
           
 neg_:    
     ld hl, 0    		        ; NEGate the value on top of stack (2's complement)
@@ -463,7 +462,7 @@ sub2:
     or a                        ; Entry point for NEGate
     sbc hl,de       
     push hl        
-    jp next        
+    jp (ix)        
         
 eq_:    
     pop hl
@@ -474,7 +473,7 @@ eq_:
 false_:
     ld hl, 0
     push hl
-    jp next 
+    jp (ix) 
 
 gt_:    
     pop de
@@ -492,7 +491,7 @@ lt1:
 true_:
     ld hl, 1
     push hl
-    jp next 
+    jp (ix) 
 
 gte_:    
     pop de
@@ -507,53 +506,32 @@ lte1:
     jp m,false_
     jp true
 
-mod_:                           ; todo
+mod_:                           
+    pop  de                     ; get first value
+    pop  hl                     ; get 2nd value
+    push bc                     ; preserve the IP    
+    ld bc,hl                
+    call divide
+    pop bc
+    push hl                     ; push remainder    
+    jp (ix)
+
 div_:    
-    jr div
-
-; division subroutine.
-;
-; bc: divisor, de: dividend, hl: remainder
-
-div:        ;=34
-    pop  de       ; get first value
-    pop  hl       ; get 2nd value
-    push bc       ; Preserve the IP
-    ld b,h        ; bc = 2nd value
-    ld c,l		
-		
-    ld hl,0    	  ; Zero the remainder
-    ld a,16    	  ; Loop counter
-
-div1:		     ;shift the bits from bc (numerator) into hl (accumulator)
-    sla c
-    rl b
-    adc hl,hl
-
-    sbc hl,de		    ;Check if remainder >= denominator (hl>=de)
-    jr c,div2
-    inc c
-    jr div3
-div2:		     ; remainder is not >= denominator, so we have to add de back to hl
-    add hl,de
-div3:
-    dec a
-    jr nz,div1
-    ld d,b        ; Result from bc to de
-    ld e,c
-div4:    
-    pop  bc       ; Restore the IP
-    push de       ; push Result
-    push hl       ; push remainder    
-
-    jp next
+    pop  de                     ; get first value
+    pop  hl                     ; get 2nd value
+    push bc                     ; preserve the IP    
+    ld bc,hl                
+    call divide
+    pop bc
+    push de                     ; push result
+    jp (ix)
 
 cFetch_:
     pop hl     
     ld d,0  
     ld e,(hl)    
     push    de    
-    jp next       
+    jp (ix)       
   
 comment_:
     inc bc        ; point to next char
@@ -567,17 +545,17 @@ cStore_:
     pop    hl     
     pop    de     
     ld     (hl),e     
-    jp next  
+    jp (ix)  
           
 emit_:
     pop hl
     ld a,l
     call putchar
-    jp next
+    jp (ix)
 
 prompt_:
     call prompt
-    jp next
+    jp (ix)
 
 
 inPort_:			    ; \<
@@ -588,11 +566,11 @@ inPort_:			    ; \<
     ld h,0
     ld c,a
     push hl
-    jp next    
+    jp (ix)    
 
 newln_:
     call crlf
-    jp next    
+    jp (ix)    
 
 outPort_:
     pop hl
@@ -601,24 +579,13 @@ outPort_:
     pop hl
     out (c),l
     ld c,e
-    jp next    
+    jp (ix)    
 
 prtstr_:
 prtstr:
     pop hl
     call putStr
-    jp next
-
-
-; rpush_:
-;     pop hl
-;     call rpush
-;     jp next
-
-; rpop_:
-;     call rpop
-;     push hl
-;     jp next
+    jp (ix)
 
 closure_:
 filter_:
@@ -632,7 +599,7 @@ shift_:
 while_:
 var_:
 
-    jp next
+    jp (ix)
 
 ;*******************************************************************
 ; Page 5 primitive routines continued
@@ -659,9 +626,9 @@ mul2:
     inc de
     dec a
     jr nz,mul2
-		pop bc			  ; Restore the IP
-		push hl       ; Put the product on the stack - stack bug fixed 2/12/21
-		jp next
+	pop bc			  ; Restore the IP
+	push hl       ; Put the product on the stack - stack bug fixed 2/12/21
+	jp (ix)
 
 
 ;*******************************************************************
@@ -703,8 +670,8 @@ crlf:
     ret
 
 init:       
+    ld ix,next
     ld iy,DSTACK
-    ld ix,RSTACK
     ld hl,isysVars
     ld de,sysVars
     ld bc,8 * 2
@@ -726,16 +693,8 @@ init1:
     djnz init1 
 
     call define
-    .pstr "add",0                       ; muat have length and null terminator
-    dw add_
-
-    call define
     .pstr "addr",0                       
     dw addr
-
-    call define
-    .pstr "and",0                       
-    dw and_
 
     call define
     .pstr "bytes",0                       
@@ -750,16 +709,12 @@ init1:
     dw def
 
     call define
-    .pstr "div",0                       
-    dw div_
-
-    call define
     .pstr "exec",0                       
     dw exec
 
     call define
-    .pstr "eq",0                       
-    dw eq_
+    .pstr "false",0                       
+    dw false_
 
     call define
     .pstr "filter",0                       
@@ -770,20 +725,12 @@ init1:
     dw get_
 
     call define
-    .pstr "gt",0                       
-    dw gt_
-
-    call define
     .pstr "hash",0                       
     dw hash
 
     call define
     .pstr "in",0                       
     dw in
-
-    call define
-    .pstr "inv",0                       
-    dw inv_
 
     call define
     .pstr "if",0                       
@@ -802,24 +749,12 @@ init1:
     dw let_
 
     call define
-    .pstr "lt",0                       
-    dw lt_
-
-    call define
     .pstr "map",0                       
     dw map_
 
     call define
-    .pstr "mul",0                       
-    dw mul_
-
-    call define
     .pstr "neg",0                       
     dw neg_
-
-    call define
-    .pstr "or",0                       
-    dw or_
 
     call define
     .pstr "print",0                       
@@ -838,12 +773,12 @@ init1:
     dw shift_
 
     call define
-    .pstr "sub",0                       
-    dw sub_
-
-    call define
     .pstr "switch",0                       
     dw switch
+
+    call define
+    .pstr "true",0                       
+    dw true_
 
     call define
     .pstr "while",0                       
@@ -852,10 +787,6 @@ init1:
     call define
     .pstr "words",0                       
     dw words
-
-    call define
-    .pstr "xor",0                       
-    dw xor_
 
     ret
     
@@ -895,7 +826,7 @@ num2:
     sbc hl,de    
 num3:
     push hl       ; Put the number on the stack
-    jp next       ; and process the next character
+    jp (ix)       ; and process the next character
 
 hexnum:        ;
 	    ld hl,0	    		    ; Clear hl to accept the number
@@ -1087,7 +1018,7 @@ strDef2:
     ld (de),a
     inc de
     ld (vHeapPtr),de            ; bump heap ptr to after definiton
-    jp next  
+    jp (ix)  
 
 char:
     ld hl,0                     ; if `` is empty
@@ -1106,7 +1037,7 @@ char2:
 char3:
     push hl
     ; dec bc
-    jp next  
+    jp (ix)  
 
 exec:				            ; execute lambda at pointer
     pop hl                      ; hl = pointer to lambda
@@ -1124,7 +1055,7 @@ exec2:
     ld bc,hl                    ; IP = pointer to lambda
     dec bc                      ; dec to prepare for next routine
 exec3:
-    jp next       
+    jp (ix)       
 
 lambda:              
     inc bc
@@ -1160,7 +1091,7 @@ lambda2:
     jr nz, lambda1              ; get the next element
     dec bc
     ld (vHeapPtr),hl            ; bump heap ptr to after definiton
-    jp next  
+    jp (ix)  
 
 lambdaEnd:
     pop hl                      ; hl = last result 
@@ -1175,7 +1106,7 @@ lambdaEnd:
     ld iy,0                     ; iy = sp = old BP
     add iy,sp
     push de                     ; push result    
-    jp next    
+    jp (ix)    
 
 block:
     inc bc
@@ -1207,7 +1138,7 @@ block2:
     cp ")"                      ; Is it the end of the block? 
     jr nz, block1               ; get the next element
     dec bc
-    jp next  
+    jp (ix)  
 
 blockend:
     pop hl                      ; hl = last result 
@@ -1222,7 +1153,7 @@ blockend:
     ld iy,0                     ; iy = sp
     add iy,sp
     push de                     ; push result    
-    jp next    
+    jp (ix)    
 
 arg:
     inc bc                      ; get next char
@@ -1242,7 +1173,7 @@ arg:
     dec hl
     ld e,(hl)
     push de                     ; push arg
-    jp next
+    jp (ix)
                                 ; 
 in:
     pop hl                      ; hl = string    
@@ -1261,7 +1192,7 @@ in2:
     dec hl                      ; if nz de = $ffff
 in3:
     push hl                     ; push result    
-    jp next    
+    jp (ix)    
     
 newAdd2:
     push bc                     ; push IP
@@ -1288,7 +1219,7 @@ newAdd2:
     add iy,sp
     
     push de                     ; push result    
-    jp next    
+    jp (ix)    
 
     
 if:
@@ -1308,7 +1239,7 @@ ifte1:
 ifte2:                           
     ld a,h                      ; check if hl is null
     or l
-    jp z,next
+    jr z,ifte3
     push bc                     ; push IP
     ld e,(iy+2)                 ; get SCP from parent stack frame
     ld d,(iy+3)                 ; make this the old BP for this stack frame
@@ -1318,7 +1249,8 @@ ifte2:
     add iy,sp
     ld bc,hl                    ; IP = then
     dec bc
-    jp next    
+ifte3:
+    jp (ix)    
 
 switch:
     pop hl                      ; get condition from stack
@@ -1330,7 +1262,7 @@ switch:
     ld iy,0                     ; BP = SP
     add iy,sp
     push hl                     ; push condition as first arg of new frame
-    jp next
+    jp (ix)
     
 case:
     ld h,(iy-1)                 ; hl = selector
@@ -1365,7 +1297,7 @@ case1:
     ld bc,de                    ; IP = arg
     dec bc
 case2:
-    jp next    
+    jp (ix)    
     
 words:
     ld hl,2
@@ -1375,7 +1307,7 @@ bytes:
     ld hl,1
 bytes1:
     ld (vDataWidth),hl
-    jp next
+    jp (ix)
     
 array:
     push bc                     ; create stack frame, push IP
@@ -1385,7 +1317,7 @@ array:
     push iy                     ; push BP  
     ld iy,0                     ; BP = SP
     add iy,sp
-    jp next
+    jp (ix)
 
 arrayEnd:
     ld d,iyh                    ; de = BP
@@ -1457,7 +1389,7 @@ arrayEnd4:
     push bc
     exx
     pop bc
-    jp next
+    jp (ix)
 
 ; updateEntry:
 ;     ld bc, 
@@ -1573,7 +1505,7 @@ hash:
     call hashStr
     pop bc
     push hl
-    jp next
+    jp (ix)
 
 ; str addr -- bool
 def:
@@ -1593,7 +1525,7 @@ def:
 def1:
     pop bc
     push hl
-    jp next
+    jp (ix)
     
 ; str -- addr
 addr:
@@ -1608,7 +1540,7 @@ addr:
 addr1:    
     pop bc
     push hl
-    jp next
+    jp (ix)
 
 define:
     pop hl
@@ -1659,7 +1591,38 @@ ident2:                                 ; non identifier char detected
     call lookupEntry
     pop bc
     jr c, ident3                        ; todo: no entry? print an error message 
-    jp next
+    jp (ix)
 ident3:    
     jp (hl)
+
+; division subroutine.
+; bc: divisor, de: dividend, hl: remainder
+
+divide:        
+    ld hl,0    	                        ; zero the remainder
+    ld a,16    	                        ; loop counter
+
+divide1:		                        ; shift the bits from bc (numerator) into hl (accumulator)
+    sla c
+    rl b
+    adc hl,hl
+
+    sbc hl,de		                    ; check if remainder >= denominator (hl>=de)
+    jr c,divide2
+    inc c
+    jr divide3
+divide2:		                        ; remainder is not >= denominator, so we have to add de back to hl
+    add hl,de
+divide3:
+    dec a
+    jr nz,divide1
+    ld d,b                              ; result from bc to de
+    ld e,c
+divide4:    
+    pop  bc       ; Restore the IP
+    push de       ; push Result
+    push hl       ; push remainder    
+
+    jp (ix)
+
     
