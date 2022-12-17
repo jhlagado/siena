@@ -9,16 +9,11 @@ rStack:
 dStack:        
 stack:
             .align $100
-opcodes:    
-            DS $80
-ctrlCodes:
-altCodes:
-            DS $80
 
-            .align $100
-mintVars:
+pad:
+            DS $100
+
             DS $30
-vLoopSP:    DS 2                ; 
 vByteMode:  DS 2                ; 
 tbPtr:      DS 2                ; reserved for tests
 

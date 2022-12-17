@@ -48,7 +48,7 @@ iAltVars:			            ; value copied into tables
     DW HEAP                     ; h vHeapPtr \h start of the free mem
 
     .align $100
-iOpcodes:
+opcodes:
     DB lsb(exit_)               ; NUL 
     DB lsb(nop_)                ; SOH 
     DB lsb(nop_)                ; STX 
@@ -114,69 +114,71 @@ iOpcodes:
     DB lsb(nop_)                ;    >  
     DB lsb(nop_)                ;    ?    
     DB lsb(fetch_)              ;    @  
-    DB lsb(kall_)               ;    A     
-    DB lsb(kall_)               ;    B     
-    DB lsb(kall_)               ;    C     
-    DB lsb(kall_)               ;    D     
-    DB lsb(kall_)               ;    E     
-    DB lsb(kall_)               ;    F     
-    DB lsb(kall_)               ;    G     
-    DB lsb(kall_)               ;    h     
-    DB lsb(kall_)               ;    I     
-    DB lsb(kall_)               ;    J     
-    DB lsb(kall_)               ;    K     
-    DB lsb(kall_)               ;    L     
-    DB lsb(kall_)               ;    M     
-    DB lsb(kall_)               ;    N     
-    DB lsb(kall_)               ;    O     
-    DB lsb(kall_)               ;    p     
-    DB lsb(kall_)               ;    Q     
-    DB lsb(kall_)               ;    R     
-    DB lsb(kall_)               ;    S     
-    DB lsb(kall_)               ;    T     
-    DB lsb(kall_)               ;    U     
-    DB lsb(kall_)               ;    V     
-    DB lsb(kall_)               ;    W     
-    DB lsb(kall_)               ;    X     
-    DB lsb(kall_)               ;    Y     
-    DB lsb(kall_)               ;    Z    
+    DB lsb(ident_)               ;    A     
+    DB lsb(ident_)               ;    B     
+    DB lsb(ident_)               ;    C     
+    DB lsb(ident_)               ;    D     
+    DB lsb(ident_)               ;    E     
+    DB lsb(ident_)               ;    F     
+    DB lsb(ident_)               ;    G     
+    DB lsb(ident_)               ;    h     
+    DB lsb(ident_)               ;    I     
+    DB lsb(ident_)               ;    J     
+    DB lsb(ident_)               ;    K     
+    DB lsb(ident_)               ;    L     
+    DB lsb(ident_)               ;    M     
+    DB lsb(ident_)               ;    N     
+    DB lsb(ident_)               ;    O     
+    DB lsb(ident_)               ;    p     
+    DB lsb(ident_)               ;    Q     
+    DB lsb(ident_)               ;    R     
+    DB lsb(ident_)               ;    S     
+    DB lsb(ident_)               ;    T     
+    DB lsb(ident_)               ;    U     
+    DB lsb(ident_)               ;    V     
+    DB lsb(ident_)               ;    W     
+    DB lsb(ident_)               ;    X     
+    DB lsb(ident_)               ;    Y     
+    DB lsb(ident_)               ;    Z    
     DB lsb(array_)              ;    [
     DB lsb(nop_)                ;    \
     DB lsb(arrayEnd_)           ;    ]
     DB lsb(nop_)                ;    ^
-    DB lsb(nop_)                ;    _
+    DB lsb(ident_)         ;    _
     DB lsb(char_)               ;    `    	    
-    DB lsb(a_)                  ;    a     
-    DB lsb(var_)                ;    b  
-    DB lsb(c_)                  ;    c  
-    DB lsb(d_)                  ;    d  
-    DB lsb(e_)                  ;    e  
-    DB lsb(f_)                  ;    f  
-    DB lsb(g_)                  ;    g  
-    DB lsb(h_)                  ;    h  
-    DB lsb(i_)                  ;    i  
-    DB lsb(var_)                ;    j  
-    DB lsb(k_)                  ;    k  
-    DB lsb(l_)                  ;    l  
-    DB lsb(m_)                  ;    m  
-    DB lsb(m_)                  ;    n  
-    DB lsb(o_)                  ;    o  
-    DB lsb(p_)                  ;    p  
-    DB lsb(var_)                ;    q  
-    DB lsb(r_)                  ;    r  
-    DB lsb(s_)                  ;    s  
-    DB lsb(var_)                ;    t  
-    DB lsb(u_)                  ;    u  
-    DB lsb(var_)                ;    v  
-    DB lsb(w_)                  ;    w  
-    DB lsb(x_)                  ;    x  
-    DB lsb(var_)                ;    y  
-    DB lsb(var_)                ;    z  
+    DB lsb(ident_)                  ;    a     
+    DB lsb(ident_)                ;    b  
+    DB lsb(ident_)                  ;    c  
+    DB lsb(ident_)                  ;    d  
+    DB lsb(ident_)                  ;    e  
+    DB lsb(ident_)                  ;    f  
+    DB lsb(ident_)                  ;    g  
+    DB lsb(ident_)                  ;    h  
+    DB lsb(ident_)                  ;    i  
+    DB lsb(ident_)                ;    j  
+    DB lsb(ident_)                  ;    k  
+    DB lsb(ident_)                  ;    l  
+    DB lsb(ident_)                  ;    m  
+    DB lsb(ident_)                  ;    n  
+    DB lsb(ident_)                  ;    o  
+    DB lsb(ident_)                  ;    p  
+    DB lsb(ident_)                ;    q  
+    DB lsb(ident_)                  ;    r  
+    DB lsb(ident_)                  ;    s  
+    DB lsb(ident_)                ;    t  
+    DB lsb(ident_)                  ;    u  
+    DB lsb(ident_)                ;    v  
+    DB lsb(ident_)                  ;    w  
+    DB lsb(ident_)                  ;    x  
+    DB lsb(ident_)                ;    y  
+    DB lsb(ident_)                ;    z  
     DB lsb(lambda_)             ;    {
     DB lsb(or_)                 ;    |  
     DB lsb(lambdaEnd_)             ;    }  
     DB lsb(nop_)                ;    ~    
     DB lsb(nop_)                ;    DEL	
+
+ctrlCodes:
     DB lsb(EMPTY)               ; NUL ^@    
     DB lsb(EMPTY)               ; SOH ^a  1
     DB lsb(EMPTY)               ; STX ^b  2
@@ -209,102 +211,6 @@ iOpcodes:
     DB lsb(EMPTY)               ; ^]  
     DB lsb(EMPTY)               ; ^^  
     DB lsb(EMPTY)               ; ^_  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)  
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
-    DB lsb(aNop_)        
-    DB lsb(aNop_)                       
-    DB lsb(aNop_)                           
-    DB lsb(aNop_)                           
-    DB lsb(aNop_)                              
-    DB lsb(aNop_)                           
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)          
-    DB lsb(aNop_)        
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)
-    DB lsb(aNop_)             
-    DB lsb(aNop_)                
-    DB lsb(aNop_)        
-    DB lsb(aNop_)    
-    DB lsb(aNop_)    
 
 etx:        
     ld hl,-DSTACK
@@ -427,7 +333,7 @@ next:
     inc bc                      ;  Increment the IP
     ld a, (bc)                  ;  Get the next character and dispatch
     ld l,a                      ;  Index into table
-    ld h,msb(iOpcodes)           ;  Start address of jump table    
+    ld h,msb(opcodes)          ;  Start address of jump table    
     ld l,(hl)                   ;  get low jump address
     ld h,msb(page4)             ;  Load h with the 1st page address
     jp (hl)                     ;  Jump to routine
@@ -469,6 +375,9 @@ array_:
     jp array
 arrayEnd_:
     jp arrayEnd
+ident_:
+    jp ident
+    
 a_:
     jp a
 c_:
@@ -554,14 +463,6 @@ add_:                           ; add the top 2 members of the stack
     push hl        
     jp next    
         
-kall_:
-    ld a,(bc)
-    call lookupRef1
-    ld e,(hl)
-    inc hl
-    ld d,(hl)
-    jp exec1
-
 hdot_:                          ; print hexadecimal
     pop hl
     call prthex
@@ -712,38 +613,12 @@ lte1:
     jp m,false_
     jp true
 
-
-var_:
-    ld a,(bc)
-    call lookupRef2
-    push hl
-    jp next
-    
-    
 div_:    
     jr div
 
-
-;*******************************************************************
-; Page 5 primitive routines 
-;*******************************************************************
-    ;falls through 
-
-    push hl
-    jp next
-
-; ********************************************************************
-; 16-bit division subroutine.
+; division subroutine.
 ;
 ; bc: divisor, de: dividend, hl: remainder
-
-; *********************************************************************  
-; This divides de by bc, storing the result in de, remainder in hl
-; *********************************************************************
-
-; 1382 cycles
-; 35 bytes (reduced from 48)
-		
 
 div:        ;=34
     pop  de       ; get first value
@@ -815,14 +690,6 @@ emit_:
     ld a,l
     call putchar
     jp next
-
-; exec_:
-;     call exec1
-;     jp next
-; exec1:
-;     pop hl
-;     ex (sp),hl
-;     jp (hl)
 
 prompt_:
     call prompt
@@ -1089,6 +956,7 @@ scan_:
 set_:
 shift_:
 while_:
+var_:
 
     jp next
 
@@ -1186,6 +1054,10 @@ init1:
     ld (hl),a
     inc hl
     djnz init1 
+
+    call define
+    .pstr "add",0                       ; muat have length and null terminator
+    dw add_
     ret
     
 num:
@@ -1887,14 +1759,14 @@ lookupEntry:
 lookupEntry0:
     ld a,(hl)                           ; a = (hl), slot
     cp UNUSED                           ; is it unused?
-    jr z,defineEntry3                   ; yes, does not exist
+    jr z,defineEntry2                   ; yes, does not exist
     ld a,c                              ; a = lo
     cp (hl)                             ; compare (lo1) with lo
     jr nz,lookupEntry1                  ; no match loop around
     inc l 
     ld a,b                              ; a = hi
     cp (hl)                             ; compare (lo1+1) with hi
-    jr z,lookupEntry2a
+    jr z,lookupEntry3
     dec l
 lookupEntry1:
     inc l 
@@ -1902,10 +1774,10 @@ lookupEntry1:
     ld a,c 
     cp l                                ; no space left, reject 
     jr nz,lookupEntry0
-lookupEntry3:
+lookupEntry2:
     ccf                                 ; clear carry flag, failure
     ret
-lookupEntry2a:
+lookupEntry3:
     ld h,msb(hashWords)                 ; hl = slots[lo*4]
     ld d,(hl)
     dec l                               ; restore l
@@ -1958,4 +1830,50 @@ lookup1:
     pop bc
     push hl
     jp next
+
+define:
+    pop hl
+    ld a,(hl)
+    inc hl
+    ld bc,hl
+    ld e,a
+    ld d,0
+    add hl,de
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    push hl                             ; bc = str 
+    push de
+    call hashStr                        ; hl = hash
+    pop de
+    ld bc,hl
+    jp defineEntry
+  
+ident:
+    ld hl,PAD
+    jr ident1
+ident0:
+    inc bc
+ident1:
+    ld a,(bc)
+    cp " "+1
+    jr c,ident2
+    ld (hl),a
+    inc hl
+    jr ident0
+ident2:
+    dec bc
+    xor a
+    ld (hl),a                           ; terminate string with null
+    push bc
+    ld bc,PAD
+    call hashStr                        ; hl = hash
+    ld bc,hl
+    call lookupEntry
+    pop bc
+    jr c, ident3                        ; todo: no entry? print an error message 
+    jp next
+ident3:    
+    jp (hl)
     
