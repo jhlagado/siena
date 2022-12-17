@@ -824,7 +824,7 @@ i:
     inc bc
     ld a,(bc)
     cp 'e'    
-    jp z,ife
+    jp z,ifte
     dec bc
     jp if
 i1:
@@ -1058,6 +1058,135 @@ init1:
     call define
     .pstr "add",0                       ; muat have length and null terminator
     dw add_
+
+    call define
+    .pstr "and",0                       
+    dw and_
+
+    call define
+    .pstr "bytes",0                       
+    dw bytes
+
+    call define
+    .pstr "case",0                       
+    dw case
+
+    call define
+    .pstr "def",0                       
+    dw def
+
+    call define
+    .pstr "div",0                       
+    dw div_
+
+    call define
+    .pstr "exec",0                       
+    dw exec
+
+    call define
+    .pstr "eq",0                       
+    dw eq_
+
+    call define
+    .pstr "filter",0                       
+    dw filter_
+
+    call define
+    .pstr "get",0                       
+    dw get_
+
+    call define
+    .pstr "gt",0                       
+    dw gt_
+
+    call define
+    .pstr "hash",0                       
+    dw hash
+
+    call define
+    .pstr "in",0                       
+    dw in
+
+    call define
+    .pstr "inv",0                       
+    dw inv_
+
+    call define
+    .pstr "if",0                       
+    dw if
+
+    call define
+    .pstr "ifte",0                       
+    dw ifte
+
+    call define
+    .pstr "key",0                       
+    dw key_
+
+    call define
+    .pstr "let",0                       
+    dw let_
+
+    call define
+    .pstr "lookup",0                       
+    dw lookup
+
+    call define
+    .pstr "lt",0                       
+    dw lt_
+
+    call define
+    .pstr "map",0                       
+    dw map_
+
+    call define
+    .pstr "mul",0                       
+    dw mul_
+
+    call define
+    .pstr "neg",0                       
+    dw neg_
+
+    call define
+    .pstr "or",0                       
+    dw or_
+
+    call define
+    .pstr "print",0                       
+    dw print_
+
+    call define
+    .pstr "scan",0                       
+    dw scan_
+
+    call define
+    .pstr "set",0                       
+    dw set_
+
+    call define
+    .pstr "shift",0                       
+    dw shift_
+
+    call define
+    .pstr "sub",0                       
+    dw sub_
+
+    call define
+    .pstr "switch",0                       
+    dw switch
+
+    call define
+    .pstr "while",0                       
+    dw while_
+
+    call define
+    .pstr "words",0                       
+    dw words
+
+    call define
+    .pstr "xor",0                       
+    dw xor_
+
     ret
     
 num:
@@ -1514,19 +1643,19 @@ newAdd2:
     
 if:
     ld de,0                      ; null pointer for else
-    jr ife1
-ife: 
+    jr ifte1
+ifte: 
     pop de                      ; de = else
-ife1:
+ifte1:
     pop hl                      ; hl = then
     ex (sp),hl                  ; hl = condition, (sp) = then
     inc hl                      ; check for true
     ld a,h
     or l
     pop hl                      ; hl = then
-    jr z,ife2                   
+    jr z,ifte2                   
     ex de,hl                    ; condition = false, hl = else  
-ife2:                           
+ifte2:                           
     ld a,h                      ; check if hl is null
     or l
     jp z,next
