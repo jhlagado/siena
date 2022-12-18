@@ -17,12 +17,14 @@ base:   .set 37
     .org $4000
 testsStart:
 
-    test "1 2 +", 3
-    ; test "1 2 add", 3
-    ; test "'H' 2 def 'H' addr", 2
+    ; test "10 sqrt", 3
+    test "10 sqrt frac", 1
 
-    ; test "'H' 2 de 'J' 3 de 'H' lo 'J' lo +", 5
-    ; test "'H' 2 de", TRUE
+    ; test "1 2 +", 3
+    ; test "'H' 2 def 'H' addr", 2
+    ; test "'H' 2 def 'J' 3 def 'H' addr 'J' addr +", 5
+    ; test "'H' 2 def", TRUE
+
     ; test "'H' ha", $3648
     ; test "'H' {1} de 'H' lo", 1
 

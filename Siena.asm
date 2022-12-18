@@ -522,6 +522,7 @@ div_:
     push bc                     ; preserve the IP    
     ld bc,hl                
     call divide
+    ld (vFrac),hl
     pop bc
     push de                     ; push result
     jp (ix)
@@ -677,12 +678,12 @@ init:
     ld bc,8 * 2
     ldir
     
-    ld hl,data                  ; init namespaces to 0 using ldir
-    ld de,hl
-    inc de
-    ld (hl),0
-    ld bc,DATASIZE
-    ldir
+    ; ld hl,data                  ; init namespaces to 0 using ldir
+    ; ld de,hl
+    ; inc de
+    ; ld (hl),0
+    ; ld bc,DATASIZE
+    ; ldir
 
     ld a,UNUSED
     ld b,0
@@ -694,7 +695,7 @@ init1:
 
     call define
     .pstr "addr",0                       
-    dw addr
+    dw addr_
 
     call define
     .pstr "bytes",0                       
@@ -761,6 +762,10 @@ init1:
     dw print_
 
     call define
+    .pstr "frac",0                       
+    dw frac
+
+    call define
     .pstr "scan",0                       
     dw scan_
 
@@ -771,6 +776,10 @@ init1:
     call define
     .pstr "shift",0                       
     dw shift_
+
+    call define
+    .pstr "sqrt",0                       
+    dw sqrt1
 
     call define
     .pstr "switch",0                       
@@ -1528,7 +1537,7 @@ def1:
     jp (ix)
     
 ; str -- addr
-addr:
+addr_:
     pop hl                              ; hl = str pointer
     push bc
     ld bc,hl
@@ -1563,27 +1572,24 @@ define:
   
 ident:
     ld de,PAD
-    jr ident1
     ld h,msb(opcodes)                   ; this table identifies the char type
+    jr ident1
 ident0:                                 ; copy to PAD area 
     inc bc                              ; characters that are part of the identifier  
+    inc de
 ident1:                                 ; 0-9 A-Z a-z _
     ld a,(bc)
+    ld (de),a
+    sub " " + 1                         ; opcodes start above white space 
     ld l,a
     ld a,(hl)
-    sub " "+1                           ; opcodes start above white space 
     cp lsb(ident_)
-    jr nz,ident2
+    jr z,ident0
     cp lsb(num_)
-    jr nz,ident2
-    ld a,l    
-    ld (de),a
-    inc de
-    jr ident0
-ident2:                                 ; non identifier char detected
+    jr z,ident0
     dec bc
     xor a
-    ld (hl),a                           ; terminate string with null
+    ld (de),a                           ; terminate string with null
     push bc
     ld bc,PAD
     call hashStr                        ; hl = hash
@@ -1625,4 +1631,89 @@ divide4:
 
     jp (ix)
 
-    
+frac:
+    ld hl,(vFrac)
+    push hl
+    jp (ix)
+
+sqrt1:
+    pop hl
+    push bc
+    call squareRoot
+    ld (vFrac),bc
+    pop bc
+    push de
+    jp (ix)
+
+; squareroot
+; Input: HL = value
+; Result: DE = square root BC = remainder
+
+squareRoot:
+    ld bc,0800h   
+    ld e,c        
+    xor a         
+squareRoot1:        
+    add hl,hl     
+    rl c          
+    adc hl,hl     
+    rl c          
+    jr nc,$+4     
+    set 0,l       
+    ld a,e        
+    add a,a       
+    ld e,a        
+    add a,a       
+    bit 0,l       
+    jr nz,$+5     
+    sub c         
+    jr nc,squareRoot4     
+    ld a,c         
+    sub e              
+    inc e          
+    sub e          
+    ld c,a         
+squareRoot4:
+    djnz squareRoot1
+    bit 0,l       
+    jr z,squareRoot5         
+    inc b         
+squareRoot5:
+    ld d,0
+    ret           
+   
+;     ; Calculate the square root of the number in HL and store the result in DE
+;     ; When the loop finishes, DE contains an approximation of the square root of the number in HL
+
+; calc_sqrt:
+;     ; Initialize result to the input number
+;     ld de,hl
+
+;     ; Iterate the Babylonian method 10 times
+;     ld bc,10
+; babylonian_loop:
+;     ; Calculate result as the average of result and input / result
+;     push de
+;     ld bc,hl
+;     ; Divide HL by BC and store the result in E
+;     ld de,0
+; div_loop:
+;     or a
+;     sbc hl,bc
+;     jr c,div_done
+;     inc de
+;     jp div_loop
+; div_done:
+;     ; HL now contains the remainder of the division
+;     add hl,de
+;     ; Shift HL right by 1 bit (divide by 2)
+;     srl h
+;     rr l
+;     pop de
+;     ; Repeat loop if counter is not 0
+;     dec bc
+;     jp nz,babylonian_loop
+
+;     ; Return from subroutine
+;     ret
+
