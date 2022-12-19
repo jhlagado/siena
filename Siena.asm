@@ -202,6 +202,7 @@ etx:
     ld sp,DSTACK
 etx1:
     jr interpret
+    
 exit:
     ld de,bc                    ; address of code after exit opcode
     inc de			            
@@ -209,7 +210,7 @@ exit:
     pop bc                      ; bc = last result 
     ld d,iyh                    ; de = BP
     ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
+    ex de,hl                    ; hl = BP 
     ld sp,hl                    ; sp = BP
     exx
     pop hl                      ; hl = old BP
@@ -323,8 +324,6 @@ arg_:
     jp arg
 strDef_:
     jp strDef
-newAdd2_:
-    jp newAdd2
 lambda_:    
     jp lambda
 lambdaEnd_:
@@ -651,21 +650,6 @@ putStr:
     jr nz,putStr0
     ret
 
-; rpush:     
-;     dec ix    
-;     ld (ix+0),h
-;     dec ix
-;     ld (ix+0),l
-;     ret
-
-; rpop:       
-;     ld l,(ix+0)    
-;     inc ix    
-;     ld h,(ix+0)
-;     inc ix    
-; rpop2:
-;     ret
-
 crlf:       
     call printStr
     .cstr "\r\n"
@@ -679,13 +663,6 @@ init:
     ld bc,8 * 2
     ldir
     
-    ; ld hl,data                  ; init namespaces to 0 using ldir
-    ; ld de,hl
-    ; inc de
-    ; ld (hl),0
-    ; ld bc,DATASIZE
-    ; ldir
-
     ld a,UNUSED
     ld b,0
     ld hl, hashSlots
@@ -858,157 +835,6 @@ hexnum2:
     add a,l       ; add into bottom of hl
     ld  l,a       ;    
     jr  hexnum1
-
-prtdec:        ;=34 ; removes leading zeros
-    ; ld a,h
-    ; or l
-    ; ld a, '0'
-    ; jp z, putchar
-    bit 7,h
-    jr z,prtdec0
-    ld a,'-'
-    call putchar
-    xor a  
-    sub l  
-    ld l,a
-    sbc a,a  
-    sub h  
-    ld h,a
-prtdec0:        
-    push bc
-    ld c,0        ; leading zeros flag = false
-    ld de,-10000
-    call prtdec1
-    ld de,-1000
-    call prtdec1
-    ld de,-100
-    call prtdec1
-    ld e,-10
-    call prtdec1
-    inc c        ; flag = true for at least digit
-    ld e,-1
-    call prtdec1
-    pop bc
-    ret
-prtdec1:	     
-    ld b,'0'-1
-prtdec2:	    
-    inc b
-    add hl,de
-    jr c,prtdec2
-    sbc hl,de
-    ld a,'0'
-    cp b
-    jr nz,prtdec3
-    xor a
-    or c
-    ret z
-    jr prtdec4
-prtdec3:	    
-    inc c
-prtdec4:	    
-    ld a,b
-    jp putchar
-                                ; 
-prthex:          
-                                ; Display hl as a 16-bit number in hex.
-    push bc                     ; preserve the IP
-    ld a,h
-    call prthex2
-    ld a,l
-    call prthex2
-    pop bc
-    ret
-prthex2:		     
-    ld	c,a
-	rra 
-	rra 
-	rra 
-	rra 
-    call prthex3
-    ld a,c
-prthex3:		
-    and	0x0F
-	add	a,0x90
-	daa
-	adc	a,0x40
-	daa
-	jp putchar
-
-printStr:        
-    ex (sp),hl		            ; swap			
-    call putStr		
-    inc hl			            ; inc past null
-    ex (sp),hl		            ; put it back	
-    ret
-
-lookupRef:
-    ld d,0
-lookupRef0:
-    cp "a"
-    jr nc,lookupRef2
-lookupRef1:
-    sub "a"
-    ld e,0
-    jr lookupRef3    
-lookupRef2:
-    sub "a"
-    ld e,26*2
-lookupRef3:
-    add a,a
-    add a,e
-    ld hl,DATA
-    add a,l
-    ld l,a
-    ld a,0
-    adc a,h
-    ld h,a
-    xor a
-    or e                        ; sets z flag if a-z
-    ret
-
-; **************************************************************************    
-; calculate nesting value
-; a is char to be tested, 
-; e is the nesting value (initially 0)
-; e is increased by ( and [ 
-; e is decreased by ) and ]
-; e has its bit 7 toggled by `
-; limited to 127 levels
-; **************************************************************************    
-
-nesting:    
-    cp $22                      ; quote char
-    jr nz,nesting1
-    bit 7,e
-    jr z,nesting1a
-    res 7,e
-    ret
-nesting1a: 
-    set 7,e
-    ret
-nesting1:
-    bit 7,e    
-    ret nz    
-    cp '{'
-    jr z,nesting2
-    cp '['
-    jr z,nesting2
-    cp '('
-    jr nz,nesting3
-nesting2:
-    inc e
-    ret
-nesting3:
-    cp '}'
-    jr z,nesting4
-    cp ']'
-    jr z,nesting4
-    cp ')'
-    ret nz
-nesting4:
-    dec e
-    ret 
 
                                 ; 
 strDef:     
@@ -1204,32 +1030,32 @@ in3:
     push hl                     ; push result    
     jp (ix)    
     
-newAdd2:
-    push bc                     ; push IP
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
-    push iy                     ; push base pointer
-    ld iy,(3+2)*2               ; base pointer = stack pointer - (stack frame vars) - 2 args
-    add iy,sp                   ;
+; newAdd2:
+;     push bc                     ; push IP
+;     ld e,(iy+2)                 ; get SCP from parent stack frame
+;     ld d,(iy+3)                 ; make this the old BP for this stack frame
+;     push de                     ; push SCP
+;     push iy                     ; push base pointer
+;     ld iy,(3+2)*2               ; base pointer = stack pointer - (stack frame vars) - 2 args
+;     add iy,sp                   ;
     
-    ld d,(iy-1)
-    ld e,(iy-2)
-    ld h,(iy-3)
-    ld l,(iy-4)
+;     ld d,(iy-1)
+;     ld e,(iy-2)
+;     ld h,(iy-3)
+;     ld l,(iy-4)
 
-    add hl,de                   ; hl = hl + de   
-    ex de,hl                    ; de = result
+;     add hl,de                   ; hl = hl + de   
+;     ex de,hl                    ; de = result
 
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    ld iy,0
-    add iy,sp
+;     pop hl                      ; hl = old BP
+;     pop bc                      ; pop SCP (discard)
+;     pop bc                      ; bc = IP
+;     ld sp,hl                    ; sp = old BP
+;     ld iy,0
+;     add iy,sp
     
-    push de                     ; push result    
-    jp (ix)    
+;     push de                     ; push result    
+;     jp (ix)    
 
     
 if:
@@ -1363,8 +1189,8 @@ arrayEnd1:
     dec bc
     ld a,c
     or b
-    jr nz,arrayEnd1
-    jr arrayEnd4
+    jr z,arrayEnd3
+    jr arrayEnd1
 
 arrayEnd2:
     dec de
@@ -1383,7 +1209,7 @@ arrayEnd2:
     or b
     jr nz,arrayEnd2
     
-arrayEnd4:
+arrayEnd3:
     ld d,iyh                    ; de = BP
     ld e,iyl
     ex de,hl                    ; hl = BP, de = result
@@ -1401,12 +1227,119 @@ arrayEnd4:
     pop bc
     jp (ix)
 
-; updateEntry:
-;     ld bc, 
-;     pop hl                          ; pointer to args
-;     ld e,(hl) 
-;     ret
+; str -- num
+hash:
+    pop hl
+    push bc
+    ld bc,hl
+    call hashStr
+    pop bc
+    push hl
+    jp (ix)
 
+; str addr -- bool
+def:
+    ld hl,bc                            ; hl = IP
+    pop de                              ; de = addr
+    pop bc                              ; bc = hash
+    push hl
+    call defineEntry
+    ld hl,0                             ; if c return TRUE
+    jr nc,def1
+    dec hl
+def1:
+    pop bc
+    push hl
+    jp (ix)
+    
+; str -- addr
+addr_:
+    pop hl                              ; hl = hash
+    push bc
+    ld bc,hl
+    call lookupEntry
+    jr c, addr1
+    ld hl,0
+addr1:    
+    pop bc
+    push hl
+    jp (ix)
+
+symbol:
+    inc bc
+    ld de,PAD
+    ld h,msb(opcodes)                   ; this table identifies the char type
+    jr symbol1
+symbol0:                                 ; copy to PAD area 
+    inc bc                              ; characters that are part of the identifier  
+    inc de
+symbol1:                                 ; 0-9 A-Z a-z _
+    ld a,(bc)
+    ld (de),a
+    sub " " + 1                         ; opcodes start above white space 
+    ld l,a
+    ld a,(hl)
+    cp lsb(ident_)
+    jr z,symbol0
+    cp lsb(num_)
+    jr z,symbol0
+    dec bc
+    xor a
+    ld (de),a                           ; terminate string with null
+    push bc
+    ld bc,PAD
+    call hashStr                        ; hl = hash
+    pop bc
+    push hl
+    jp (ix)
+    
+ident:
+    ld de,PAD
+    ld h,msb(opcodes)                   ; this table identifies the char type
+    jr ident1
+ident0:                                 ; copy to PAD area 
+    inc bc                              ; characters that are part of the identifier  
+    inc de
+ident1:                                 ; 0-9 A-Z a-z _
+    ld a,(bc)
+    ld (de),a
+    sub " " + 1                         ; opcodes start above white space 
+    ld l,a
+    ld a,(hl)
+    cp lsb(ident_)
+    jr z,ident0
+    cp lsb(num_)
+    jr z,ident0
+    dec bc
+    xor a
+    ld (de),a                           ; terminate string with null
+    push bc
+    ld bc,PAD
+    call hashStr                        ; hl = hash
+    ld bc,hl
+    call lookupEntry
+    pop bc
+    jr c, ident3                        ; todo: no entry? print an error message 
+    jp (ix)
+ident3:    
+    jp (hl)
+
+frac:
+    ld hl,(vFrac)
+    push hl
+    jp (ix)
+
+sqrt1:
+    pop hl
+    push bc
+    call squareRoot
+    ld (vFrac),bc
+    pop bc
+    push de
+    jp (ix)
+
+; ===============================================================================
+;
 ; hash C-string in BC, result in HL 
 hashStr:
     ld hl,0                             
@@ -1507,122 +1440,6 @@ lookupEntry3:
     scf
     ret
 
-; str -- num
-hash:
-    pop hl
-    push bc
-    ld bc,hl
-    call hashStr
-    pop bc
-    push hl
-    jp (ix)
-
-; str addr -- bool
-def:
-    ld hl,bc                            ; hl = IP
-    pop de                              ; de = addr
-    pop bc                              ; bc = hash
-    push hl
-    call defineEntry
-    ld hl,0                             ; if c return TRUE
-    jr nc,def1
-    dec hl
-def1:
-    pop bc
-    push hl
-    jp (ix)
-    
-; str -- addr
-addr_:
-    pop hl                              ; hl = hash
-    push bc
-    ld bc,hl
-    call lookupEntry
-    jr c, addr1
-    ld hl,0
-addr1:    
-    pop bc
-    push hl
-    jp (ix)
-
-define:
-    pop hl
-    ld a,(hl)
-    inc hl
-    ld bc,hl
-    ld e,a
-    ld d,0
-    add hl,de
-    ld e,(hl)
-    inc hl
-    ld d,(hl)
-    inc hl
-    push hl                             ; bc = str 
-    push de
-    call hashStr                        ; hl = hash
-    pop de
-    ld bc,hl
-    jp defineEntry
-
-symbol:
-    inc bc
-    ld de,PAD
-    ld h,msb(opcodes)                   ; this table identifies the char type
-    jr symbol1
-symbol0:                                 ; copy to PAD area 
-    inc bc                              ; characters that are part of the identifier  
-    inc de
-symbol1:                                 ; 0-9 A-Z a-z _
-    ld a,(bc)
-    ld (de),a
-    sub " " + 1                         ; opcodes start above white space 
-    ld l,a
-    ld a,(hl)
-    cp lsb(ident_)
-    jr z,symbol0
-    cp lsb(num_)
-    jr z,symbol0
-    dec bc
-    xor a
-    ld (de),a                           ; terminate string with null
-    push bc
-    ld bc,PAD
-    call hashStr                        ; hl = hash
-    pop bc
-    push hl
-    jp (ix)
-    
-ident:
-    ld de,PAD
-    ld h,msb(opcodes)                   ; this table identifies the char type
-    jr ident1
-ident0:                                 ; copy to PAD area 
-    inc bc                              ; characters that are part of the identifier  
-    inc de
-ident1:                                 ; 0-9 A-Z a-z _
-    ld a,(bc)
-    ld (de),a
-    sub " " + 1                         ; opcodes start above white space 
-    ld l,a
-    ld a,(hl)
-    cp lsb(ident_)
-    jr z,ident0
-    cp lsb(num_)
-    jr z,ident0
-    dec bc
-    xor a
-    ld (de),a                           ; terminate string with null
-    push bc
-    ld bc,PAD
-    call hashStr                        ; hl = hash
-    ld bc,hl
-    call lookupEntry
-    pop bc
-    jr c, ident3                        ; todo: no entry? print an error message 
-    jp (ix)
-ident3:    
-    jp (hl)
-
 ; division subroutine.
 ; bc: divisor, de: dividend, hl: remainder
 
@@ -1644,20 +1461,6 @@ divide3:
     jr nz,divide1
     ld de,bc                              ; result from bc to de
     ret
-
-frac:
-    ld hl,(vFrac)
-    push hl
-    jp (ix)
-
-sqrt1:
-    pop hl
-    push bc
-    call squareRoot
-    ld (vFrac),bc
-    pop bc
-    push de
-    jp (ix)
 
 ; squareroot
 ; Input: HL = value
@@ -1685,7 +1488,7 @@ squareRoot1:
     ld a,c         
     sub e              
     inc e          
-    sub e          
+    sub e           
     ld c,a         
 squareRoot4:
     djnz squareRoot1
@@ -1696,39 +1499,144 @@ squareRoot5:
     ld d,0
     ret           
  
+prtdec:        
+    bit 7,h
+    jr z,prtdec0
+    ld a,'-'
+    call putchar
+    xor a  
+    sub l  
+    ld l,a
+    sbc a,a  
+    sub h  
+    ld h,a
+prtdec0:        
+    push bc
+    ld c,0                      ; leading zeros flag = false
+    ld de,-10000
+    call prtdec1
+    ld de,-1000
+    call prtdec1
+    ld de,-100
+    call prtdec1
+    ld e,-10
+    call prtdec1
+    inc c                       ; flag = true for at least digit
+    ld e,-1
+    call prtdec1
+    pop bc
+    ret
+prtdec1:	     
+    ld b,'0'-1
+prtdec2:	    
+    inc b
+    add hl,de
+    jr c,prtdec2
+    sbc hl,de
+    ld a,'0'
+    cp b
+    jr nz,prtdec3
+    xor a
+    or c
+    ret z
+    jr prtdec4
+prtdec3:	    
+    inc c
+prtdec4:	    
+    ld a,b
+    jp putchar
+                                 
+prthex:                         ; display hl as a 16-bit number in hex.
+    push bc                     ; preserve the IP
+    ld a,h
+    call prthex2
+    ld a,l
+    call prthex2
+    pop bc
+    ret
+prthex2:		     
+    ld	c,a
+	rra 
+	rra 
+	rra 
+	rra 
+    call prthex3
+    ld a,c
+prthex3:		
+    and	0x0F
+	add	a,0x90
+	daa
+	adc	a,0x40
+	daa
+	jp putchar
+
+printStr:        
+    ex (sp),hl		            ; swap			
+    call putStr		
+    inc hl			            ; inc past null
+    ex (sp),hl		            ; put it back	
+    ret
+
+; **************************************************************************    
+; calculate nesting value
+; a is char to be tested, 
+; e is the nesting value (initially 0)
+; e is increased by ( and [ 
+; e is decreased by ) and ]
+; e has its bit 7 toggled by `
+; limited to 127 levels
+; **************************************************************************    
+
+nesting:    
+    cp $22                      ; quote char
+    jr nz,nesting1
+    bit 7,e
+    jr z,nesting1a
+    res 7,e
+    ret
+nesting1a: 
+    set 7,e
+    ret
+nesting1:
+    bit 7,e    
+    ret nz    
+    cp '{'
+    jr z,nesting2
+    cp '['
+    jr z,nesting2
+    cp '('
+    jr nz,nesting3
+nesting2:
+    inc e
+    ret
+nesting3:
+    cp '}'
+    jr z,nesting4
+    cp ']'
+    jr z,nesting4
+    cp ')'
+    ret nz
+nesting4:
+    dec e
+    ret 
+ 
+define:
+    pop hl
+    ld a,(hl)
+    inc hl
+    ld bc,hl
+    ld e,a
+    ld d,0
+    add hl,de
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    push hl                             ; bc = str 
+    push de
+    call hashStr                        ; hl = hash
+    pop de
+    ld bc,hl
+    jp defineEntry
+
    
-;     ; Calculate the square root of the number in HL and store the result in DE
-;     ; When the loop finishes, DE contains an approximation of the square root of the number in HL
-
-; calc_sqrt:
-;     ; Initialize result to the input number
-;     ld de,hl
-
-;     ; Iterate the Babylonian method 10 times
-;     ld bc,10
-; babylonian_loop:
-;     ; Calculate result as the average of result and input / result
-;     push de
-;     ld bc,hl
-;     ; Divide HL by BC and store the result in E
-;     ld de,0
-; div_loop:
-;     or a
-;     sbc hl,bc
-;     jr c,div_done
-;     inc de
-;     jp div_loop
-; div_done:
-;     ; HL now contains the remainder of the division
-;     add hl,de
-;     ; Shift HL right by 1 bit (divide by 2)
-;     srl h
-;     rr l
-;     pop de
-;     ; Repeat loop if counter is not 0
-;     dec bc
-;     jp nz,babylonian_loop
-
-;     ; Return from subroutine
-;     ret
-
