@@ -75,7 +75,7 @@ opcodes:
     DB lsb(num_)                ;    7    
     DB lsb(num_)                ;    8    
     DB lsb(num_)                ;    9    
-    DB lsb(nop_)                ;    :    
+    DB lsb(symbol_)             ;    :    
     DB lsb(nop_)                ;    ;
     DB lsb(lt_)                 ;    <
     DB lsb(eq_)                 ;    =  
@@ -348,7 +348,8 @@ arrayEnd_:
     jp arrayEnd
 ident_:
     jp ident
-    
+symbol_:
+    jp symbol
 and_:    
     pop de                      ; Bitwise and the top 2 elements of the stack
     pop hl     
@@ -1518,15 +1519,10 @@ hash:
 
 ; str addr -- bool
 def:
-    pop hl                              ; hl = addr
-    ex (sp),hl                          ; hl = str pointer (sp) = addr
-    push bc
-    ld bc,hl
-    call hashStr                        ; hl = hash
-    ld bc,hl                            ; bc = hash
-    pop hl                              ; hl = old BC
-    ex (sp),hl                          ; hl = addr
-    ex de,hl                            ; de = addr
+    ld hl,bc                            ; hl = IP
+    pop de                              ; de = addr
+    pop bc                              ; bc = hash
+    push hl
     call defineEntry
     ld hl,0                             ; if c return TRUE
     jr nc,def1
@@ -1538,10 +1534,8 @@ def1:
     
 ; str -- addr
 addr_:
-    pop hl                              ; hl = str pointer
+    pop hl                              ; hl = hash
     push bc
-    ld bc,hl
-    call hashStr                        ; hl = hash
     ld bc,hl
     call lookupEntry
     jr c, addr1
@@ -1569,7 +1563,35 @@ define:
     pop de
     ld bc,hl
     jp defineEntry
-  
+
+symbol:
+    inc bc
+    ld de,PAD
+    ld h,msb(opcodes)                   ; this table identifies the char type
+    jr symbol1
+symbol0:                                 ; copy to PAD area 
+    inc bc                              ; characters that are part of the identifier  
+    inc de
+symbol1:                                 ; 0-9 A-Z a-z _
+    ld a,(bc)
+    ld (de),a
+    sub " " + 1                         ; opcodes start above white space 
+    ld l,a
+    ld a,(hl)
+    cp lsb(ident_)
+    jr z,symbol0
+    cp lsb(num_)
+    jr z,symbol0
+    dec bc
+    xor a
+    ld (de),a                           ; terminate string with null
+    push bc
+    ld bc,PAD
+    call hashStr                        ; hl = hash
+    pop bc
+    push hl
+    jp (ix)
+    
 ident:
     ld de,PAD
     ld h,msb(opcodes)                   ; this table identifies the char type
@@ -1607,12 +1629,10 @@ ident3:
 divide:        
     ld hl,0    	                        ; zero the remainder
     ld a,16    	                        ; loop counter
-
 divide1:		                        ; shift the bits from bc (numerator) into hl (accumulator)
     sla c
     rl b
     adc hl,hl
-
     sbc hl,de		                    ; check if remainder >= denominator (hl>=de)
     jr c,divide2
     inc c
@@ -1622,14 +1642,8 @@ divide2:		                        ; remainder is not >= denominator, so we have 
 divide3:
     dec a
     jr nz,divide1
-    ld d,b                              ; result from bc to de
-    ld e,c
-divide4:    
-    pop  bc       ; Restore the IP
-    push de       ; push Result
-    push hl       ; push remainder    
-
-    jp (ix)
+    ld de,bc                              ; result from bc to de
+    ret
 
 frac:
     ld hl,(vFrac)
@@ -1681,6 +1695,7 @@ squareRoot4:
 squareRoot5:
     ld d,0
     ret           
+ 
    
 ;     ; Calculate the square root of the number in HL and store the result in DE
 ;     ; When the loop finishes, DE contains an approximation of the square root of the number in HL

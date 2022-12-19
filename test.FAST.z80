@@ -17,16 +17,19 @@ base:   .set 37
     .org $4000
 testsStart:
 
+    ; test ":hello", $7f54
+    ; test ":hello 2 def", TRUE
+    ; test ":hello 2 def :hello addr", 2
+    ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
+
     ; test "10 sqrt", 3
-    test "10 sqrt frac", 1
-
+    ; test "10 sqrt frac", 1
+    ; test "7 3 /", 2
+    ; test "7 3 / frac", 1
     ; test "1 2 +", 3
-    ; test "'H' 2 def 'H' addr", 2
-    ; test "'H' 2 def 'J' 3 def 'H' addr 'J' addr +", 5
-    ; test "'H' 2 def", TRUE
+    ; test "'Hello' hash", 1844
 
-    ; test "'H' ha", $3648
-    ; test "'H' {1} de 'H' lo", 1
+    ; test "'H' {1} def 'H' addr exec", 1
 
     ; test "by [`A` `B` `C`]", 0
     ; test "by [`A` `B` `C`] 1 ge", 'B'
