@@ -39,7 +39,7 @@ macros:
 ; Initial values for system vars		
 ; ***********************************************************************		
 isysVars:			            
-    DW 0                        ; a 			
+    DW 0                        ; a fractional part of calculation			
     DW 1                        ; b width in bytes of array operations (default 1 byte) 
     DW 0                        ; c vTIBPtr an offset to the tib
     DW 0                        ; d 
@@ -49,6 +49,40 @@ isysVars:
     DW HEAP                     ; h vHeapPtr \h start of the free mem
 
     .align $100
+; ctrlCodes:
+;     DB lsb(EMPTY)               ; NUL ^@    
+;     DB lsb(EMPTY)               ; SOH ^a  1
+;     DB lsb(EMPTY)               ; STX ^b  2
+;     DB lsb(EMPTY)               ; ETX ^c  3
+;     DB lsb(EMPTY)               ; EOT ^d  4
+;     DB lsb(EMPTY)               ; ENQ ^e  5
+;     DB lsb(EMPTY)               ; ACK ^F  6
+;     DB lsb(EMPTY)               ; BEL ^G  7 
+;     DB lsb(EMPTY)               ; BS  ^h  8
+;     DB lsb(EMPTY)               ; TAB ^I  9
+;     DB lsb(EMPTY)               ; LF  ^J 10
+;     DB lsb(EMPTY)               ; VT  ^K 11
+;     DB lsb(EMPTY)               ; FF  ^l 12
+;     DB lsb(EMPTY)               ; CR  ^m 13
+;     DB lsb(EMPTY)               ; SO  ^N 14
+;     DB lsb(EMPTY)               ; SI  ^O 15
+;     DB lsb(EMPTY)               ; DLE ^p 16
+;     DB lsb(EMPTY)               ; ^Q     
+;     DB lsb(EMPTY)               ; ^R     
+;     DB lsb(EMPTY)               ; ^S    
+;     DB lsb(EMPTY)               ; ^T    
+;     DB lsb(EMPTY)               ; ^U       
+;     DB lsb(EMPTY)               ; ^V  
+;     DB lsb(EMPTY)               ; ^W    
+;     DB lsb(EMPTY)               ; ^X    
+;     DB lsb(EMPTY)               ; ^Y    
+;     DB lsb(EMPTY)               ; ^Z    
+;     DB lsb(EMPTY)               ; ^[  
+;     DB lsb(EMPTY)               ; ^\  
+;     DB lsb(EMPTY)               ; ^]  
+;     DB lsb(EMPTY)               ; ^^  
+;     DB lsb(EMPTY)               ; ^_  
+
 opcodes:
     DB lsb(inv_)                ;    !  
     DB lsb(nop_)                ;    "
@@ -81,7 +115,7 @@ opcodes:
     DB lsb(eq_)                 ;    =  
     DB lsb(gt_)                 ;    >  
     DB lsb(nop_)                ;    ?    
-    DB lsb(fetch_)              ;    @  
+    DB lsb(nop_)                ;    @  
     DB lsb(ident_)              ;    A     
     DB lsb(ident_)              ;    B     
     DB lsb(ident_)              ;    C     
@@ -146,82 +180,6 @@ opcodes:
     DB lsb(nop_)                ;    ~    
     DB lsb(nop_)                ;    DEL	
 
-; ctrlCodes:
-;     DB lsb(EMPTY)               ; NUL ^@    
-;     DB lsb(EMPTY)               ; SOH ^a  1
-;     DB lsb(EMPTY)               ; STX ^b  2
-;     DB lsb(EMPTY)               ; ETX ^c  3
-;     DB lsb(EMPTY)               ; EOT ^d  4
-;     DB lsb(EMPTY)               ; ENQ ^e  5
-;     DB lsb(EMPTY)               ; ACK ^F  6
-;     DB lsb(EMPTY)               ; BEL ^G  7 
-;     DB lsb(EMPTY)               ; BS  ^h  8
-;     DB lsb(EMPTY)               ; TAB ^I  9
-;     DB lsb(EMPTY)               ; LF  ^J 10
-;     DB lsb(EMPTY)               ; VT  ^K 11
-;     DB lsb(EMPTY)               ; FF  ^l 12
-;     DB lsb(EMPTY)               ; CR  ^m 13
-;     DB lsb(EMPTY)               ; SO  ^N 14
-;     DB lsb(EMPTY)               ; SI  ^O 15
-;     DB lsb(EMPTY)               ; DLE ^p 16
-;     DB lsb(EMPTY)               ; ^Q     
-;     DB lsb(EMPTY)               ; ^R     
-;     DB lsb(EMPTY)               ; ^S    
-;     DB lsb(EMPTY)               ; ^T    
-;     DB lsb(EMPTY)               ; ^U       
-;     DB lsb(EMPTY)               ; ^V  
-;     DB lsb(EMPTY)               ; ^W    
-;     DB lsb(EMPTY)               ; ^X    
-;     DB lsb(EMPTY)               ; ^Y    
-;     DB lsb(EMPTY)               ; ^Z    
-;     DB lsb(EMPTY)               ; ^[  
-;     DB lsb(EMPTY)               ; ^\  
-;     DB lsb(EMPTY)               ; ^]  
-;     DB lsb(EMPTY)               ; ^^  
-;     DB lsb(EMPTY)               ; ^_  
-
-next:        
-    inc bc                      ; Increment the IP
-    ld a,(bc)                   ; Get the next character and dispatch
-    sub " " + 1                 ; whitespace?
-    jr c,next1
-    ld l,a                      ; index into table
-    ld h,msb(opcodes)           ; start address of jump table    
-    ld l,(hl)                   ; get low jump address
-    ld h,msb(page4)             ; Load h with the 1st page address
-    jp (hl)                     ; Jump to routine
-next1:
-    cp NULL - (" " + 1)           ; is it end of text?
-    jr z,exit
-    cp ENDTEXT - (" " + 1)        ; is it end of text?
-    jr nz,next                  ; no, other whitespace, ignore
-etx:        
-    ld hl,-DSTACK
-    add hl,sp
-    jr nc,etx1
-    ld sp,DSTACK
-etx1:
-    jr interpret
-    
-exit:
-    ld de,bc                    ; address of code after exit opcode
-    inc de			            
-    exx
-    pop bc                      ; bc = last result 
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP 
-    ld sp,hl                    ; sp = BP
-    exx
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    exx
-    push bc                     ; push result    
-    exx
-    ex de,hl
-    jp (hl)
 
 start:
     ld sp,DSTACK		        ; start of Siena
@@ -309,6 +267,49 @@ waitchar4:
     ld (vTIBPtr),bc
     ld bc,TIB                   ; Instructions stored on heap at address HERE, we pressed enter
     dec bc
+next:        
+    inc bc                      ; Increment the IP
+    ld a,(bc)                   ; Get the next character and dispatch
+    sub " " + 1                 ; whitespace?
+    jr c,next1
+    ld l,a                      ; index into table
+    ld h,msb(opcodes)           ; start address of jump table    
+    ld l,(hl)                   ; get low jump address
+    ld h,msb(page4)             ; Load h with the 1st page address
+    jp (hl)                     ; Jump to routine
+next1:
+    cp NULL - (" " + 1)           ; is it end of text?
+    jr z,exit
+    cp ENDTEXT - (" " + 1)        ; is it end of text?
+    jr nz,next                  ; no, other whitespace, ignore
+etx:        
+    ld hl,-DSTACK
+    add hl,sp
+    jr nc,etx1
+    ld sp,DSTACK
+etx1:
+    jr interpret
+    
+exit:
+    ld de,bc                    ; address of code after exit opcode
+    inc de			            
+    exx
+    pop bc                      ; bc = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP 
+    ld sp,hl                    ; sp = BP
+    exx
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    exx
+    push bc                     ; push result    
+    exx
+    ex de,hl
+    jp (hl)
+
 
 ; **********************************************************************			 
 ; Page 4 primitive routines 
@@ -404,56 +405,8 @@ etx_:
     
 exit_:
     jp exit
-    
-fetch_:                         ; Fetch the value from the address placed on the top of the stack 
-    pop hl    
-fetch1:
-    ld e,(hl)    
-    inc hl    
-    ld d,(hl)    
-    push de    
-    jp (ix)       
-
-key_:
-    call getchar
-    ld h,0
-    ld l,a
-    push hl
-    jp (ix)
 
 mul_:    jp mul 
-
-nop_:  
-    jp (ix)                     ; hardwire white space to always exec_ to next (important for arrays)
-
-
-shl_:    
-    pop hl                      ; Duplicate the top member of the stack
-    add hl,hl
-    push hl                     ; shift left fallthrough into add_     
-    jp (ix)            
-    
-				                ;  Right shift } is a divide by 2		
-shr_:    
-    pop hl                      ; Get the top member of the stack
-shr1:
-    srl h
-    RR l
-    push hl
-    jp (ix)            
-
-store_:                         ; Store the value at the address placed on the top of the stack
-    pop hl     
-    pop de     
-    ld (hl),e     
-    inc hl    
-    ld (hl),d     
-    jp (ix)  
-          
-neg_:    
-    ld hl, 0    		        ; NEGate the value on top of stack (2's complement)
-    pop de       
-    jr sub2                     ; use the SUBtract routine
     
 sub_:  		                    ; Subtract the value 2nd on stack from top of stack 
     pop de    
@@ -470,6 +423,7 @@ eq_:
     or a                        ; reset the carry flag
     sbc hl,de                   ; only equality sets hl=0 here
     jr z, true_
+
 false_:
     ld hl, 0
     push hl
@@ -486,8 +440,9 @@ lt_:
 lt1:    
     or a                        ; reset the carry flag
     sbc hl,de    
-	    jr z,false_    
+    jr z,false_    
     jp m,false_
+
 true_:
     ld hl, 1
     push hl
@@ -527,133 +482,114 @@ div_:
     push de                     ; push result
     jp (ix)
 
-cFetch_:
-    pop hl     
-    ld d,0  
-    ld e,(hl)    
-    push    de    
-    jp (ix)       
-  
-comment_:
-    inc bc        ; point to next char
-    ld a,(bc)
-    cp "\r"       ; terminate at cr 
-    jr nz,comment_
-    dec bc
-    jp  next 
-
-cStore_:	  
-    pop    hl     
-    pop    de     
-    ld     (hl),e     
-    jp (ix)  
-          
-emit_:
-    pop hl
-    ld a,l
-    call putchar
+nop_:  
     jp (ix)
 
-prompt_:
-    call prompt
-    jp (ix)
+; -------------------------------------------------------------------------------
 
-
-inPort_:			    ; \<
-    pop hl
-    ld a,c
-    ld c,l
-    in l,(c)
+key:
+    call getchar
     ld h,0
-    ld c,a
+    ld l,a
     push hl
-    jp (ix)    
-
-newln_:
-    call crlf
-    jp (ix)    
-
-outPort_:
-    pop hl
-    ld e,c
-    ld c,l
-    pop hl
-    out (c),l
-    ld c,e
-    jp (ix)    
-
-prtstr_:
-prtstr:
-    pop hl
-    call putStr
     jp (ix)
 
-closure_:
-filter_:
-get_:
-let_:
-map_:
-print_:
-scan_:
-set_:
-shift_:
-while_:
-var_:
+; fetch:                         ; Fetch the value from the address placed on the top of the stack 
+;     pop hl    
 
-    jp (ix)
+; fetch1:
+;     ld e,(hl)    
+;     inc hl    
+;     ld d,(hl)    
+;     push de    
+;     jp (ix)       
 
-;*******************************************************************
-; Page 5 primitive routines continued
-;*******************************************************************
-
-; ********************************************************************
-; 16-bit multiply  
-mul:        ;=19
-    pop  de       ; get first value
-    pop  hl
-    push bc       ; Preserve the IP
-    ld b,h        ; bc = 2nd value
-    ld c,l
+; store:                         ; Store the value at the address placed on the top of the stack
+;     pop hl     
+;     pop de     
+;     ld (hl),e     
+;     inc hl    
+;     ld (hl),d     
+;     jp (ix)  
+          
+; cFetch:
+;     pop hl     
+;     ld d,0  
+;     ld e,(hl)    
+;     push    de    
+;     jp (ix)       
+  
+; cStore:	  
+;     pop    hl     
+;     pop    de     
+;     ld     (hl),e     
+;     jp (ix)  
+          
+neg:    
+    ld hl, 0    		        ; NEGate the value on top of stack (2's complement)
+    pop de       
+    jr sub2                     ; use the SUBtract routine
     
-    ld hl,0
-    ld a,16
-mul2:
-    add hl,hl
-    rl e
-    rl d
-    jr nc,$+6
-    add hl,bc
-    jr nc,$+3
-    inc de
-    dec a
-    jr nz,mul2
-	pop bc			  ; Restore the IP
-	push hl       ; Put the product on the stack - stack bug fixed 2/12/21
-	jp (ix)
+; comment:
+;     inc bc        ; point to next char
+;     ld a,(bc)
+;     cp "\r"       ; terminate at cr 
+;     jr nz,comment
+;     dec bc
+;     jp  next 
 
+; emit:
+;     pop hl
+;     ld a,l
+;     call putchar
+;     jp (ix)
+
+; prompt:
+;     call prompt
+;     jp (ix)
+
+; inPort:			    ; \<
+;     pop hl
+;     ld a,c
+;     ld c,l
+;     in l,(c)
+;     ld h,0
+;     ld c,a
+;     push hl
+;     jp (ix)    
+
+; newln:
+;     call crlf
+;     jp (ix)    
+
+; outPort:
+;     pop hl
+;     ld e,c
+;     ld c,l
+;     pop hl
+;     out (c),l
+;     ld c,e
+;     jp (ix)    
+
+; prtstr:
+;     pop hl
+;     call putStr
+;     jp (ix)
+
+get:
+set1:
+let:
+while:
+
+filter:
+map:
+scan:
+
+    jp (ix)
 
 ;*******************************************************************
 ; Subroutines
 ;*******************************************************************
-
-prompt:          
-    call printStr
-    .cstr "\r\n> "
-    ret
-
-putStr0:
-    call putchar
-    inc hl
-putStr:
-    ld a,(hl)
-    or a
-    jr nz,putStr0
-    ret
-
-crlf:       
-    call printStr
-    .cstr "\r\n"
-    ret
 
 init:       
     ld ix,next
@@ -672,8 +608,12 @@ init1:
     djnz init1 
 
     call define
+    .pstr "abs",0                       
+    dw abs1
+
+    call define
     .pstr "addr",0                       
-    dw addr_
+    dw addr
 
     call define
     .pstr "bytes",0                       
@@ -697,11 +637,11 @@ init1:
 
     call define
     .pstr "filter",0                       
-    dw filter_
+    dw filter
 
     call define
     .pstr "get",0                       
-    dw get_
+    dw get
 
     call define
     .pstr "hash",0                       
@@ -721,23 +661,19 @@ init1:
 
     call define
     .pstr "key",0                       
-    dw key_
+    dw key
 
     call define
     .pstr "let",0                       
-    dw let_
+    dw let
 
     call define
     .pstr "map",0                       
-    dw map_
+    dw map
 
     call define
     .pstr "neg",0                       
-    dw neg_
-
-    call define
-    .pstr "print",0                       
-    dw print_
+    dw neg
 
     call define
     .pstr "frac",0                       
@@ -745,15 +681,19 @@ init1:
 
     call define
     .pstr "scan",0                       
-    dw scan_
+    dw scan
 
     call define
     .pstr "set",0                       
-    dw set_
+    dw set1
 
     call define
-    .pstr "shift",0                       
-    dw shift_
+    .pstr "shl",0                       
+    dw shl
+
+    call define
+    .pstr "shr",0                       
+    dw shr
 
     call define
     .pstr "sqrt",0                       
@@ -769,14 +709,51 @@ init1:
 
     call define
     .pstr "while",0                       
-    dw while_
+    dw while
 
     call define
     .pstr "words",0                       
     dw words
 
     ret
+
+shl:    
+    pop hl                      ; Duplicate the top member of the stack
+    add hl,hl
+    push hl                     ; shift left fallthrough into add_     
+    jp (ix)            
+
+shr:    
+    pop hl                      ; Get the top member of the stack
+shr1:
+    srl h
+    RR l
+    push hl
+    jp (ix)            
+
+mul:        ;=19
+    pop  de       ; get first value
+    pop  hl
+    push bc       ; Preserve the IP
+    ld b,h        ; bc = 2nd value
+    ld c,l
     
+    ld hl,0
+    ld a,16
+mul2:
+    add hl,hl
+    rl e
+    rl d
+    jr nc,$+6
+    add hl,bc
+    jr nc,$+3
+    inc de
+    dec a
+    jr nz,mul2
+	pop bc			  ; Restore the IP
+	push hl       ; Put the product on the stack - stack bug fixed 2/12/21
+	jp (ix)
+
 num:
 	ld hl,$0000				    ; Clear hl to accept the number
 	ld a,(bc)				    ; Get numeral or -
@@ -1137,8 +1114,7 @@ case2:
     
 words:
     ld hl,2
-    jp bytes
-    
+    jr bytes1
 bytes:
     ld hl,1
 bytes1:
@@ -1253,7 +1229,7 @@ def1:
     jp (ix)
     
 ; str -- addr
-addr_:
+addr:
     pop hl                              ; hl = hash
     push bc
     ld bc,hl
@@ -1337,6 +1313,20 @@ sqrt1:
     pop bc
     push de
     jp (ix)
+
+abs1:
+    pop hl
+    bit 7,h
+    ret z
+    xor a  
+    sub l  
+    ld l,a
+    sbc a,a  
+    sub h  
+    ld h,a
+    push hl
+    jp (ix)
+
 
 ; ===============================================================================
 ;
@@ -1620,6 +1610,25 @@ nesting4:
     dec e
     ret 
  
+prompt:          
+    call printStr
+    .cstr "\r\n> "
+    ret
+
+putStr0:
+    call putchar
+    inc hl
+putStr:
+    ld a,(hl)
+    or a
+    jr nz,putStr0
+    ret
+
+crlf:       
+    call printStr
+    .cstr "\r\n"
+    ret
+
 define:
     pop hl
     ld a,(hl)

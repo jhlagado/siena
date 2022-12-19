@@ -1,4 +1,4 @@
-    .engine mycomputer
+    ; .engine mycomputer
 
     .include "constants.asm"
     .include "test.fast.mac.asm"
@@ -16,6 +16,20 @@ base:   .set 37
 
     .org $4000
 testsStart:
+    ld hl,0
+    ld de,1
+    add hl,de
+    ld de,hl                            ; hl *= 193 (11000001)
+    add hl,hl                           ; shift left
+    add hl,de                           ; add
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,hl                           ; shift left
+    add hl,de                           ; add
+
 
     test "'hello' hash", $7f54
     ; test ":hello", $7f54

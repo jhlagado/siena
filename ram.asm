@@ -32,7 +32,7 @@ PUTCVEC:    DS 2                ;
             DS 26*2
 sysVars:
 
-vFrac: DS 2                ; a
+vFrac:      DS 2                ; a
 vDataWidth: DS 2                ; b
 vTIBPtr:    DS 2                ; c
             DS 2                ; d
