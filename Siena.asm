@@ -49,41 +49,45 @@ isysVars:
     DW HEAP                     ; h vHeapPtr \h start of the free mem
 
     .align $100
-; ctrlCodes:
-;     DB lsb(EMPTY)               ; NUL ^@    
-;     DB lsb(EMPTY)               ; SOH ^a  1
-;     DB lsb(EMPTY)               ; STX ^b  2
-;     DB lsb(EMPTY)               ; ETX ^c  3
-;     DB lsb(EMPTY)               ; EOT ^d  4
-;     DB lsb(EMPTY)               ; ENQ ^e  5
-;     DB lsb(EMPTY)               ; ACK ^F  6
-;     DB lsb(EMPTY)               ; BEL ^G  7 
-;     DB lsb(EMPTY)               ; BS  ^h  8
-;     DB lsb(EMPTY)               ; TAB ^I  9
-;     DB lsb(EMPTY)               ; LF  ^J 10
-;     DB lsb(EMPTY)               ; VT  ^K 11
-;     DB lsb(EMPTY)               ; FF  ^l 12
-;     DB lsb(EMPTY)               ; CR  ^m 13
-;     DB lsb(EMPTY)               ; SO  ^N 14
-;     DB lsb(EMPTY)               ; SI  ^O 15
-;     DB lsb(EMPTY)               ; DLE ^p 16
-;     DB lsb(EMPTY)               ; ^Q     
-;     DB lsb(EMPTY)               ; ^R     
-;     DB lsb(EMPTY)               ; ^S    
-;     DB lsb(EMPTY)               ; ^T    
-;     DB lsb(EMPTY)               ; ^U       
-;     DB lsb(EMPTY)               ; ^V  
-;     DB lsb(EMPTY)               ; ^W    
-;     DB lsb(EMPTY)               ; ^X    
-;     DB lsb(EMPTY)               ; ^Y    
-;     DB lsb(EMPTY)               ; ^Z    
-;     DB lsb(EMPTY)               ; ^[  
-;     DB lsb(EMPTY)               ; ^\  
-;     DB lsb(EMPTY)               ; ^]  
-;     DB lsb(EMPTY)               ; ^^  
-;     DB lsb(EMPTY)               ; ^_  
+
+opcodesBase:
+
+ctrlCodes:
+    DB lsb(EMPTY)               ; ^@  0 NUL  
+    DB lsb(EMPTY)               ; ^A  1
+    DB lsb(EMPTY)               ; ^B  2
+    DB lsb(EMPTY)               ; ^C  3 ETX
+    DB lsb(EMPTY)               ; ^D  4
+    DB lsb(EMPTY)               ; ^E  5
+    DB lsb(EMPTY)               ; ^F  6
+    DB lsb(EMPTY)               ; ^G  7 BEL
+    DB lsb(EMPTY)               ; ^H  8 BS
+    DB lsb(EMPTY)               ; ^I  9 TAB
+    DB lsb(EMPTY)               ; ^J 10 LF
+    DB lsb(EMPTY)               ; ^K 11
+    DB lsb(EMPTY)               ; ^L 12
+    DB lsb(EMPTY)               ; ^M 13 CR
+    DB lsb(EMPTY)               ; ^N 14
+    DB lsb(EMPTY)               ; ^O 15
+    DB lsb(EMPTY)               ; ^P 16
+    DB lsb(EMPTY)               ; ^Q     
+    DB lsb(EMPTY)               ; ^R     
+    DB lsb(EMPTY)               ; ^S    
+    DB lsb(EMPTY)               ; ^T    
+    DB lsb(EMPTY)               ; ^U       
+    DB lsb(EMPTY)               ; ^V  
+    DB lsb(EMPTY)               ; ^W    
+    DB lsb(EMPTY)               ; ^X    
+    DB lsb(EMPTY)               ; ^Y    
+    DB lsb(EMPTY)               ; ^Z    
+    DB lsb(EMPTY)               ; ^[  
+    DB lsb(EMPTY)               ; ^\  
+    DB lsb(EMPTY)               ; ^]  
+    DB lsb(EMPTY)               ; ^^  
+    DB lsb(EMPTY)               ; ^_  
 
 opcodes:
+    DB lsb(nop_)                ;    SP  
     DB lsb(inv_)                ;    !  
     DB lsb(nop_)                ;    "
     DB lsb(hexnum_)             ;    #
@@ -267,20 +271,21 @@ waitchar4:
     ld (vTIBPtr),bc
     ld bc,TIB                   ; Instructions stored on heap at address HERE, we pressed enter
     dec bc
+
 next:        
     inc bc                      ; Increment the IP
     ld a,(bc)                   ; Get the next character and dispatch
-    sub " " + 1                 ; whitespace?
+    cp " " + 1                  ; whitespace?
     jr c,next1
     ld l,a                      ; index into table
-    ld h,msb(opcodes)           ; start address of jump table    
+    ld h,msb(opcodesBase)       ; start address of jump table    
     ld l,(hl)                   ; get low jump address
     ld h,msb(page4)             ; Load h with the 1st page address
     jp (hl)                     ; Jump to routine
 next1:
-    cp NULL - (" " + 1)           ; is it end of text?
+    cp NULL                     ; is it end of text?
     jr z,exit
-    cp ENDTEXT - (" " + 1)        ; is it end of text?
+    cp ENDTEXT                 ; is it end of text?
     jr nz,next                  ; no, other whitespace, ignore
 etx:        
     ld hl,-DSTACK
@@ -400,13 +405,8 @@ hdot_:                          ; print hexadecimal
     call prthex
     jp dot2
 
-etx_:
-    jp ETX
-    
-exit_:
-    jp exit
-
-mul_:    jp mul 
+mul_:    
+    jp mul 
     
 sub_:  		                    ; Subtract the value 2nd on stack from top of stack 
     pop de    
@@ -590,132 +590,6 @@ scan:
 ;*******************************************************************
 ; Subroutines
 ;*******************************************************************
-
-init:       
-    ld ix,next
-    ld iy,DSTACK
-    ld hl,isysVars
-    ld de,sysVars
-    ld bc,8 * 2
-    ldir
-    
-    ld a,UNUSED
-    ld b,0
-    ld hl, hashSlots
-init1:
-    ld (hl),a
-    inc hl
-    djnz init1 
-
-    call define
-    .pstr "abs",0                       
-    dw abs1
-
-    call define
-    .pstr "addr",0                       
-    dw addr
-
-    call define
-    .pstr "bytes",0                       
-    dw bytes
-
-    call define
-    .pstr "case",0                       
-    dw case
-
-    call define
-    .pstr "def",0                       
-    dw def
-
-    call define
-    .pstr "exec",0                       
-    dw exec
-
-    call define
-    .pstr "false",0                       
-    dw false_
-
-    call define
-    .pstr "filter",0                       
-    dw filter
-
-    call define
-    .pstr "get",0                       
-    dw get
-
-    call define
-    .pstr "hash",0                       
-    dw hash
-
-    call define
-    .pstr "in",0                       
-    dw in
-
-    call define
-    .pstr "if",0                       
-    dw if
-
-    call define
-    .pstr "ifte",0                       
-    dw ifte
-
-    call define
-    .pstr "key",0                       
-    dw key
-
-    call define
-    .pstr "let",0                       
-    dw let
-
-    call define
-    .pstr "map",0                       
-    dw map
-
-    call define
-    .pstr "neg",0                       
-    dw neg
-
-    call define
-    .pstr "frac",0                       
-    dw frac
-
-    call define
-    .pstr "scan",0                       
-    dw scan
-
-    call define
-    .pstr "set",0                       
-    dw set1
-
-    call define
-    .pstr "shl",0                       
-    dw shl
-
-    call define
-    .pstr "shr",0                       
-    dw shr
-
-    call define
-    .pstr "sqrt",0                       
-    dw sqrt1
-
-    call define
-    .pstr "switch",0                       
-    dw switch
-
-    call define
-    .pstr "true",0                       
-    dw true_
-
-    call define
-    .pstr "while",0                       
-    dw while
-
-    call define
-    .pstr "words",0                       
-    dw words
-
-    ret
 
 shl:    
     pop hl                      ; Duplicate the top member of the stack
@@ -988,24 +862,24 @@ arg:
     push de                     ; push arg
     jp (ix)
                                 ; 
-in:
-    pop hl                      ; hl = string    
-    pop de                      ; de = char
-in1:
-    ld a,(hl)
-    inc hl
-    cp 0                        ; is end of string
-    jr z,in2
-    cp e
-    jr nz,in1
-    or a                        ; a is never 0, or a resets zero flag 
-in2:
-    ld hl,0                     ; hl = result
-    jr z,in3
-    dec hl                      ; if nz de = $ffff
-in3:
-    push hl                     ; push result    
-    jp (ix)    
+; in:
+;     pop hl                      ; hl = string    
+;     pop de                      ; de = char
+; in1:
+;     ld a,(hl)
+;     inc hl
+;     cp 0                        ; is end of string
+;     jr z,in2
+;     cp e
+;     jr nz,in1
+;     or a                        ; a is never 0, or a resets zero flag 
+; in2:
+;     ld hl,0                     ; hl = result
+;     jr z,in3
+;     dec hl                      ; if nz de = $ffff
+; in3:
+;     push hl                     ; push result    
+;     jp (ix)    
     
 ; newAdd2:
 ;     push bc                     ; push IP
@@ -1244,7 +1118,7 @@ addr1:
 symbol:
     inc bc
     ld de,PAD
-    ld h,msb(opcodes)                   ; this table identifies the char type
+    ld h,msb(opcodesBase)                   ; this table identifies the char type
     jr symbol1
 symbol0:                                 ; copy to PAD area 
     inc bc                              ; characters that are part of the identifier  
@@ -1252,13 +1126,15 @@ symbol0:                                 ; copy to PAD area
 symbol1:                                 ; 0-9 A-Z a-z _
     ld a,(bc)
     ld (de),a
-    sub " " + 1                         ; opcodes start above white space 
+    or a
+    jr z,symbol2
     ld l,a
     ld a,(hl)
     cp lsb(ident_)
     jr z,symbol0
     cp lsb(num_)
     jr z,symbol0
+symbol2:
     dec bc
     xor a
     ld (de),a                           ; terminate string with null
@@ -1271,7 +1147,7 @@ symbol1:                                 ; 0-9 A-Z a-z _
     
 ident:
     ld de,PAD
-    ld h,msb(opcodes)                   ; this table identifies the char type
+    ld h,msb(opcodesBase)                   ; this table identifies the char type
     jr ident1
 ident0:                                 ; copy to PAD area 
     inc bc                              ; characters that are part of the identifier  
@@ -1279,13 +1155,15 @@ ident0:                                 ; copy to PAD area
 ident1:                                 ; 0-9 A-Z a-z _
     ld a,(bc)
     ld (de),a
-    sub " " + 1                         ; opcodes start above white space 
+    or a
+    jr z,ident2
     ld l,a
     ld a,(hl)
     cp lsb(ident_)
     jr z,ident0
     cp lsb(num_)
     jr z,ident0
+ident2:
     dec bc
     xor a
     ld (de),a                           ; terminate string with null
@@ -1648,4 +1526,125 @@ define:
     ld bc,hl
     jp defineEntry
 
-   
+init:       
+    ld ix,next
+    ld iy,DSTACK
+    ld hl,isysVars
+    ld de,sysVars
+    ld bc,8 * 2
+    ldir
+    
+    ld a,UNUSED
+    ld b,0
+    ld hl, hashSlots
+init1:
+    ld (hl),a
+    inc hl
+    djnz init1 
+
+    call define
+    .pstr "abs",0                       
+    dw abs1
+
+    call define
+    .pstr "addr",0                       
+    dw addr
+
+    call define
+    .pstr "bytes",0                       
+    dw bytes
+
+    call define
+    .pstr "case",0                       
+    dw case
+
+    call define
+    .pstr "def",0                       
+    dw def
+
+    call define
+    .pstr "exec",0                       
+    dw exec
+
+    call define
+    .pstr "false",0                       
+    dw false_
+
+    call define
+    .pstr "filter",0                       
+    dw filter
+
+    call define
+    .pstr "get",0                       
+    dw get
+
+    call define
+    .pstr "hash",0                       
+    dw hash
+
+    call define
+    .pstr "if",0                       
+    dw if
+
+    call define
+    .pstr "ifte",0                       
+    dw ifte
+
+    call define
+    .pstr "key",0                       
+    dw key
+
+    call define
+    .pstr "let",0                       
+    dw let
+
+    call define
+    .pstr "map",0                       
+    dw map
+
+    call define
+    .pstr "neg",0                       
+    dw neg
+
+    call define
+    .pstr "frac",0                       
+    dw frac
+
+    call define
+    .pstr "scan",0                       
+    dw scan
+
+    call define
+    .pstr "set",0                       
+    dw set1
+
+    call define
+    .pstr "shl",0                       
+    dw shl
+
+    call define
+    .pstr "shr",0                       
+    dw shr
+
+    call define
+    .pstr "sqrt",0                       
+    dw sqrt1
+
+    call define
+    .pstr "switch",0                       
+    dw switch
+
+    call define
+    .pstr "true",0                       
+    dw true_
+
+    call define
+    .pstr "while",0                       
+    dw while
+
+    call define
+    .pstr "words",0                       
+    dw words
+
+    ret
+

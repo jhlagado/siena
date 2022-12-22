@@ -1,4 +1,4 @@
-    ; .engine mycomputer
+    .engine mycomputer
 
     .include "constants.asm"
     .include "test.fast.mac.asm"
@@ -32,10 +32,10 @@ testsStart:
 
 
     test "'hello' hash", $7f54
-    ; test ":hello", $7f54
-    ; test ":hello 2 def", TRUE
-    ; test ":hello 2 def :hello addr", 2
-    ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
+    test ":hello", $7f54
+    test ":hello 2 def", TRUE
+    test ":hello 2 def :hello addr", 2
+    test ":hello 2 def :there 3 def :hello addr :there addr +", 5
 
     ; test "10 sqrt", 3
     ; test "10 sqrt frac", 1
