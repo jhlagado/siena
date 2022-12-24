@@ -86,14 +86,13 @@ ctrlCodes:
     DB lsb(EMPTY)               ; ^^  
     DB lsb(EMPTY)               ; ^_  
 
-                                
-opcodes:                        ; still available ! " % , ; ? @ \
+opcodes:                        ; still available " , ?
     DB lsb(nop_)                ; SP  
-    DB lsb(nop_)                ; !  
+    DB lsb(store_)              ; !  
     DB lsb(nop_)                ; "
     DB lsb(hexnum_)             ; #
     DB lsb(arg_)                ; $  
-    DB lsb(nop_)                ; %  
+    DB lsb(index_)              ; %  
     DB lsb(and_)                ; &
     DB lsb(strDef_)             ; '
     DB lsb(block_)              ; (    
@@ -103,7 +102,7 @@ opcodes:                        ; still available ! " % , ; ? @ \
     DB lsb(nop_)                ; ,  
     DB lsb(sub_)                ; -
     DB lsb(dot_)                ; .
-    DB lsb(slash_)              ; /	
+    DB lsb(div_)                ; /	
     DB lsb(num_)                ; 0     
     DB lsb(num_)                ; 1    
     DB lsb(num_)                ; 2    
@@ -115,12 +114,12 @@ opcodes:                        ; still available ! " % , ; ? @ \
     DB lsb(num_)                ; 8    
     DB lsb(num_)                ; 9    
     DB lsb(symbol_)             ; :    
-    DB lsb(nop_)                ; ;
+    DB lsb(comment_)            ; ;
     DB lsb(lt_)                 ; <
     DB lsb(eq_)                 ; =  
     DB lsb(gt_)                 ; >  
     DB lsb(nop_)                ; ?    
-    DB lsb(nop_)                ; @  
+    DB lsb(fetch_)              ; @  
     DB lsb(ident_)              ; A     
     DB lsb(ident_)              ; B     
     DB lsb(ident_)              ; C     
@@ -363,6 +362,46 @@ dot4:
     call putchar
     jp (ix)
 
+; addr index -- addr2
+index_:                         
+    pop hl                              ; hl = index  
+    pop de                              ; de = addr
+    ld a,(vDataWidth)
+    dec a
+    jr z,index1
+    add hl,hl                           ; if data width = 2 then double 
+index1:
+    add hl,de                           ; add addr
+    push hl
+    jp (ix)       
+
+; addr -- value
+fetch_:                         
+    pop hl    
+    ld d,0
+    ld e,(hl)    
+    ld a,(vDataWidth)
+    dec a
+    jr z,fetch1
+    inc hl    
+    ld d,(hl)    
+fetch1:
+    push de    
+    jp (ix)       
+
+; value addr -- 
+store_:                         
+    pop hl     
+    pop de     
+    ld (hl),e     
+    ld a,(vDataWidth)
+    dec a
+    jr z,store1
+    inc hl    
+    ld (hl),d     
+store1:	  
+    jp (ix)  
+
 block_:
     jp block
 blockend_:
@@ -458,12 +497,7 @@ lt1:
     dec bc
     jp lessthan
     
-slash_:    
-    inc bc
-    ld a,(bc)
-    cp "/"                      ; double / is a comment
-    jp z,comment
-    dec bc
+div_:    
     pop  de                     ; get first value
     pop  hl                     ; get 2nd value
     push bc                     ; preserve the IP    
@@ -474,91 +508,56 @@ slash_:
     push de                     ; push result
     jp (ix)
 
+comment_:
+    inc bc                      ; point to next char
+    ld a,(bc)
+    cp " "                      ; terminate on any char less than SP 
+    jr nc,comment_
+    dec bc
+    jp (ix) 
+
 nop_:  
     jp (ix)
 
-; -------------------------------------------------------------------------------
-
-key:
-    call getchar
-    ld h,0
-    ld l,a
-    push hl
-    jp (ix)
-
-; fetch:                         ; Fetch the value from the address placed on the top of the stack 
-;  pop hl    
-
-; fetch1:
-;  ld e,(hl)    
-;  inc hl    
-;  ld d,(hl)    
-;  push de    
-;  jp (ix)       
-
-; cFetch:
-;  pop hl     
-;  ld d,0  
-;  ld e,(hl)    
-;  push    de    
-;  jp (ix)       
-  
-; store:                         ; Store the value at the address placed on the top of the stack
-;  pop hl     
-;  pop de     
-;  ld (hl),e     
-;  inc hl    
-;  ld (hl),d     
-;  jp (ix)  
-          
-; cStore:	  
-;  pop    hl     
-;  pop    de     
-;  ld     (hl),e     
-;  jp (ix)  
-          
-neg:    
-    ld hl, 0    		        ; NEGate the value on top of stack (2's complement)
-    pop de       
-    jr sub2                     ; use the SUBtract routine
-    
-
-; prompt:
-;  call prompt
-;  jp (ix)
-
-; newln:
-;  call crlf
-;  jp (ix)    
-
-get:
-set1:
-let:
-while:
-
-filter:
-map:
-scan:
-
-    jp (ix)
 
 ;*******************************************************************
 ; word operators
 ;*******************************************************************
 
-shl:    
-    pop hl                      ; Duplicate the top member of the stack
-    add hl,hl
-    push hl                     ; shift left fallthrough into add_     
-    jp (ix)            
-
-shr:    
-    pop hl                      ; Get the top member of the stack
-shr1:
-    srl h
-    RR l
+; shl  
+; value count -- value2          shift left count places
+shl:
+    ld de,bc                    ; save IP    
+    pop bc                      ; bc = count
+    ld b,c                      ; b = loop counter
+    pop hl                      
+    inc b                       ; test for counter=0 case
+    jr shl2
+shl1:   
+    add hl,hl                   ; left shift hl
+shl2:   
+    djnz shl1
     push hl
-    jp (ix)            
+    ld bc,de                    ; restore IP
+    jp (ix)
+
+; shr  
+; value count -- value2          shift left count places
+shr:
+    ld de,bc                    ; save IP    
+    pop bc                      ; bc = count
+    ld b,c                      ; b = loop counter
+    pop hl                      
+    inc b                       ; test for counter=0 case
+    jr shr2
+shr1:   
+    srl h                       ; right shift hl
+    rr l
+shr2:   
+    djnz shr1
+    push hl
+    ld bc,de                    ; restore IP
+    jp (ix)
 
 mul:        ;=19
     pop  de       ; get first value
@@ -1204,14 +1203,6 @@ false1:
     push hl
     jp (ix) 
 
-comment:
-    inc bc                      ; point to next char
-    ld a,(bc)
-    cp " "                      ; terminate on any char less than SP 
-    jr nc,comment
-    dec bc
-    jp (ix) 
-
 ; Z80 port input
 ; port -- value 
 input:			    
@@ -1234,6 +1225,28 @@ output:
     out (c),l
     ld c,e                      ; restore IP
     jp (ix)    
+
+key:
+    call getchar
+    ld h,0
+    ld l,a
+    push hl
+    jp (ix)
+
+neg:    
+    ld hl, 0    		        ; NEGate the value on top of stack (2's complement)
+    pop de       
+    jp sub2                     ; use the SUBtract routine
+    
+let:
+while:
+
+filter:
+map:
+scan:
+
+    jp (ix)
+
 
 ; -------------------------------------------------------------------------------
 ; hash C-string 
@@ -1609,10 +1622,6 @@ init1:
     dw frac
 
     call define
-    .pstr "get",0                       
-    dw get
-
-    call define
     .pstr "hash",0                       
     dw hash
 
@@ -1655,10 +1664,6 @@ init1:
     call define
     .pstr "scan",0                       
     dw scan
-
-    call define
-    .pstr "set",0                       
-    dw set1
 
     call define
     .pstr "shl",0                       
