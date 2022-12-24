@@ -86,103 +86,104 @@ ctrlCodes:
     DB lsb(EMPTY)               ; ^^  
     DB lsb(EMPTY)               ; ^_  
 
-opcodes:
-    DB lsb(nop_)                ;    SP  
-    DB lsb(inv_)                ;    !  
-    DB lsb(nop_)                ;    "
-    DB lsb(hexnum_)             ;    #
-    DB lsb(arg_)                ;    $  
-    DB lsb(mod_)                ;    %  
-    DB lsb(and_)                ;    &
-    DB lsb(strDef_)             ;    '
-    DB lsb(block_)              ;    (    
-    DB lsb(blockend_)           ;    )
-    DB lsb(mul_)                ;    *  
-    DB lsb(add_)                ;    +
-    DB lsb(nop_)                ;    ,  
-    DB lsb(sub_)                ;    -
-    DB lsb(dot_)                ;    .
-    DB lsb(div_)                ;    /	
-    DB lsb(num_)                ;    0     
-    DB lsb(num_)                ;    1    
-    DB lsb(num_)                ;    2    
-    DB lsb(num_)                ;    3    
-    DB lsb(num_)                ;    4    
-    DB lsb(num_)                ;    5    
-    DB lsb(num_)                ;    6    
-    DB lsb(num_)                ;    7    
-    DB lsb(num_)                ;    8    
-    DB lsb(num_)                ;    9    
-    DB lsb(symbol_)             ;    :    
-    DB lsb(nop_)                ;    ;
-    DB lsb(lt_)                 ;    <
-    DB lsb(eq_)                 ;    =  
-    DB lsb(gt_)                 ;    >  
-    DB lsb(nop_)                ;    ?    
-    DB lsb(nop_)                ;    @  
-    DB lsb(ident_)              ;    A     
-    DB lsb(ident_)              ;    B     
-    DB lsb(ident_)              ;    C     
-    DB lsb(ident_)              ;    D     
-    DB lsb(ident_)              ;    E     
-    DB lsb(ident_)              ;    F     
-    DB lsb(ident_)              ;    G     
-    DB lsb(ident_)              ;    h     
-    DB lsb(ident_)              ;    I     
-    DB lsb(ident_)              ;    J     
-    DB lsb(ident_)              ;    K     
-    DB lsb(ident_)              ;    L     
-    DB lsb(ident_)              ;    M     
-    DB lsb(ident_)              ;    N     
-    DB lsb(ident_)              ;    O     
-    DB lsb(ident_)              ;    p     
-    DB lsb(ident_)              ;    Q     
-    DB lsb(ident_)              ;    R     
-    DB lsb(ident_)              ;    S     
-    DB lsb(ident_)              ;    T     
-    DB lsb(ident_)              ;    U     
-    DB lsb(ident_)              ;    V     
-    DB lsb(ident_)              ;    W     
-    DB lsb(ident_)              ;    X     
-    DB lsb(ident_)              ;    Y     
-    DB lsb(ident_)              ;    Z    
-    DB lsb(array_)              ;    [
-    DB lsb(nop_)                ;    \
-    DB lsb(arrayEnd_)           ;    ]
-    DB lsb(xor_)                ;    ^
-    DB lsb(ident_)              ;    _
-    DB lsb(char_)               ;    `    	    
-    DB lsb(ident_)              ;    a     
-    DB lsb(ident_)              ;    b  
-    DB lsb(ident_)              ;    c  
-    DB lsb(ident_)              ;    d  
-    DB lsb(ident_)              ;    e  
-    DB lsb(ident_)              ;    f  
-    DB lsb(ident_)              ;    g  
-    DB lsb(ident_)              ;    h  
-    DB lsb(ident_)              ;    i  
-    DB lsb(ident_)              ;    j  
-    DB lsb(ident_)              ;    k  
-    DB lsb(ident_)              ;    l  
-    DB lsb(ident_)              ;    m  
-    DB lsb(ident_)              ;    n  
-    DB lsb(ident_)              ;    o  
-    DB lsb(ident_)              ;    p  
-    DB lsb(ident_)              ;    q  
-    DB lsb(ident_)              ;    r  
-    DB lsb(ident_)              ;    s  
-    DB lsb(ident_)              ;    t  
-    DB lsb(ident_)              ;    u  
-    DB lsb(ident_)              ;    v  
-    DB lsb(ident_)              ;    w  
-    DB lsb(ident_)              ;    x  
-    DB lsb(ident_)              ;    y  
-    DB lsb(ident_)              ;    z  
-    DB lsb(lambda_)             ;    {
-    DB lsb(or_)                 ;    |  
-    DB lsb(lambdaEnd_)          ;    }  
-    DB lsb(nop_)                ;    ~    
-    DB lsb(nop_)                ;    DEL	
+                                
+opcodes:                        ; still available ! " % , ; ? @ \
+    DB lsb(nop_)                ; SP  
+    DB lsb(nop_)                ; !  
+    DB lsb(nop_)                ; "
+    DB lsb(hexnum_)             ; #
+    DB lsb(arg_)                ; $  
+    DB lsb(nop_)                ; %  
+    DB lsb(and_)                ; &
+    DB lsb(strDef_)             ; '
+    DB lsb(block_)              ; (    
+    DB lsb(blockend_)           ; )
+    DB lsb(mul_)                ; *  
+    DB lsb(add_)                ; +
+    DB lsb(nop_)                ; ,  
+    DB lsb(sub_)                ; -
+    DB lsb(dot_)                ; .
+    DB lsb(slash_)              ; /	
+    DB lsb(num_)                ; 0     
+    DB lsb(num_)                ; 1    
+    DB lsb(num_)                ; 2    
+    DB lsb(num_)                ; 3    
+    DB lsb(num_)                ; 4    
+    DB lsb(num_)                ; 5    
+    DB lsb(num_)                ; 6    
+    DB lsb(num_)                ; 7    
+    DB lsb(num_)                ; 8    
+    DB lsb(num_)                ; 9    
+    DB lsb(symbol_)             ; :    
+    DB lsb(nop_)                ; ;
+    DB lsb(lt_)                 ; <
+    DB lsb(eq_)                 ; =  
+    DB lsb(gt_)                 ; >  
+    DB lsb(nop_)                ; ?    
+    DB lsb(nop_)                ; @  
+    DB lsb(ident_)              ; A     
+    DB lsb(ident_)              ; B     
+    DB lsb(ident_)              ; C     
+    DB lsb(ident_)              ; D     
+    DB lsb(ident_)              ; E     
+    DB lsb(ident_)              ; F     
+    DB lsb(ident_)              ; G     
+    DB lsb(ident_)              ; h     
+    DB lsb(ident_)              ; I     
+    DB lsb(ident_)              ; J     
+    DB lsb(ident_)              ; K     
+    DB lsb(ident_)              ; L     
+    DB lsb(ident_)              ; M     
+    DB lsb(ident_)              ; N     
+    DB lsb(ident_)              ; O     
+    DB lsb(ident_)              ; p     
+    DB lsb(ident_)              ; Q     
+    DB lsb(ident_)              ; R     
+    DB lsb(ident_)              ; S     
+    DB lsb(ident_)              ; T     
+    DB lsb(ident_)              ; U     
+    DB lsb(ident_)              ; V     
+    DB lsb(ident_)              ; W     
+    DB lsb(ident_)              ; X     
+    DB lsb(ident_)              ; Y     
+    DB lsb(ident_)              ; Z    
+    DB lsb(array_)              ; [
+    DB lsb(nop_)                ; \
+    DB lsb(arrayEnd_)           ; ]
+    DB lsb(xor_)                ; ^
+    DB lsb(ident_)              ; _
+    DB lsb(char_)               ; `    	    
+    DB lsb(ident_)              ; a     
+    DB lsb(ident_)              ; b  
+    DB lsb(ident_)              ; c  
+    DB lsb(ident_)              ; d  
+    DB lsb(ident_)              ; e  
+    DB lsb(ident_)              ; f  
+    DB lsb(ident_)              ; g  
+    DB lsb(ident_)              ; h  
+    DB lsb(ident_)              ; i  
+    DB lsb(ident_)              ; j  
+    DB lsb(ident_)              ; k  
+    DB lsb(ident_)              ; l  
+    DB lsb(ident_)              ; m  
+    DB lsb(ident_)              ; n  
+    DB lsb(ident_)              ; o  
+    DB lsb(ident_)              ; p  
+    DB lsb(ident_)              ; q  
+    DB lsb(ident_)              ; r  
+    DB lsb(ident_)              ; s  
+    DB lsb(ident_)              ; t  
+    DB lsb(ident_)              ; u  
+    DB lsb(ident_)              ; v  
+    DB lsb(ident_)              ; w  
+    DB lsb(ident_)              ; x  
+    DB lsb(ident_)              ; y  
+    DB lsb(ident_)              ; z  
+    DB lsb(lambda_)             ; {
+    DB lsb(or_)                 ; |  
+    DB lsb(lambdaEnd_)          ; }  
+    DB lsb(inv_)                ; ~    
+    DB lsb(nop_)                ; DEL	
 
 
 start:
@@ -226,20 +227,20 @@ waitchar:
     jr z,waitchar3		        ; if anything else its macro/control 
 
 macro:       
-;     ld (vTIBPtr),bc
-;     ld hl,ctrlCodes
-;     add a,l			            ; look up key of macros
-;     ld l,a
-;     ld e,(hl)
-;     ld a,e
-;     or a
-;     jr z,macro1
-;     ld d,msb(macros)
-;     push de
-;     call exec		            ; Siena exec_ operation and jump to it
-;     .cstr "ca"
+;  ld (vTIBPtr),bc
+;  ld hl,ctrlCodes
+;  add a,l			            ; look up key of macros
+;  ld l,a
+;  ld e,(hl)
+;  ld a,e
+;  or a
+;  jr z,macro1
+;  ld d,msb(macros)
+;  push de
+;  call exec		            ; Siena exec_ operation and jump to it
+;  .cstr "ca"
 ; macro1:
-;     ld bc,(vTIBPtr)
+;  ld bc,(vTIBPtr)
     jr interpret2
 
 waitchar1:
@@ -317,7 +318,7 @@ exit:
 
 
 ; **********************************************************************			 
-; Page 4 primitive routines 
+; symbolic operators 
 ; **********************************************************************
     .align $100
 page4:
@@ -334,13 +335,34 @@ lambda_:
     jp lambda
 lambdaEnd_:
     jp lambdaEnd
+
 dot_:  
     pop hl
-    call prtdec
+    inc bc
+    ld a,(bc)
+    cp "h"
+    jr nz,dot1
+    call prthex
+    jr dot4
+dot1:
+    cp "s"
+    jr nz,dot2
+    call prtstr
+    jr dot4
 dot2:
+    cp "c"
+    jr nz,dot3
+    ld a,l
+    call putchar
+    jr dot4
+dot3:
+    dec bc
+    call prtdec
+dot4:
     ld a,' '       
     call putchar
     jp (ix)
+
 block_:
     jp block
 blockend_:
@@ -403,7 +425,7 @@ add_:                           ; add the top 2 members of the stack
 hdot_:                          ; print hexadecimal
     pop hl
     call prthex
-    jp dot2
+    jp dot3
 
 mul_:    
     jp mul 
@@ -420,58 +442,28 @@ sub2:
 eq_:    
     pop hl
     pop de
-    or a                        ; reset the carry flag
-    sbc hl,de                   ; only equality sets hl=0 here
-    jr z, true_
-
-false_:
-    ld hl, 0
-    push hl
-    jp (ix) 
-
-gt_:    
+    jp equals
+gt_:
     pop de
     pop hl
     jr lt1
+lt_:
+    pop hl
+    pop de
+lt1:
+    inc bc
+    ld a,(bc)
+    cp "="
+    jp z,lessthaneq
+    dec bc
+    jp lessthan
     
-lt_:    
-    pop hl
-    pop de
-lt1:    
-    or a                        ; reset the carry flag
-    sbc hl,de    
-    jr z,false_    
-    jp m,false_
-
-true_:
-    ld hl, 1
-    push hl
-    jp (ix) 
-
-gte_:    
-    pop de
-    pop hl
-    jr lte1
-lte_:    
-    pop hl
-    pop de
-lte1:    
-    or a                        ; reset the carry flag
-    sbc hl,de    
-    jp m,false_
-    jp true
-
-mod_:                           
-    pop  de                     ; get first value
-    pop  hl                     ; get 2nd value
-    push bc                     ; preserve the IP    
-    ld bc,hl                
-    call divide
-    pop bc
-    push hl                     ; push remainder    
-    jp (ix)
-
-div_:    
+slash_:    
+    inc bc
+    ld a,(bc)
+    cp "/"                      ; double / is a comment
+    jp z,comment
+    dec bc
     pop  de                     ; get first value
     pop  hl                     ; get 2nd value
     push bc                     ; preserve the IP    
@@ -495,86 +487,49 @@ key:
     jp (ix)
 
 ; fetch:                         ; Fetch the value from the address placed on the top of the stack 
-;     pop hl    
+;  pop hl    
 
 ; fetch1:
-;     ld e,(hl)    
-;     inc hl    
-;     ld d,(hl)    
-;     push de    
-;     jp (ix)       
+;  ld e,(hl)    
+;  inc hl    
+;  ld d,(hl)    
+;  push de    
+;  jp (ix)       
 
-; store:                         ; Store the value at the address placed on the top of the stack
-;     pop hl     
-;     pop de     
-;     ld (hl),e     
-;     inc hl    
-;     ld (hl),d     
-;     jp (ix)  
-          
 ; cFetch:
-;     pop hl     
-;     ld d,0  
-;     ld e,(hl)    
-;     push    de    
-;     jp (ix)       
+;  pop hl     
+;  ld d,0  
+;  ld e,(hl)    
+;  push    de    
+;  jp (ix)       
   
+; store:                         ; Store the value at the address placed on the top of the stack
+;  pop hl     
+;  pop de     
+;  ld (hl),e     
+;  inc hl    
+;  ld (hl),d     
+;  jp (ix)  
+          
 ; cStore:	  
-;     pop    hl     
-;     pop    de     
-;     ld     (hl),e     
-;     jp (ix)  
+;  pop    hl     
+;  pop    de     
+;  ld     (hl),e     
+;  jp (ix)  
           
 neg:    
     ld hl, 0    		        ; NEGate the value on top of stack (2's complement)
     pop de       
     jr sub2                     ; use the SUBtract routine
     
-; comment:
-;     inc bc        ; point to next char
-;     ld a,(bc)
-;     cp "\r"       ; terminate at cr 
-;     jr nz,comment
-;     dec bc
-;     jp  next 
-
-; emit:
-;     pop hl
-;     ld a,l
-;     call putchar
-;     jp (ix)
 
 ; prompt:
-;     call prompt
-;     jp (ix)
-
-; inPort:			    ; \<
-;     pop hl
-;     ld a,c
-;     ld c,l
-;     in l,(c)
-;     ld h,0
-;     ld c,a
-;     push hl
-;     jp (ix)    
+;  call prompt
+;  jp (ix)
 
 ; newln:
-;     call crlf
-;     jp (ix)    
-
-; outPort:
-;     pop hl
-;     ld e,c
-;     ld c,l
-;     pop hl
-;     out (c),l
-;     ld c,e
-;     jp (ix)    
-
-; prtstr:
-;     pop hl
-;     call putStr
-;     jp (ix)
+;  call crlf
+;  jp (ix)    
 
 get:
 set1:
@@ -588,7 +543,7 @@ scan:
     jp (ix)
 
 ;*******************************************************************
-; Subroutines
+; word operators
 ;*******************************************************************
 
 shl:    
@@ -684,9 +639,8 @@ hexnum2:
     add hl,hl    ; 8X
     add hl,hl    ; 16X     
     add a,l       ; add into bottom of hl
-    ld  l,a       ;    
+    ld  l,a       ; 
     jr  hexnum1
-
                                 ; 
 strDef:     
     ld de,(vHeapPtr)            ; DE = heap ptr
@@ -863,50 +817,50 @@ arg:
     jp (ix)
                                 ; 
 ; in:
-;     pop hl                      ; hl = string    
-;     pop de                      ; de = char
+;  pop hl                      ; hl = string    
+;  pop de                      ; de = char
 ; in1:
-;     ld a,(hl)
-;     inc hl
-;     cp 0                        ; is end of string
-;     jr z,in2
-;     cp e
-;     jr nz,in1
-;     or a                        ; a is never 0, or a resets zero flag 
+;  ld a,(hl)
+;  inc hl
+;  cp 0                        ; is end of string
+;  jr z,in2
+;  cp e
+;  jr nz,in1
+;  or a                        ; a is never 0, or a resets zero flag 
 ; in2:
-;     ld hl,0                     ; hl = result
-;     jr z,in3
-;     dec hl                      ; if nz de = $ffff
+;  ld hl,0                     ; hl = result
+;  jr z,in3
+;  dec hl                      ; if nz de = $ffff
 ; in3:
-;     push hl                     ; push result    
-;     jp (ix)    
+;  push hl                     ; push result    
+;  jp (ix)    
     
 ; newAdd2:
-;     push bc                     ; push IP
-;     ld e,(iy+2)                 ; get SCP from parent stack frame
-;     ld d,(iy+3)                 ; make this the old BP for this stack frame
-;     push de                     ; push SCP
-;     push iy                     ; push base pointer
-;     ld iy,(3+2)*2               ; base pointer = stack pointer - (stack frame vars) - 2 args
-;     add iy,sp                   ;
+;  push bc                     ; push IP
+;  ld e,(iy+2)                 ; get SCP from parent stack frame
+;  ld d,(iy+3)                 ; make this the old BP for this stack frame
+;  push de                     ; push SCP
+;  push iy                     ; push base pointer
+;  ld iy,(3+2)*2               ; base pointer = stack pointer - (stack frame vars) - 2 args
+;  add iy,sp                   ;
     
-;     ld d,(iy-1)
-;     ld e,(iy-2)
-;     ld h,(iy-3)
-;     ld l,(iy-4)
+;  ld d,(iy-1)
+;  ld e,(iy-2)
+;  ld h,(iy-3)
+;  ld l,(iy-4)
 
-;     add hl,de                   ; hl = hl + de   
-;     ex de,hl                    ; de = result
+;  add hl,de                   ; hl = hl + de   
+;  ex de,hl                    ; de = result
 
-;     pop hl                      ; hl = old BP
-;     pop bc                      ; pop SCP (discard)
-;     pop bc                      ; bc = IP
-;     ld sp,hl                    ; sp = old BP
-;     ld iy,0
-;     add iy,sp
+;  pop hl                      ; hl = old BP
+;  pop bc                      ; pop SCP (discard)
+;  pop bc                      ; bc = IP
+;  ld sp,hl                    ; sp = old BP
+;  ld iy,0
+;  add iy,sp
     
-;     push de                     ; push result    
-;     jp (ix)    
+;  push de                     ; push result    
+;  jp (ix)    
 
     
 if:
@@ -1205,10 +1159,86 @@ abs1:
     push hl
     jp (ix)
 
+mod:                           
+    pop  de                     ; get first value
+    pop  hl                     ; get 2nd value
+    push bc                     ; preserve the IP    
+    ld bc,hl                
+    call divide
+    pop bc
+    push hl                     ; push remainder    
+    jp (ix)
 
-; ===============================================================================
-;
-; hash C-string in BC, result in HL 
+; hl = value1, de = value2
+; hl = result
+equals:
+    or a                        ; reset the carry flag
+    sbc hl,de                   ; only equality sets hl=0 here
+    jr z, true1
+    jp false1
+
+; hl = value1 de = value2
+; hl = result
+lessthaneq:    
+    or a                        
+    sbc hl,de    
+    jr lessthan1
+
+; hl = value1 de = value2
+; hl = result
+lessthan:
+    or a                        
+    sbc hl,de    
+    jr z,false1    
+
+lessthan1:
+    jp m,false1
+
+true1:
+    ld hl, TRUE
+    push hl
+    jp (ix) 
+
+false1:
+    ld hl, FALSE
+    push hl
+    jp (ix) 
+
+comment:
+    inc bc                      ; point to next char
+    ld a,(bc)
+    cp " "                      ; terminate on any char less than SP 
+    jr nc,comment
+    dec bc
+    jp (ix) 
+
+; Z80 port input
+; port -- value 
+input:			    
+    pop hl
+    ld e,c                      ; save IP
+    ld c,l
+    in l,(c)
+    ld h,0
+    ld c,e                      ; restore IP
+    push hl
+    jp (ix)    
+
+; Z80 port output
+; value port --
+output:
+    pop hl
+    ld e,c                      ; save IP
+    ld c,l
+    pop hl
+    out (c),l
+    ld c,e                      ; restore IP
+    jp (ix)    
+
+; -------------------------------------------------------------------------------
+; hash C-string 
+; BC = str
+; HL = hash
 hashStr:
     ld hl,0                             
 hashStr1:    
@@ -1438,11 +1468,13 @@ prthex3:
 	daa
 	jp putchar
 
-printStr:        
-    ex (sp),hl		            ; swap			
-    call putStr		
-    inc hl			            ; inc past null
-    ex (sp),hl		            ; put it back	
+prtstr0:
+    call putchar
+    inc hl
+prtstr:
+    ld a,(hl)
+    or a
+    jr nz,prtstr0
     ret
 
 ; **************************************************************************    
@@ -1493,18 +1525,16 @@ prompt:
     .cstr "\r\n> "
     ret
 
-putStr0:
-    call putchar
-    inc hl
-putStr:
-    ld a,(hl)
-    or a
-    jr nz,putStr0
-    ret
-
 crlf:       
     call printStr
     .cstr "\r\n"
+    ret
+
+printStr:        
+    ex (sp),hl		            ; swap			
+    call prtstr		
+    inc hl			            ; inc past null
+    ex (sp),hl		            ; put it back	
     ret
 
 define:
@@ -1568,11 +1598,15 @@ init1:
 
     call define
     .pstr "false",0                       
-    dw false_
+    dw false
 
     call define
     .pstr "filter",0                       
     dw filter
+
+    call define
+    .pstr "frac",0                       
+    dw frac
 
     call define
     .pstr "get",0                       
@@ -1581,6 +1615,10 @@ init1:
     call define
     .pstr "hash",0                       
     dw hash
+
+    call define
+    .pstr "input",0                       
+    dw input
 
     call define
     .pstr "if",0                       
@@ -1603,12 +1641,16 @@ init1:
     dw map
 
     call define
+    .pstr "mod",0                       
+    dw mod
+
+    call define
     .pstr "neg",0                       
     dw neg
 
     call define
-    .pstr "frac",0                       
-    dw frac
+    .pstr "output",0                       
+    dw output
 
     call define
     .pstr "scan",0                       
@@ -1636,7 +1678,7 @@ init1:
 
     call define
     .pstr "true",0                       
-    dw true_
+    dw true
 
     call define
     .pstr "while",0                       
