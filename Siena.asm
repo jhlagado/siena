@@ -13,16 +13,21 @@
 ; *****************************************************************************
 
                                 ; 
-    DSIZE   EQU     $80
-    RSIZE   EQU     $80
-    TIBSIZE EQU     $100	        ; 256 bytes , along line!
-    TRUE    EQU     -1		        ; C-style true
-    FALSE   EQU     0
-    EMPTY   EQU     0		        ; 
-    UNUSED  EQU     $ff
-    NULL    EQU     0
-    ENDTEXT EQU     3
-    DATASIZE EQU    26*2*2	    ; a..z, a..z words
+DSIZE       EQU     $80
+RSIZE       EQU     $80
+TIBSIZE     EQU     $100	        ; 256 bytes , along line!
+TRUE        EQU     -1		        ; C-style true
+FALSE       EQU     0
+EMPTY       EQU     0		        ; 
+UNUSED      EQU     $ff
+NULL        EQU     0
+ENDTEXT     EQU     3
+DATASIZE    EQU    26*2*2	    ; a..z, a..z words
+
+.macro cmd,address
+    db msb(address / 2) | $80
+    db lsb(address / 2)
+.endm
 
 ; **************************************************************************
 ; Page 0  Initialisation
@@ -275,6 +280,8 @@ waitchar4:
 next:        
     inc bc                      ; Increment the IP
     ld a,(bc)                   ; Get the next character and dispatch
+    bit 7,a                     ; is 15-bit opcode ?
+    jr nz,next3
     cp " " + 1                  ; whitespace?
     jr c,next1
     ld l,a                      ; index into table
@@ -285,16 +292,22 @@ next:
 next1:
     cp NULL                     ; is it end of text?
     jr z,exit
-    cp ENDTEXT                 ; is it end of text?
-    jr nz,next                  ; no, other whitespace, ignore
-etx:        
-    ld hl,-DSTACK
+    cp ENDTEXT                  ; is it end of text?
+    jr nz,next                   
+    ld hl,-DSTACK               ; etx, is SP valid? (too many pops?)
     add hl,sp
-    jr nc,etx1
-    ld sp,DSTACK
-etx1:
-    jr interpret
-    
+    jr nc,next2
+    ld sp,DSTACK                ; yes, reset stack
+next2:
+    jr interpret                ; no, other whitespace, ignore
+next3:
+    ld h,a                      ; build address                      
+    inc bc
+    ld a,(bc)
+    ld l,a
+    add hl,hl
+    jp (hl)
+        
 exit:
     ld de,bc                    ; address of code after exit opcode
     inc de			            
@@ -892,8 +905,35 @@ ifte2:
 ifte3:
     jp (ix)    
 
+do:
+    pop hl                      ; hl = condition
+    push hl                     ; reuse this slot for block later
+    push bc                     ; push IP
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP  
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    push hl                     ; push condition
+    jp (ix)
+    
+loop:
+    pop de                      ; de = block
+    ld (iy+0),e                 ; store block in arg 1
+    ld (iy+0),d
+    ld bc,loopx 
+    jp (ix)
+    
+loopx:
+    db "$1"
+    cmd exec
+    cmd qbranch
+    db -5,0
+    jp (ix)    
+
 switch:
-    pop hl                      ; get condition from stack
+    pop hl                      ; get selector from stack
     push bc                     ; create stack frame, push IP (replace later)
     ld e,(iy+2)                 ; get SCP from parent stack frame
     ld d,(iy+3)                 ; make this the old BP for this stack frame
@@ -901,7 +941,7 @@ switch:
     push iy                     ; push BP  
     ld iy,0                     ; BP = SP
     add iy,sp
-    push hl                     ; push condition as first arg of new frame
+    push hl                     ; push selector as first arg of new frame
     jp (ix)
     
 case:
@@ -1244,11 +1284,13 @@ while:
 filter:
 map:
 scan:
-
+qbranch:
     jp (ix)
 
 
 ; -------------------------------------------------------------------------------
+
+
 ; hash C-string 
 ; BC = str
 ; HL = hash
