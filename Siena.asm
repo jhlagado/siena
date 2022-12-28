@@ -294,6 +294,8 @@ next1:
     jr z,exit
     cp ENDTEXT                  ; is it end of text?
     jr nz,next                   
+    cp DC1                      ; is it end of text?
+    jr nz,exec                   
     ld hl,-DSTACK               ; etx, is SP valid? (too many pops?)
     add hl,sp
     jr nc,next2
@@ -905,33 +907,30 @@ ifte2:
 ifte3:
     jp (ix)    
 
-do:
-    pop hl                      ; hl = condition
-    push hl                     ; reuse this slot for block later
-    push bc                     ; push IP
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
-    push iy                     ; push BP  
-    ld iy,0                     ; BP = SP
-    add iy,sp
-    push hl                     ; push condition
+; c b --
+; loops until c = 0
+loop:                           
+    pop hl                      ; hl = block                    c
+    pop de                      ; de = condition    
+loop1:    
+    push hl                     ; push block & condition        b c                   
+    push de                     
+    push hl                     ; push block again              b c b
+    call exec                   ; execute string                b c b r
+    db DC1,0                    ; executes block & returns here b ... c'
+    pop hl                      ; hl = condition (tos)          b ...                
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    dec de                      ; de = BP - 2
+    dec de
+    ex de,hl                    ; hl = BP - 2, de = condition
+    ld sp,hl                    ; sp = BP - 2
+    pop hl                      ; hl = block, de = condition                    
+    ld a,e                      ; condition = zero?
+    or d                        
+    jr nz,loop1
     jp (ix)
     
-loop:
-    pop de                      ; de = block
-    ld (iy+0),e                 ; store block in arg 1
-    ld (iy+0),d
-    ld bc,loopx 
-    jp (ix)
-    
-loopx:
-    db "$1"
-    cmd exec
-    cmd qbranch
-    db -5,0
-    jp (ix)    
-
 switch:
     pop hl                      ; get selector from stack
     push bc                     ; create stack frame, push IP (replace later)
