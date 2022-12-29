@@ -910,25 +910,45 @@ ifte3:
 ; c b --
 ; loops until c = 0
 loop:                           
-    pop hl                      ; hl = block                    c
-    pop de                      ; de = condition    
+    pop de                      ; de = block                    c
+    pop hl                      ; hl = condition    
+    push bc                     ; push IP
+    ld bc,de                    ; bc = block
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP  
+    ld iy,0                     ; iy = sp
+    add iy,sp
+    push bc                     ; push block                    b
+    push hl                     ; push condition                b c
 loop1:    
-    push hl                     ; push block & condition        b c                   
-    push de                     
-    push hl                     ; push block again              b c b
+    ld d,(iy-1)                 ; de = block
+    ld e,(iy-2)
+    push de                     ; push block                    b c b                  
     call exec                   ; execute string                b c b r
     db DC1,0                    ; executes block & returns here b ... c'
     pop hl                      ; hl = condition (tos)          b ...                
-    ld d,iyh                    ; de = BP
+    ld d,iyh                    ; de = BP, hl = condition
     ld e,iyl
-    dec de                      ; de = BP - 2
+    dec de                      ; de = BP-2 preserve block
     dec de
-    ex de,hl                    ; hl = BP - 2, de = condition
-    ld sp,hl                    ; sp = BP - 2
-    pop hl                      ; hl = block, de = condition                    
+    ex de,hl                    ; hl = BP-2, de = condition
+    ld sp,hl                    ; sp = BP-2
+    push de                     ; push condition                c'
     ld a,e                      ; condition = zero?
     or d                        
     jr nz,loop1
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    ld iy,0                     ; iy = sp
+    add iy,sp
     jp (ix)
     
 switch:
