@@ -658,17 +658,22 @@ get1:
     push de    
     jp (ix)       
 
-; addr value -- 
+; addr value -- value0
 set:                         
-    pop de     
     pop hl     
-    ld (hl),e     
+    pop de     
+    ld a,(hl)
+    ld (hl),e
+    ld e,a
     ld a,(vDataWidth)
     dec a
     jr z,set1
     inc hl    
-    ld (hl),d     
+    ld a,(hl)
+    ld (hl),d
+    ld d,a
 set1:	  
+    push de                     ; return old value
     jp (ix)  
                                 ; 
 ; in:
@@ -997,6 +1002,9 @@ addr:
     call lookupEntry
     jr c, addr1
     ld hl,0
+    ; call printStr		        
+    ; .cstr "Undefined"
+    ; jp interpret
 addr1:    
     pop bc
     push hl
@@ -1234,7 +1242,7 @@ defineEntry1:
     cp l                                ; if equal then there's no space left, reject 
     jr nz,defineEntry0
 defineEntry2:
-    ccf                                 ; clear carry flag, failure
+    or a                                ; clear carry flag, failure
     ret
 defineEntry3:                           ; new entry
     ld (hl),c                           ; (lo1) = hash lo
@@ -1273,7 +1281,7 @@ lookupEntry1:
     cp l                                ; no space left, reject 
     jr nz,lookupEntry0
 lookupEntry2:
-    ccf                                 ; clear carry flag, failure
+    or a                                ; clear carry flag, failure
     ret
 lookupEntry3:
     ld h,msb(hashWords)                 ; hl = slots[lo*4]

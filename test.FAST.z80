@@ -17,9 +17,21 @@ base:   .set 37
     .org $4000
 testsStart:
 
+    test ":xyz (10) def :xyz addr exec", 10
+    test ":xyz (10) def :xyz addr call", 10
+    ; test ":xyz ($1 $2 +) def 1 2 :xyz addr call", 3
+    ; test "1 2 ($1 $2 +) call", 3
+
+
+    ; test "'hello' hash", $7f54
+    ; test ":hello", $7f54
+    ; test ":hello 2 def", TRUE
+    ; test ":hello 2 def :hello addr", 2
+    ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
+
     ; test "bytes [1 2 3]", $1e02
     ; test "bytes [1 2 3] 1? get", 2
-    test ":xx bytes [1 2 3] def   xx 1? 100 set   xx 1? get ", 2
+    ; test "bytes :xx [1 2 3] def :xx addr", 2
 
     ; test "words [1 2 3]", $1e02
     ; test "bytes [`A` `B` `C`] 1 ? get", 'B'
@@ -47,12 +59,6 @@ testsStart:
     ; test "1 (1-) loop", $1a00
 
     ; test "65 .c", 0
-
-    ; test "'hello' hash", $7f54
-    ; test ":hello", $7f54
-    ; test ":hello 2 def", TRUE
-    ; test ":hello 2 def :hello addr", 2
-    ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
 
     ; test "1 2 <", TRUE
     ; test "2 2 <=", TRUE
