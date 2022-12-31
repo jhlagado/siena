@@ -1,4 +1,4 @@
-    ; .engine mycomputer
+    .engine mycomputer
 
     .include "constants.asm"
     .include "test.fast.mac.asm"
@@ -17,12 +17,16 @@ base:   .set 37
     .org $4000
 testsStart:
 
-    test "bytes [`A` `B` `C`]", 0
-    ; test "bytes [`A` `B` `C`] 1 get", 'B'
-    ; test "bytes [`A` `B` `C`] 1 `Z` set 1 get", 'Z'
+    ; test "bytes [1 2 3]", $1e02
+    ; test "bytes [1 2 3] 1? get", 2
+    test ":xx bytes [1 2 3] def   xx 1? 100 set   xx 1? get ", 2
+
+    ; test "words [1 2 3]", $1e02
+    ; test "bytes [`A` `B` `C`] 1 ? get", 'B'
+    ; test "bytes [`A` `B` `C`] 1 ? `Z` set 1 ? get", 'Z'
     
-    ; test "words [10 20 30] 1 get", 10
-    ; test "words [10 20 30] 1 50 set 1 get", 50
+    ; test "words [10 20 30] 1 ? get", 10
+    ; test "words [10 20 30] 1 ? 50 set 1 ? get", 50
     
     ; test "(((1) exec) exec) exec", 1
     ; test "5 ((($1) exec) exec) call", 5

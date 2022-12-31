@@ -658,10 +658,10 @@ get1:
     push de    
     jp (ix)       
 
-; value addr -- 
+; addr value -- 
 set:                         
-    pop hl     
     pop de     
+    pop hl     
     ld (hl),e     
     ld a,(vDataWidth)
     dec a
@@ -883,73 +883,85 @@ array:
 arrayEnd:
     ld d,iyh                    ; de = BP
     ld e,iyl
+    ld ixh,d                    ; ix = BP
+    ld ixl,e
+
     ld hl,de                    ; hl = de
     or a 
     sbc hl,sp                   ; hl = array count (items on stack)
-    push bc                     ; bc' = IP
-    exx
-    pop bc                       
-    exx
-    ld bc,hl                    ; bc = count
-    ld hl,(vHeapPtr)            ; hl = heap ptr
-    ld (hl),c                   ; write count before array data
+    srl h
+    rr l                        
+    
+    ex de,hl                    ; de = count
+    ld hl,(vHeapPtr)            ; hl = array[-2]
+    ld (hl),e
     inc hl
-    ld (hl),b
-    inc hl
-    push hl                     ; hl = ptr to array (index 0)
-    exx
-    pop hl                      ; hl' = ptr to array (index 0)
-    exx
-    ld a,(vDataWidth)
-    cp 1                        ; byte?
+    ld (hl),d
+    inc hl                      ; hl = array[0], de = count
+
+    ld a,(vDataWidth)           ; vDataWidth=1? 
+    cp 1                        
     jr nz, arrayEnd2
-    ex de,hl
 
-arrayEnd1:
-    dec de
-    dec de
-    ld a,(de)
+arrayEnd1:                      ; byte
+    ld a,(ix-2)
     ld (hl),a
-    inc hl
-    dec bc
-    ld a,c
-    or b
-    jr z,arrayEnd3
-    jr arrayEnd1
 
-arrayEnd2:
+    inc hl
+    dec ix
+    dec ix
+
     dec de
-    ld a,(de)
-    ex af,af'
-    dec de
-    ld a,(de)
+    ld a,e
+    or d
+    jr nz,arrayEnd1
+    jr arrayEnd3
+
+arrayEnd2:                      ; word
+    ld a,(ix-2)
     ld (hl),a
     inc hl
-    ex af,af'
-    ld a,(de)
+    ld a,(ix-1)
     ld (hl),a
     inc hl
-    dec bc
-    ld a,c
-    or b
+
+    dec ix
+    dec ix
+
+    dec de
+    ld a,e
+    or d
     jr nz,arrayEnd2
     
 arrayEnd3:
-    ld d,iyh                    ; de = BP
+
+    ld d,iyh                    ; de = BP, hl = end of array
     ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
+    ex de,hl                    ; hl = BP, de = end of array
     ld sp,hl                    ; sp = BP
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; bc = IP
+
+    pop hl                      ; hl = old BP, de = end of array
+    pop ix                      ; pop SCP (discard)
+    pop ix                      ; pop IP (discard)
     ld sp,hl                    ; sp = old BP
     ld iy,0                     ; iy = sp
     add iy,sp
-    exx
-    push hl
-    push bc
-    exx
-    pop bc
+    ld ix,next
+    
+    ld hl,(vHeapPtr)            ; hl = array[0], de = end of array
+    inc hl
+    inc hl
+    push hl                     ; return array[0]
+    ex de,hl                    ; hl = end of array, de = array[0] 
+
+    or a
+    sbc hl,de                   ; hl = size = end of array - array[0] 
+    ex de,hl
+    ld hl,(vHeapPtr)            ; hl = array[-2]
+    ld (hl),e                   ; array[-2] = size
+    inc hl
+    ld (hl),d
+    
     jp (ix)
 
 ; str -- num
