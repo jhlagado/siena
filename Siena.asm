@@ -52,39 +52,42 @@ isysVars:
 
 opcodesBase:
 
+
+
+
 ctrlCodes:
     DB lsb(EMPTY)               ; ^@  0 NUL  
-    DB lsb(EMPTY)               ; ^A  1
-    DB lsb(EMPTY)               ; ^B  2
+    DB lsb(EMPTY)               ; ^A  1 SOH
+    DB lsb(EMPTY)               ; ^B  2 STX
     DB lsb(EMPTY)               ; ^C  3 ETX
-    DB lsb(EMPTY)               ; ^D  4
-    DB lsb(EMPTY)               ; ^E  5
-    DB lsb(EMPTY)               ; ^F  6
+    DB lsb(EMPTY)               ; ^D  4 EOT
+    DB lsb(EMPTY)               ; ^E  5 ENQ
+    DB lsb(EMPTY)               ; ^F  6 ACK
     DB lsb(EMPTY)               ; ^G  7 BEL
     DB lsb(EMPTY)               ; ^H  8 BS
     DB lsb(EMPTY)               ; ^I  9 TAB
     DB lsb(EMPTY)               ; ^J 10 LF
-    DB lsb(EMPTY)               ; ^K 11
-    DB lsb(EMPTY)               ; ^L 12
+    DB lsb(EMPTY)               ; ^K 11 VT
+    DB lsb(EMPTY)               ; ^L 12 FF
     DB lsb(EMPTY)               ; ^M 13 CR
-    DB lsb(EMPTY)               ; ^N 14
-    DB lsb(EMPTY)               ; ^O 15
-    DB lsb(EMPTY)               ; ^P 16
-    DB lsb(EMPTY)               ; ^Q     
-    DB lsb(EMPTY)               ; ^R     
-    DB lsb(EMPTY)               ; ^S    
-    DB lsb(EMPTY)               ; ^T    
-    DB lsb(EMPTY)               ; ^U       
-    DB lsb(EMPTY)               ; ^V  
-    DB lsb(EMPTY)               ; ^W    
-    DB lsb(EMPTY)               ; ^X    
-    DB lsb(EMPTY)               ; ^Y    
-    DB lsb(EMPTY)               ; ^Z    
-    DB lsb(EMPTY)               ; ^[  
-    DB lsb(EMPTY)               ; ^\  
-    DB lsb(EMPTY)               ; ^]  
-    DB lsb(EMPTY)               ; ^^  
-    DB lsb(EMPTY)               ; ^_  
+    DB lsb(EMPTY)               ; ^N 14 SO
+    DB lsb(EMPTY)               ; ^O 15 SI
+    DB lsb(EMPTY)               ; ^P 16 DLE
+    DB lsb(EMPTY)               ; ^Q 17 DC1    
+    DB lsb(EMPTY)               ; ^R 18 DC2   
+    DB lsb(EMPTY)               ; ^S 19 DC3  
+    DB lsb(EMPTY)               ; ^T 20 DC4  
+    DB lsb(EMPTY)               ; ^U 21 NAK     
+    DB lsb(EMPTY)               ; ^V 22 SYN
+    DB lsb(EMPTY)               ; ^W 23 ETB  
+    DB lsb(EMPTY)               ; ^X 24 CAN   
+    DB lsb(EMPTY)               ; ^Y 25 EM  
+    DB lsb(EMPTY)               ; ^Z 26 SUB  
+    DB lsb(EMPTY)               ; ^[ 27 ESC
+    DB lsb(EMPTY)               ; ^\ 28 FS
+    DB lsb(EMPTY)               ; ^] 29 GS
+    DB lsb(EMPTY)               ; ^^ 30 RS
+    DB lsb(EMPTY)               ; ^_ 31 US
 
 opcodes:                        ; still available ! " % , @ \ { } 
     DB lsb(nop_)                ; SP  
