@@ -59,13 +59,6 @@ vHeapPtr:   DS 2                ; h
             DS 2                ; y
             DS 2                ; z
 
-; ****************************************************************
-; NS Table - Each space holds 26 user commands, 26 user vars, 12 bytes free
-; ****************************************************************
-            .align $40
-
-DATA:       ds dataSize
-
             .align $100
 hashSlots:      ds $100
 

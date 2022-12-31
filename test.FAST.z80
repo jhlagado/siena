@@ -1,4 +1,4 @@
-    .engine mycomputer
+    ; .engine mycomputer
 
     .include "constants.asm"
     .include "test.fast.mac.asm"
@@ -16,19 +16,31 @@ base:   .set 37
 
     .org $4000
 testsStart:
-    ld hl,0
-    ld de,1
-    add hl,de
-    ld de,hl                            ; hl *= 193 (11000001)
-    add hl,hl                           ; shift left
-    add hl,de                           ; add
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
-    add hl,hl                           ; shift left
-    add hl,de                           ; add
+
+    test "bytes [`A` `B` `C`]", 0
+    ; test "bytes [`A` `B` `C`] 1 get", 'B'
+    ; test "bytes [`A` `B` `C`] 1 `Z` set 1 get", 'Z'
+    
+    ; test "words [10 20 30] 1 get", 10
+    ; test "words [10 20 30] 1 50 set 1 get", 50
+    
+    ; test "(((1) exec) exec) exec", 1
+    ; test "5 ((($1) exec) exec) call", 5
+
+    ; test "5 ($1) call", 5
+    ; test "5 (($1) exec) call", 5
+
+    ; test "2 1 {{$1} call} call", 2
+    ; test "2 1 {$2} call", 1
+    ; test "2 1 {$1} call", 2
+    ; test "2 1 {$2} call", 1
+    ; test "2 4 {$2} call", 4
+    ; test "{{1} call} call", 1
+    ; test "5 {-1 ($1) if} call", 5
+
+
+    ; test "0 () loop", 0
+    ; test "1 (1-) loop", $1a00
 
     ; test "65 .c", 0
 
@@ -51,15 +63,8 @@ testsStart:
     ; test "7 3 / frac", 1
     ; test "1 2 +", 3
 
-    ; test ":h {1} def :h addr exec", 1
+    ; test ":h {1} def :h addr call", 1
 
-    ; test "bytes [`A` `B` `C`]", 0
-    ; test "bytes [`A` `B` `C`] 1 get", 'B'
-    ; test "bytes [`A` `B` `C`] 1 `Z` set 1 get", 'Z'
-    
-    ; test "words [10 20 30] 1 get", 10
-    ; test "words [10 20 30] 1 50 set 1 get", 50
-    
     ; test "1 2 +", 3
     ; test "4 1 2 +", 3
     ; test "1", 1
@@ -83,10 +88,6 @@ testsStart:
     ; test "5 -1 (2) if", 2
     ; test "5 -1 (-1 (2) if) if", 2
     ; test "(1) ex", 1
-    ; test "2 ($1) ex", 2
-    ; test "2 4 ($2) ex", 4
-    ; test "((1) ex) ex", 1
-    ; test "5 (-1 ($1) if) ex", 5
 
 
 

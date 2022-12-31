@@ -18,16 +18,11 @@ RSIZE       EQU     $80
 TIBSIZE     EQU     $100	        ; 256 bytes , along line!
 TRUE        EQU     -1		        ; C-style true
 FALSE       EQU     0
-EMPTY       EQU     0		        ; 
+EMPTY       EQU     0		         
 UNUSED      EQU     $ff
-NULL        EQU     0
-ENDTEXT     EQU     3
-DATASIZE    EQU    26*2*2	    ; a..z, a..z words
-
-.macro cmd,address
-    db msb(address / 2) | $80
-    db lsb(address / 2)
-.endm
+NUL         EQU     0
+ETX         EQU     3
+ESC         EQU     27
 
 ; **************************************************************************
 ; Page 0  Initialisation
@@ -91,15 +86,15 @@ ctrlCodes:
     DB lsb(EMPTY)               ; ^^  
     DB lsb(EMPTY)               ; ^_  
 
-opcodes:                        ; still available " , ?
+opcodes:                        ; still available ! " % , @ \ { } 
     DB lsb(nop_)                ; SP  
-    DB lsb(store_)              ; !  
+    DB lsb(nop_)                ; !  
     DB lsb(nop_)                ; "
     DB lsb(hexnum_)             ; #
     DB lsb(arg_)                ; $  
-    DB lsb(index_)              ; %  
+    DB lsb(nop_)                ; %  
     DB lsb(and_)                ; &
-    DB lsb(strDef_)             ; '
+    DB lsb(string_)             ; '
     DB lsb(block_)              ; (    
     DB lsb(blockend_)           ; )
     DB lsb(mul_)                ; *  
@@ -123,8 +118,8 @@ opcodes:                        ; still available " , ?
     DB lsb(lt_)                 ; <
     DB lsb(eq_)                 ; =  
     DB lsb(gt_)                 ; >  
-    DB lsb(nop_)                ; ?    
-    DB lsb(fetch_)              ; @  
+    DB lsb(index_)              ; ?    
+    DB lsb(nop_)                ; @  
     DB lsb(ident_)              ; A     
     DB lsb(ident_)              ; B     
     DB lsb(ident_)              ; C     
@@ -183,152 +178,11 @@ opcodes:                        ; still available " , ?
     DB lsb(ident_)              ; x  
     DB lsb(ident_)              ; y  
     DB lsb(ident_)              ; z  
-    DB lsb(lambda_)             ; {
+    DB lsb(nop_)                ; {
     DB lsb(or_)                 ; |  
-    DB lsb(lambdaEnd_)          ; }  
+    DB lsb(nop_)                ; }  
     DB lsb(inv_)                ; ~    
     DB lsb(nop_)                ; DEL	
-
-
-start:
-    ld sp,DSTACK		        ; start of Siena
-    call init		            ; setups
-    call printStr		        ; prog count to stack, put code line 235 on stack then call print
-    .cstr "Siena V0.0\r\n"
-
-interpret:
-    call prompt
-
-    ld bc,0                     ; load bc with offset into TIB, decide char into tib or execute or control    
-    ld (vTIBPtr),bc
-
-interpret2:                     ; calc nesting (a macro might have changed it)
-    ld e,0                      ; initilize nesting value
-    push bc                     ; save offset into TIB, 
-                                ; bc is also the count of chars in TIB
-    ld hl,TIB                   ; hl is start of TIB
-    jr interpret4
-
-interpret3:
-    ld a,(hl)                   ; a = char in TIB
-    inc hl                      ; inc pointer into TIB
-    dec bc                      ; dec count of chars in TIB
-    call nesting                ; update nesting value
-
-interpret4:
-    ld a,c                      ; is count zero?
-    or b
-    jr nz, interpret3           ; if not loop
-    pop bc                      ; restore offset into TIB
-    
-waitchar:    
-    call getchar                ; loop around waiting for character from serial port
-    cp $20			            ; compare to space
-    jr nc,waitchar1		        ; if >= space, if below 20 set cary flag
-    cp $0                       ; is it end of string? null end of string
-    jr z,waitchar4
-    cp '\r'                     ; carriage return? ascii 13
-    jr z,waitchar3		        ; if anything else its macro/control 
-
-macro:       
-;  ld (vTIBPtr),bc
-;  ld hl,ctrlCodes
-;  add a,l			            ; look up key of macros
-;  ld l,a
-;  ld e,(hl)
-;  ld a,e
-;  or a
-;  jr z,macro1
-;  ld d,msb(macros)
-;  push de
-;  call exec		            ; Siena exec_ operation and jump to it
-;  .cstr "ca"
-; macro1:
-;  ld bc,(vTIBPtr)
-    jr interpret2
-
-waitchar1:
-    ld hl,TIB
-    add hl,bc
-    ld (hl),a                   ; store the character in textbuf
-    inc bc
-    call putchar                ; echo character to screen
-    call nesting
-    jr  waitchar                ; wait for next character
-
-waitchar3:
-    ld hl,TIB
-    add hl,bc
-    ld (hl),"\r"                ; store the crlf in textbuf
-    inc hl
-    ld (hl),"\n"  
-    inc hl    
-    inc bc
-    inc bc
-    call crlf                   ; echo character to screen
-    ld a,e                      ; if zero nesting append and ETX after \r
-    or a
-    jr nz,waitchar
-    ld (hl),$03                 ; store end of text ETX in text buffer 
-    inc bc
-
-waitchar4:    
-    ld (vTIBPtr),bc
-    ld bc,TIB                   ; Instructions stored on heap at address HERE, we pressed enter
-    dec bc
-
-next:        
-    inc bc                      ; Increment the IP
-    ld a,(bc)                   ; Get the next character and dispatch
-    bit 7,a                     ; is 15-bit opcode ?
-    jr nz,next3
-    cp " " + 1                  ; whitespace?
-    jr c,next1
-    ld l,a                      ; index into table
-    ld h,msb(opcodesBase)       ; start address of jump table    
-    ld l,(hl)                   ; get low jump address
-    ld h,msb(page4)             ; Load h with the 1st page address
-    jp (hl)                     ; Jump to routine
-next1:
-    cp NULL                     ; is it end of text?
-    jr z,exit
-    cp ENDTEXT                  ; is it end of text?
-    jr nz,next                   
-    cp DC1                      ; is it end of text?
-    jr nz,exec                   
-    ld hl,-DSTACK               ; etx, is SP valid? (too many pops?)
-    add hl,sp
-    jr nc,next2
-    ld sp,DSTACK                ; yes, reset stack
-next2:
-    jr interpret                ; no, other whitespace, ignore
-next3:
-    ld h,a                      ; build address                      
-    inc bc
-    ld a,(bc)
-    ld l,a
-    add hl,hl
-    jp (hl)
-        
-exit:
-    ld de,bc                    ; address of code after exit opcode
-    inc de			            
-    exx
-    pop bc                      ; bc = last result 
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP 
-    ld sp,hl                    ; sp = BP
-    exx
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    exx
-    push bc                     ; push result    
-    exx
-    ex de,hl
-    jp (hl)
 
 
 ; **********************************************************************			 
@@ -343,12 +197,12 @@ hexnum_:
     jp hexnum
 arg_:
     jp arg
-strDef_:
-    jp strDef
-lambda_:    
-    jp lambda
-lambdaEnd_:
-    jp lambdaEnd
+string_:
+    jp string
+; lambda_:    
+;     jp lambda
+; lambdaEnd_:
+;     jp lambdaEnd
 
 dot_:  
     pop hl
@@ -389,33 +243,6 @@ index1:
     add hl,de                           ; add addr
     push hl
     jp (ix)       
-
-; addr -- value
-fetch_:                         
-    pop hl    
-    ld d,0
-    ld e,(hl)    
-    ld a,(vDataWidth)
-    dec a
-    jr z,fetch1
-    inc hl    
-    ld d,(hl)    
-fetch1:
-    push de    
-    jp (ix)       
-
-; value addr -- 
-store_:                         
-    pop hl     
-    pop de     
-    ld (hl),e     
-    ld a,(vDataWidth)
-    dec a
-    jr z,store1
-    inc hl    
-    ld (hl),d     
-store1:	  
-    jp (ix)  
 
 block_:
     jp block
@@ -656,20 +483,20 @@ hexnum2:
     ld  l,a       ; 
     jr  hexnum1
                                 ; 
-strDef:     
+string:     
     ld de,(vHeapPtr)            ; DE = heap ptr
     push de                     ; save start of string 
     inc bc                      ; point to next char
-    jr strDef2
-strDef1:
+    jr string2
+string1:
     ld (de),a
     inc de                      ; increase count
     inc bc                      ; point to next char
-strDef2:
+string2:
     ld a,(bc)
     cp "'"                      ; ' is the string terminator
-    jr nz,strDef1
-    xor a                       ; write null to terminate string
+    jr nz,string1
+    xor a                       ; write NUL to terminate string
     ld (de),a
     inc de
     ld (vHeapPtr),de            ; bump heap ptr to after definiton
@@ -694,74 +521,56 @@ char3:
     ; dec bc
     jp (ix)  
 
-exec:				            ; execute lambda at pointer
-    pop hl                      ; hl = pointer to lambda
-exec1:
-    ld a,h                      ; skip if destination address is null
-    or l
-    jr z,exec3
-exec2:
-    push bc                     ; push IP 
-    push iy                     ; push SCP (scope pointer)
-    push iy                     ; push BP
-    ld iy,0                     ; BP = SP
-    add iy,sp
+; lambda:              
+;     inc bc
+;     ld hl,(vHeapPtr)            ; start of lambda defintion
+;     push hl
+;     ld d,1                      ; nesting: count first parenthesis
+; lambda1:                        ; Skip to end of definition    
+;     ld a,(bc)                   ; Get the next character
+;     inc bc                      ; Point to next character
+;     ld (hl),a
+;     inc hl
+;     cp "'"
+;     jr z,lambda2
+;     cp "("
+;     jr z,lambda2
+;     cp ")"
+;     jr z,lambda2
+;     cp "{"
+;     jr z,lambda2
+;     cp "}"                      ; Is it the end of the definition? 
+;     jr z,lambda2
+;     cp "["
+;     jr z,lambda2
+;     cp "]"
+;     jr z,lambda2
+;     cp "`"
+;     jr nz,lambda1
+; lambda2:
+;     inc d
+;     bit 0,d                     ; balanced?
+;     jr nz, lambda1              ; not balanced, get the next element
+;     cp "}"                      ; Is it the end of the definition? 
+;     jr nz, lambda1              ; get the next element
+;     dec bc
+;     ld (vHeapPtr),hl            ; bump heap ptr to after definiton
+;     jp (ix)  
 
-    ld bc,hl                    ; IP = pointer to lambda
-    dec bc                      ; dec to prepare for next routine
-exec3:
-    jp (ix)       
-
-lambda:              
-    inc bc
-    ld hl,(vHeapPtr)            ; start of lambda defintion
-    push hl
-    ld d,1                      ; nesting: count first parenthesis
-lambda1:                        ; Skip to end of definition    
-    ld a,(bc)                   ; Get the next character
-    inc bc                      ; Point to next character
-    ld (hl),a
-    inc hl
-    cp "'"
-    jr z,lambda2
-    cp "("
-    jr z,lambda2
-    cp ")"
-    jr z,lambda2
-    cp "{"
-    jr z,lambda2
-    cp "}"                      ; Is it the end of the definition? 
-    jr z,lambda2
-    cp "["
-    jr z,lambda2
-    cp "]"
-    jr z,lambda2
-    cp "`"
-    jr nz,lambda1
-lambda2:
-    inc d
-    bit 0,d                     ; balanced?
-    jr nz, lambda1              ; not balanced, get the next element
-    cp "}"                      ; Is it the end of the definition? 
-    jr nz, lambda1              ; get the next element
-    dec bc
-    ld (vHeapPtr),hl            ; bump heap ptr to after definiton
-    jp (ix)  
-
-lambdaEnd:
-    pop hl                      ; hl = last result 
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
-    ld sp,hl                    ; sp = BP
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop scope ptr (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    ld iy,0                     ; iy = sp = old BP
-    add iy,sp
-    push de                     ; push result    
-    jp (ix)    
+; lambdaEnd:
+;     pop hl                      ; hl = last result 
+;     ld d,iyh                    ; de = BP
+;     ld e,iyl
+;     ex de,hl                    ; hl = BP, de = result
+;     ld sp,hl                    ; sp = BP
+;     pop hl                      ; hl = old BP
+;     pop bc                      ; pop scope ptr (discard)
+;     pop bc                      ; bc = IP
+;     ld sp,hl                    ; sp = old BP
+;     ld iy,0                     ; iy = sp = old BP
+;     add iy,sp
+;     push de                     ; push result    
+;     jp (ix)    
 
 block:
     inc bc
@@ -771,28 +580,33 @@ block1:                         ; Skip to end of definition
     ld a,(bc)                   ; Get the next character
     inc bc                      ; Point to next character
     cp "'"
-    jr z,block2
+    jr z,block4
+    cp "`"
+    jr z,block4
     cp "("
-    jr z,block2
-    cp ")"
-    jr z,block2
+    jr z,block3
     cp "{"
+    jr z,block3
+    cp "["
+    jr z,block3
+    cp ")"
     jr z,block2
     cp "}"                       
     jr z,block2
-    cp "["
-    jr z,block2
     cp "]"
-    jr z,block2
-    cp "`"
     jr nz,block1
 block2:
+    dec d
+    jr block5                   
+block3:
     inc d
-    bit 0,d                     ; balanced?
-    jr nz, block1               ; not balanced, get the next element
-    cp ")"                      ; Is it the end of the block? 
+    jr block1                   
+block4:
+    ld a,$80
+    add a,d
+block5:
     jr nz, block1               ; get the next element
-    dec bc
+    dec bc                      ; balanced, exit
     jp (ix)  
 
 blockend:
@@ -829,6 +643,33 @@ arg:
     ld e,(hl)
     push de                     ; push arg
     jp (ix)
+
+; addr -- value
+get:                         
+    pop hl    
+    ld d,0
+    ld e,(hl)    
+    ld a,(vDataWidth)
+    dec a
+    jr z,get1
+    inc hl    
+    ld d,(hl)    
+get1:
+    push de    
+    jp (ix)       
+
+; value addr -- 
+set:                         
+    pop hl     
+    pop de     
+    ld (hl),e     
+    ld a,(vDataWidth)
+    dec a
+    jr z,set1
+    inc hl    
+    ld (hl),d     
+set1:	  
+    jp (ix)  
                                 ; 
 ; in:
 ;  pop hl                      ; hl = string    
@@ -878,7 +719,7 @@ arg:
 
     
 if:
-    ld de,0                      ; null pointer for else
+    ld de,0                      ; NUL pointer for else
     jr ifte1
 ifte: 
     pop de                      ; de = else
@@ -892,7 +733,7 @@ ifte1:
     jr z,ifte2                   
     ex de,hl                    ; condition = false, hl = else  
 ifte2:                           
-    ld a,h                      ; check if hl is null
+    ld a,h                      ; check if hl is NUL
     or l
     jr z,ifte3
     push bc                     ; push IP
@@ -912,6 +753,7 @@ ifte3:
 loop:                           
     pop de                      ; de = block                    c
     pop hl                      ; hl = condition    
+    push de
     push bc                     ; push IP
     ld bc,de                    ; bc = block
     ld e,(iy+2)                 ; get SCP from parent stack frame
@@ -920,25 +762,30 @@ loop:
     push iy                     ; push BP  
     ld iy,0                     ; iy = sp
     add iy,sp
-    push bc                     ; push block                    b
-    push hl                     ; push condition                b c
 loop1:    
-    ld d,(iy-1)                 ; de = block
-    ld e,(iy-2)
-    push de                     ; push block                    b c b                  
-    call exec                   ; execute string                b c b r
-    db DC1,0                    ; executes block & returns here b ... c'
-    pop hl                      ; hl = condition (tos)          b ...                
-    ld d,iyh                    ; de = BP, hl = condition
-    ld e,iyl
-    dec de                      ; de = BP-2 preserve block
-    dec de
-    ex de,hl                    ; hl = BP-2, de = condition
-    ld sp,hl                    ; sp = BP-2
-    push de                     ; push condition                c'
-    ld a,e                      ; condition = zero?
-    or d                        
-    jr nz,loop1
+    ld a,l                      ; bc = block, hl = condition = zero?
+    or h                        
+    jr z,loop3
+    ld de,loop2-1               ; IP return address
+    push de
+    ld e,(iy+2)                 ; push parent SCP
+    ld d,(iy+3)                  
+    push de                     ; 
+    push iy                     ; push BP  
+    ld iy,0                     ; iy = sp
+    add iy,sp
+    push hl                     ; push condition
+    dec bc
+    jp (ix)                     
+
+loop2:
+    db ESC                      ; escape from interpreter
+    ld c,(iy+6)                 ; bc = block
+    ld b,(iy+7)                  
+    pop hl                      ; hl = condition
+    jr loop1
+    
+loop3:
     ld d,iyh                    ; de = BP
     ld e,iyl
     ex de,hl                    ; hl = BP, de = result
@@ -949,7 +796,23 @@ loop1:
     ld sp,hl                    ; sp = old BP
     ld iy,0                     ; iy = sp
     add iy,sp
+    ld ix,next
     jp (ix)
+
+; xxxblockend:
+;     pop hl                      ; hl = last result 
+;     ld d,iyh                    ; de = BP
+;     ld e,iyl
+;     ex de,hl                    ; hl = BP, de = result
+;     ld sp,hl                    ; sp = BP
+;     pop hl                      ; hl = old BP
+;     pop bc                      ; pop SCP (discard)
+;     pop bc                      ; bc = IP
+;     ld sp,hl                    ; sp = old BP
+;     ld iy,0                     ; iy = sp
+;     add iy,sp
+;     push de                     ; push result    
+;     jp (ix)    
     
 switch:
     pop hl                      ; get selector from stack
@@ -988,7 +851,7 @@ case0:
     dec hl
     ld e,(hl)
 case1:
-    ld a,d                      ; is arg == null ? then skip
+    ld a,d                      ; is arg == NUL ? then skip
     or e
     jr z,case2
     ld (iy+4),c                 ; update return address in stack frame
@@ -1149,7 +1012,7 @@ symbol1:                                 ; 0-9 A-Z a-z _
 symbol2:
     dec bc
     xor a
-    ld (de),a                           ; terminate string with null
+    ld (de),a                           ; terminate string with NUL
     push bc
     ld bc,PAD
     call hashStr                        ; hl = hash
@@ -1178,7 +1041,7 @@ ident1:                                 ; 0-9 A-Z a-z _
 ident2:
     dec bc
     xor a
-    ld (de),a                           ; terminate string with null
+    ld (de),a                           ; terminate string with NUL
     push bc
     ld bc,PAD
     call hashStr                        ; hl = hash
@@ -1298,12 +1161,9 @@ neg:
     jp sub2                     ; use the SUBtract routine
     
 let:
-while:
-
 filter:
 map:
 scan:
-qbranch:
     jp (ix)
 
 
@@ -1318,7 +1178,7 @@ hashStr:
 hashStr1:    
     ld a,(bc)                           ; load next char
     inc bc
-    cp 0                                ; null?
+    cp 0                                ; NUL?
     ret z                     
 hashStr2:
     ld d,0
@@ -1607,7 +1467,7 @@ crlf:
 printStr:        
     ex (sp),hl		            ; swap			
     call prtstr		
-    inc hl			            ; inc past null
+    inc hl			            ; inc past NUL
     ex (sp),hl		            ; put it back	
     ret
 
@@ -1659,6 +1519,10 @@ init1:
     dw bytes
 
     call define
+    .pstr "call",0                       
+    dw call
+
+    call define
     .pstr "case",0                       
     dw case
 
@@ -1681,6 +1545,10 @@ init1:
     call define
     .pstr "frac",0                       
     dw frac
+
+    call define
+    .pstr "get",0                       
+    dw get
 
     call define
     .pstr "hash",0                       
@@ -1707,6 +1575,10 @@ init1:
     dw let
 
     call define
+    .pstr "loop",0                       
+    dw loop
+
+    call define
     .pstr "map",0                       
     dw map
 
@@ -1725,6 +1597,10 @@ init1:
     call define
     .pstr "scan",0                       
     dw scan
+
+    call define
+    .pstr "set",0                       
+    dw set
 
     call define
     .pstr "shl",0                       
@@ -1747,12 +1623,192 @@ init1:
     dw true
 
     call define
-    .pstr "while",0                       
-    dw while
-
-    call define
     .pstr "words",0                       
     dw words
 
     ret
+
+start:
+    ld sp,DSTACK		        ; start of Siena
+    call init		            ; setups
+    call printStr		        ; prog count to stack, put code line 235 on stack then call print
+    .cstr "Siena V0.0\r\n"
+
+interpret:
+    call prompt
+
+    ld bc,0                     ; load bc with offset into TIB, decide char into tib or execute or control    
+    ld (vTIBPtr),bc
+
+interpret2:                     ; calc nesting (a macro might have changed it)
+    ld e,0                      ; initilize nesting value
+    push bc                     ; save offset into TIB, 
+                                ; bc is also the count of chars in TIB
+    ld hl,TIB                   ; hl is start of TIB
+    jr interpret4
+
+interpret3:
+    ld a,(hl)                   ; a = char in TIB
+    inc hl                      ; inc pointer into TIB
+    dec bc                      ; dec count of chars in TIB
+    call nesting                ; update nesting value
+
+interpret4:
+    ld a,c                      ; is count zero?
+    or b
+    jr nz, interpret3           ; if not loop
+    pop bc                      ; restore offset into TIB
+    
+waitchar:    
+    call getchar                ; loop around waiting for character from serial port
+    cp $20			            ; compare to space
+    jr nc,waitchar1		        ; if >= space, if below 20 set cary flag
+    cp $0                       ; is it end of string? NUL end of string
+                                ; ???? NEEDED?
+    jr z,waitchar4
+    cp '\r'                     ; carriage return? ascii 13
+    jr z,waitchar3		        ; if anything else its macro/control 
+
+macro:       
+;  ld (vTIBPtr),bc
+;  ld hl,ctrlCodes
+;  add a,l			            ; look up key of macros
+;  ld l,a
+;  ld e,(hl)
+;  ld a,e
+;  or a
+;  jr z,macro1
+;  ld d,msb(macros)
+;  push de
+;  call call		            ; Siena exec_ operation and jump to it
+;  db DC1,0
+; macro1:
+;  ld bc,(vTIBPtr)
+    jr interpret2
+
+waitchar1:
+    ld hl,TIB
+    add hl,bc
+    ld (hl),a                   ; store the character in textbuf
+    inc bc
+    call putchar                ; echo character to screen
+    call nesting
+    jr  waitchar                ; wait for next character
+
+waitchar3:
+    ld hl,TIB
+    add hl,bc
+    ld (hl),"\r"                ; store the crlf in textbuf
+    inc hl
+    ld (hl),"\n"  
+    inc hl    
+    inc bc
+    inc bc
+    call crlf                   ; echo character to screen
+    ld a,e                      ; if zero nesting append and ETX after \r
+    or a
+    jr nz,waitchar
+    ld (hl),ETX                 ; store end of text ETX in text buffer ??? NEEDED?
+    inc bc
+
+waitchar4:    
+    ld (vTIBPtr),bc
+    ld bc,TIB                   ; Instructions stored on heap at address HERE, 
+                                ; we pressed enter
+    dec bc
+
+next:        
+    inc bc                      ; Increment the IP
+    ld a,(bc)                   ; Get the next character and dispatch
+    ; bit 7,a                   ; is 15-bit opcode ?
+    ; jr nz,next3
+    cp " "                      ; whitespace?
+    jr z,next                   ; space? ignore
+    jr c,next1
+    ld l,a                      ; index into table
+    ld h,msb(opcodesBase)       ; start address of jump table    
+    ld l,(hl)                   ; get low jump address
+    ld h,msb(page4)             ; Load h with the 1st page address
+    jp (hl)                     ; Jump to routine
+next1:
+    cp ESC                      ; escape from interpreter
+    jr z,escape                   
+    cp NUL                      ; end of input string?
+    jr z,exit
+    ; cp ETX                      ; end of command line input text?
+    ; jr nz,next                   
+;     ld hl,-DSTACK               ; etx, is SP valid? (too many pops?)
+;     add hl,sp
+;     jr nc,next2
+;     ld sp,DSTACK                ; yes, reset stack
+; next2:
+    jp interpret                ; no, other whitespace, macros?
+; next3:
+;     ld h,a                    ; build address                      
+;     inc bc
+;     ld a,(bc)
+;     ld l,a
+;     add hl,hl
+;     jp (hl)
+        
+escape:
+    ld hl,bc                    ; address of code after escape opcode
+    inc hl			            
+    jp (hl)
+    
+exit:
+    ld de,bc                    ; address of code after exit opcode
+    inc de			            
+    exx
+    pop bc                      ; bc = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP 
+    ld sp,hl                    ; sp = BP
+    exx
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    exx
+    push bc                     ; push result    
+    exx
+    ex de,hl
+    jp (hl)
+
+; call with args
+; creates a scope
+call:				            ; execute code at pointer
+    pop hl                      ; hl = pointer to code
+    ld a,h                      ; skip if destination address is NUL
+    or l
+    jr z,call2
+    push bc                     ; push IP 
+    push iy                     ; push SCP (scope pointer)
+    push iy                     ; push BP
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    ld bc,hl                    ; IP = pointer to code
+    dec bc                      ; dec to prepare for next routine
+call2:
+    jp (ix)       
+
+; execute a block of code
+; uses parent scope
+exec:				            ; execute code at pointer
+    pop hl                      ; hl = pointer to code
+    ld a,h                      ; skip if destination address is NUL
+    or l
+    jr z,exec2
+    push bc                     ; push IP 
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    ld bc,hl                    ; IP = pointer to code
+    dec bc                      ; dec to prepare for next routine
+exec2:
+    jp (ix)       
 
