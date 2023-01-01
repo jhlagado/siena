@@ -12,7 +12,7 @@
 ;
 ; *****************************************************************************
 
-                                ; 
+                                
 DSIZE       EQU     $80
 RSIZE       EQU     $80
 TIBSIZE     EQU     $100	        ; 256 bytes , along line!
@@ -117,7 +117,7 @@ opcodes:                        ; still available ! " % , @ \ { }
     DB lsb(num_)                ; 8    
     DB lsb(num_)                ; 9    
     DB lsb(symbol_)             ; :    
-    DB lsb(comment_)            ; ;
+    DB lsb(clear_)              ; ;
     DB lsb(lt_)                 ; <
     DB lsb(eq_)                 ; =  
     DB lsb(gt_)                 ; >  
@@ -205,6 +205,9 @@ arg_:
 
 string_:
     jp string
+
+clear_:    
+    jp clear
 
 paren_:    
     jp paren
@@ -947,12 +950,11 @@ def:
     pop bc                              ; bc = hash
     push hl
     call defineEntry
-    ld hl,0                             ; if c return TRUE
-    jr nc,def1
-    dec hl
+    jr c,def1
+    ; call error
+    ; .cstr "Collision"
 def1:
     pop bc
-    push hl
     jp (ix)
     
 ; str -- addr
@@ -1736,7 +1738,15 @@ escape:
     ld hl,bc                    ; address of code after escape opcode
     inc hl			            
     jp (hl)
-    
+  
+; clear stack args
+clear:
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    jp (ix)
+
 exit:
     ld de,bc                    ; address of code after exit opcode
     inc de			            
