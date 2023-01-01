@@ -17,12 +17,12 @@ base:   .set 37
     .org $4000
 testsStart:
 
-    test "2 (1 2 +) *", 6
+    test "1 2 {$1 $2 +} call", 3
 
+    ; test "2 (1 2 +) *", 6
     ; test ":xyz {10} def :xyz addr exec", 10
     ; test ":xyz {10} def :xyz addr call", 10
     ; test ":xyz {$1 $2 +} def 1 2 :xyz addr call", 3
-    ; test "1 2 {$1 $2 +} call", 3
 
 
     ; test "'hello' hash", $7f54

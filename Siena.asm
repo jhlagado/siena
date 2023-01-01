@@ -183,7 +183,7 @@ opcodes:                        ; still available ! " % , @ \ { }
     DB lsb(ident_)              ; z  
     DB lsb(block_)              ; {
     DB lsb(or_)                 ; |  
-    DB lsb(block_)              ; }  
+    DB lsb(blockEnd_)              ; }  
     DB lsb(inv_)                ; ~    
     DB lsb(nop_)                ; DEL	
 
@@ -553,6 +553,8 @@ block:
 block1:                         ; Skip to end of definition    
     ld a,(bc)                   ; Get the next character
     inc bc                      ; Point to next character
+    cp " " + 1                  ; ignore whitespace 
+    jr c,block1
     cp "'"
     jr z,block4
     cp "`"

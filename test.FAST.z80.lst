@@ -558,7 +558,7 @@
 00C3                             ; 
 00C3                             ; 
 00C3   31 00 1A               LD   SP,DSTACK   
-00C6   CD CE 08               CALL   init   
+00C6   CD D2 08               CALL   init   
 00C9   C3 00 40               JP   testsStart   
 00CC                             ; *************************************************************************
 00CC                             ; 
@@ -733,7 +733,7 @@
 027A   58                     DB   lsb(ident_)   ; z
 027B   49                     DB   lsb(block_)   ; {
 027C   69                     DB   lsb(or_)   ; |
-027D   49                     DB   lsb(block_)   ; }
+027D   4C                     DB   lsb(blockEnd_)   ; }
 027E   7B                     DB   lsb(inv_)   ; ~
 027F   C6                     DB   lsb(nop_)   ; DEL	
 0280                             ; **********************************************************************			
@@ -746,7 +746,7 @@
 0303                HEXNUM_:      
 0303   C3 37 04               JP   hexnum   
 0306                ARG_:        
-0306   C3 E6 04               JP   arg   
+0306   C3 EA 04               JP   arg   
 0309                STRING_:      
 0309   C3 54 04               JP   string   
 030C                PAREN_:      
@@ -759,12 +759,12 @@
 0314   0A                     LD   a,(bc)   
 0315   FE 68                  CP   "h"   
 0317   20 05                  JR   nz,dot1   
-0319   CD 4B 08               CALL   prthex   
+0319   CD 4F 08               CALL   prthex   
 031C   18 17                  JR   dot4   
 031E                DOT1:        
 031E   FE 73                  CP   "s"   
 0320   20 05                  JR   nz,dot2   
-0322   CD 6E 08               CALL   prtstr   
+0322   CD 72 08               CALL   prtstr   
 0325   18 0E                  JR   dot4   
 0327                DOT2:        
 0327   FE 63                  CP   "c"   
@@ -774,7 +774,7 @@
 032F   18 04                  JR   dot4   
 0331                DOT3:        
 0331   0B                     DEC   bc   
-0332   CD 03 08               CALL   prtdec   
+0332   CD 07 08               CALL   prtdec   
 0335                DOT4:        
 0335   3E 20                  LD   a," "   
 0337   CD 85 00               CALL   putchar   
@@ -794,17 +794,17 @@
 0349                BLOCK_:      
 0349   C3 9E 04               JP   block   
 034C                BLOCKEND_:      
-034C   C3 D2 04               JP   blockend   
+034C   C3 D6 04               JP   blockend   
 034F                CHAR_:       
 034F   C3 6D 04               JP   char   
 0352                ARRAY_:      
-0352   C3 EB 05               JP   array   
+0352   C3 EF 05               JP   array   
 0355                ARRAYEND_:      
-0355   C3 FD 05               JP   arrayEnd   
+0355   C3 01 06               JP   arrayEnd   
 0358                IDENT_:      
-0358   C3 BD 06               JP   ident   
+0358   C3 C1 06               JP   ident   
 035B                SYMBOL_:      
-035B   C3 96 06               JP   symbol   
+035B   C3 9A 06               JP   symbol   
 035E                AND_:        
 035E   D1                     POP   de   ; Bitwise and the top 2 elements of the stack
 035F   E1                     POP   hl   
@@ -847,7 +847,7 @@
 0384   DD E9                  JP   (ix)   
 0386                HDOT_:       ; print hexadecimal
 0386   E1                     POP   hl   
-0387   CD 4B 08               CALL   prthex   
+0387   CD 4F 08               CALL   prthex   
 038A   C3 31 03               JP   dot3   
 038D                MUL_:        
 038D   C3 EB 03               JP   mul   
@@ -862,7 +862,7 @@
 0398                EQ_:         
 0398   E1                     POP   hl   
 0399   D1                     POP   de   
-039A   C3 16 07               JP   equals   
+039A   C3 1A 07               JP   equals   
 039D                GT_:         
 039D   D1                     POP   de   
 039E   E1                     POP   hl   
@@ -874,15 +874,15 @@
 03A3   03                     INC   bc   
 03A4   0A                     LD   a,(bc)   
 03A5   FE 3D                  CP   "="   
-03A7   CA 1E 07               JP   z,lessthaneq   
+03A7   CA 22 07               JP   z,lessthaneq   
 03AA   0B                     DEC   bc   
-03AB   C3 23 07               JP   lessthan   
+03AB   C3 27 07               JP   lessthan   
 03AE                DIV_:        
 03AE   D1                     POP   de   ; get first value
 03AF   E1                     POP   hl   ; get 2nd value
 03B0   C5                     PUSH   bc   ; preserve the IP
 03B1   44 4D                  LD   bc,hl   
-03B3   CD C0 07               CALL   divide   
+03B3   CD C4 07               CALL   divide   
 03B6   22 7E 1B               LD   (vFrac),hl   
 03B9   C1                     POP   bc   
 03BA   D5                     PUSH   de   ; push result
@@ -1050,8 +1050,8 @@
 0482   DD 21 88 04            LD   ix,paren2   
 0486   18 16                  JR   block   
 0488                PAREN2:      
-0488   DD 21 A4 0A            LD   ix,next   
-048C   C3 EC 0A               JP   exec   
+0488   DD 21 A8 0A            LD   ix,next   
+048C   C3 F0 0A               JP   exec   
 048F                PARENEND:      
 048F   E1                     POP   hl   ; hl = last result
 0490   D1                     POP   de   
@@ -1060,7 +1060,7 @@
 0493   E5                     PUSH   hl   
 0494   FD 62                  LD   iyh,d   
 0496   FD 6B                  LD   iyl,e   
-0498   DD 21 A4 0A            LD   ix,next   
+0498   DD 21 A8 0A            LD   ix,next   
 049C   DD E9                  JP   (ix)   
 049E                BLOCK:       
 049E   03                     INC   bc   
@@ -1069,1121 +1069,1123 @@
 04A2                BLOCK1:      ; Skip to end of definition
 04A2   0A                     LD   a,(bc)   ; Get the next character
 04A3   03                     INC   bc   ; Point to next character
-04A4   FE 27                  CP   "'"   
-04A6   28 22                  JR   z,block4   
-04A8   FE 60                  CP   "`"   
-04AA   28 1E                  JR   z,block4   
-04AC   FE 28                  CP   "("   
-04AE   28 17                  JR   z,block3   
-04B0   FE 7B                  CP   "{"   
-04B2   28 13                  JR   z,block3   
-04B4   FE 5B                  CP   "["   
-04B6   28 0F                  JR   z,block3   
-04B8   FE 29                  CP   ")"   
-04BA   28 08                  JR   z,block2   
-04BC   FE 7D                  CP   "}"   
-04BE   28 04                  JR   z,block2   
-04C0   FE 5D                  CP   "]"   
-04C2   20 DE                  JR   nz,block1   
-04C4                BLOCK2:      
-04C4   15                     DEC   d   
-04C5   18 06                  JR   block5   
-04C7                BLOCK3:      
-04C7   14                     INC   d   
-04C8   18 D8                  JR   block1   
-04CA                BLOCK4:      
-04CA   3E 80                  LD   a,$80   
-04CC   82                     ADD   a,d   
-04CD                BLOCK5:      
-04CD   20 D3                  JR   nz,block1   ; get the next element
-04CF   0B                     DEC   bc   ; balanced, exit
-04D0   DD E9                  JP   (ix)   
-04D2                BLOCKEND:      
-04D2   E1                     POP   hl   ; hl = last result
-04D3   FD 54                  LD   d,iyh   ; de = BP
-04D5   FD 5D                  LD   e,iyl   
-04D7   EB                     EX   de,hl   ; hl = BP, de = result
-04D8   F9                     LD   sp,hl   ; sp = BP
-04D9   E1                     POP   hl   ; hl = old BP
-04DA   C1                     POP   bc   ; pop SCP (discard)
-04DB   C1                     POP   bc   ; bc = IP
-04DC   F9                     LD   sp,hl   ; sp = old BP
-04DD   FD 21 00 00            LD   iy,0   ; iy = sp
-04E1   FD 39                  ADD   iy,sp   
-04E3   D5                     PUSH   de   ; push result
-04E4   DD E9                  JP   (ix)   
-04E6                ARG:         
-04E6   03                     INC   bc   ; get next char
-04E7   0A                     LD   a,(bc)   
-04E8   D6 31                  SUB   "1"   ; treat as a digit, 1 based index
-04EA   E6 07                  AND   $07   ; mask
-04EC   87                     ADD   a,a   ; double
-04ED   6F                     LD   l,a   ; hl = offset into args
-04EE   26 00                  LD   h,0   
-04F0   FD 5E 02               LD   e,(iy+2)   ; de = SCP (scope ptr)
-04F3   FD 56 03               LD   d,(iy+3)   
-04F6   EB                     EX   de,hl   ; hl = SCP - offset
-04F7   B7                     OR   a   
-04F8   ED 52                  SBC   hl,de   
-04FA   2B                     DEC   hl   ; de = arg
-04FB   56                     LD   d,(hl)   
-04FC   2B                     DEC   hl   
-04FD   5E                     LD   e,(hl)   
-04FE   D5                     PUSH   de   ; push arg
-04FF   DD E9                  JP   (ix)   
-0501                             ; addr -- value
-0501                GET:         
-0501   E1                     POP   hl   
-0502   16 00                  LD   d,0   
-0504   5E                     LD   e,(hl)   
-0505   3A 80 1B               LD   a,(vDataWidth)   
-0508   3D                     DEC   a   
-0509   28 02                  JR   z,get1   
-050B   23                     INC   hl   
-050C   56                     LD   d,(hl)   
-050D                GET1:        
-050D   D5                     PUSH   de   
-050E   DD E9                  JP   (ix)   
-0510                             ; addr value -- value0
-0510                SET:         
-0510   E1                     POP   hl   
-0511   D1                     POP   de   
-0512   7E                     LD   a,(hl)   
-0513   73                     LD   (hl),e   
-0514   5F                     LD   e,a   
-0515   3A 80 1B               LD   a,(vDataWidth)   
-0518   3D                     DEC   a   
-0519   28 04                  JR   z,set1   
-051B   23                     INC   hl   
-051C   7E                     LD   a,(hl)   
-051D   72                     LD   (hl),d   
-051E   57                     LD   d,a   
-051F                SET1:        
-051F   D5                     PUSH   de   ; return old value
-0520   DD E9                  JP   (ix)   
-0522                             ; 
-0522                             ; in:
-0522                             ;  pop hl                      ; hl = string
-0522                             ;  pop de                      ; de = char
-0522                             ; in1:
-0522                             ;  ld a,(hl)
-0522                             ;  inc hl
-0522                             ;  cp 0                        ; is end of string
-0522                             ;  jr z,in2
-0522                             ;  cp e
-0522                             ;  jr nz,in1
-0522                             ;  or a                        ; a is never 0, or a resets zero flag
-0522                             ; in2:
-0522                             ;  ld hl,0                     ; hl = result
-0522                             ;  jr z,in3
-0522                             ;  dec hl                      ; if nz de = $ffff
-0522                             ; in3:
-0522                             ;  push hl                     ; push result
-0522                             ;  jp (ix)
-0522                             ; newAdd2:
-0522                             ;  push bc                     ; push IP
-0522                             ;  ld e,(iy+2)                 ; get SCP from parent stack frame
-0522                             ;  ld d,(iy+3)                 ; make this the old BP for this stack frame
-0522                             ;  push de                     ; push SCP
-0522                             ;  push iy                     ; push base pointer
-0522                             ;  ld iy,(3+2)*2               ; base pointer = stack pointer - (stack frame vars) - 2 args
-0522                             ;  add iy,sp                   ;
-0522                             ;  ld d,(iy-1)
-0522                             ;  ld e,(iy-2)
-0522                             ;  ld h,(iy-3)
-0522                             ;  ld l,(iy-4)
-0522                             ;  add hl,de                   ; hl = hl + de
-0522                             ;  ex de,hl                    ; de = result
-0522                             ;  pop hl                      ; hl = old BP
-0522                             ;  pop bc                      ; pop SCP (discard)
-0522                             ;  pop bc                      ; bc = IP
-0522                             ;  ld sp,hl                    ; sp = old BP
-0522                             ;  ld iy,0
-0522                             ;  add iy,sp
-0522                             ;  push de                     ; push result
-0522                             ;  jp (ix)
-0522                IF:          
-0522   11 00 00               LD   de,0   ; NUL pointer for else
-0525   18 01                  JR   ifte1   
-0527                IFTE:        
-0527   D1                     POP   de   ; de = else
-0528                IFTE1:       
-0528   E1                     POP   hl   ; hl = then
-0529   E3                     EX   (sp),hl   ; hl = condition, (sp) = then
-052A   23                     INC   hl   ; check for true
-052B   7C                     LD   a,h   
-052C   B5                     OR   l   
-052D   E1                     POP   hl   ; hl = then
-052E   28 01                  JR   z,ifte2   
-0530   EB                     EX   de,hl   ; condition = false, hl = else
-0531                IFTE2:       
-0531   7C                     LD   a,h   ; check if hl is NUL
-0532   B5                     OR   l   
-0533   28 13                  JR   z,ifte3   
-0535   C5                     PUSH   bc   ; push IP
-0536   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
-0539   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
-053C   D5                     PUSH   de   ; push SCP
-053D   FD E5                  PUSH   iy   ; push BP
-053F   FD 21 00 00            LD   iy,0   ; iy = sp
-0543   FD 39                  ADD   iy,sp   
-0545   44 4D                  LD   bc,hl   ; IP = then
-0547   0B                     DEC   bc   
-0548                IFTE3:       
-0548   DD E9                  JP   (ix)   
-054A                             ; c b --
-054A                             ; loops until c = 0
-054A                LOOP:        
-054A   D1                     POP   de   ; de = block                    c
-054B   E1                     POP   hl   ; hl = condition
-054C   D5                     PUSH   de   
-054D   C5                     PUSH   bc   ; push IP
-054E   42 4B                  LD   bc,de   ; bc = block
-0550   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
-0553   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
-0556   D5                     PUSH   de   ; push SCP
-0557   FD E5                  PUSH   iy   ; push BP
-0559   FD 21 00 00            LD   iy,0   ; iy = sp
-055D   FD 39                  ADD   iy,sp   
-055F                LOOP1:       
-055F   7D                     LD   a,l   ; bc = block, hl = condition = zero?
-0560   B4                     OR   h   
-0561   28 21                  JR   z,loop3   
-0563   11 79 05               LD   de,loop2-1   ; IP return address
-0566   D5                     PUSH   de   
-0567   FD 5E 02               LD   e,(iy+2)   ; push parent SCP
-056A   FD 56 03               LD   d,(iy+3)   
-056D   D5                     PUSH   de   ; 
-056E   FD E5                  PUSH   iy   ; push BP
-0570   FD 21 00 00            LD   iy,0   ; iy = sp
-0574   FD 39                  ADD   iy,sp   
-0576   E5                     PUSH   hl   ; push condition
-0577   0B                     DEC   bc   
-0578   DD E9                  JP   (ix)   
-057A                LOOP2:       
-057A   1B                     DB   ESC   ; escape from interpreter
-057B   FD 4E 06               LD   c,(iy+6)   ; bc = block
-057E   FD 46 07               LD   b,(iy+7)   
-0581   E1                     POP   hl   ; hl = condition
-0582   18 DB                  JR   loop1   
-0584                LOOP3:       
-0584   FD 54                  LD   d,iyh   ; de = BP
-0586   FD 5D                  LD   e,iyl   
-0588   EB                     EX   de,hl   ; hl = BP, de = result
-0589   F9                     LD   sp,hl   ; sp = BP
-058A   E1                     POP   hl   ; hl = old BP
-058B   C1                     POP   bc   ; pop SCP (discard)
-058C   C1                     POP   bc   ; bc = IP
-058D   F9                     LD   sp,hl   ; sp = old BP
-058E   FD 21 00 00            LD   iy,0   ; iy = sp
-0592   FD 39                  ADD   iy,sp   
-0594   DD 21 A4 0A            LD   ix,next   
-0598   DD E9                  JP   (ix)   
-059A                SWITCH:      
-059A   E1                     POP   hl   ; get selector from stack
-059B   C5                     PUSH   bc   ; create stack frame, push IP (replace later)
-059C   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
-059F   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
-05A2   D5                     PUSH   de   ; push SCP
-05A3   FD E5                  PUSH   iy   ; push BP
-05A5   FD 21 00 00            LD   iy,0   ; BP = SP
-05A9   FD 39                  ADD   iy,sp   
-05AB   E5                     PUSH   hl   ; push selector as first arg of new frame
-05AC   DD E9                  JP   (ix)   
-05AE                CASE:        
-05AE   FD 66 FF               LD   h,(iy-1)   ; hl = selector
-05B1   FD 6E FE               LD   l,(iy-2)   
-05B4   23                     INC   hl   ; hl -= 1 index from second arg
-05B5   29                     ADD   hl,hl   ; hl *= 2 word offset
-05B6   FD 54                  LD   d,iyh   ; hl = BP, de = offset
-05B8   FD 5D                  LD   e,iyl   
-05BA   EB                     EX   de,hl   
-05BB   B7                     OR   a   ; hl = BP - offset
-05BC   ED 52                  SBC   hl,de   
-05BE   54 5D                  LD   de,hl   ; save arg ptr
-05C0   2B                     DEC   hl   ; hl += 2
-05C1   2B                     DEC   hl   
-05C2   B7                     OR   a   ; arg ptr - stack pointer
-05C3   ED 72                  SBC   hl,sp   
-05C5   30 03                  JR   nc,case0   
-05C7   D1                     POP   de   ; pop last arg
-05C8   18 05                  JR   case1   
-05CA                CASE0:       
-05CA   EB                     EX   de,hl   
-05CB   2B                     DEC   hl   ; de = arg
-05CC   56                     LD   d,(hl)   
-05CD   2B                     DEC   hl   
-05CE   5E                     LD   e,(hl)   
-05CF                CASE1:       
-05CF   7A                     LD   a,d   ; is arg == NUL ? then skip
-05D0   B3                     OR   e   
-05D1   28 09                  JR   z,case2   
-05D3   FD 71 04               LD   (iy+4),c   ; update return address in stack frame
-05D6   FD 70 05               LD   (iy+5),b   
-05D9   42 4B                  LD   bc,de   ; IP = arg
-05DB   0B                     DEC   bc   
-05DC                CASE2:       
-05DC   DD E9                  JP   (ix)   
-05DE                WORDS:       
-05DE   21 02 00               LD   hl,2   
-05E1   18 03                  JR   bytes1   
-05E3                BYTES:       
-05E3   21 01 00               LD   hl,1   
-05E6                BYTES1:      
-05E6   22 80 1B               LD   (vDataWidth),hl   
-05E9   DD E9                  JP   (ix)   
-05EB                ARRAY:       
-05EB   C5                     PUSH   bc   ; create stack frame, push IP
-05EC   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
-05EF   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
-05F2   D5                     PUSH   de   ; push SCP
-05F3   FD E5                  PUSH   iy   ; push BP
-05F5   FD 21 00 00            LD   iy,0   ; BP = SP
-05F9   FD 39                  ADD   iy,sp   
-05FB   DD E9                  JP   (ix)   
-05FD                ARRAYEND:      
-05FD   FD 54                  LD   d,iyh   ; de = BP
-05FF   FD 5D                  LD   e,iyl   
-0601   DD 62                  LD   ixh,d   ; ix = BP
-0603   DD 6B                  LD   ixl,e   
-0605   62 6B                  LD   hl,de   ; hl = de
-0607   B7                     OR   a   
-0608   ED 72                  SBC   hl,sp   ; hl = array count (items on stack)
-060A   CB 3C                  SRL   h   
-060C   CB 1D                  RR   l   
-060E   EB                     EX   de,hl   ; de = count
-060F   2A 8C 1B               LD   hl,(vHeapPtr)   ; hl = array[-2]
-0612   73                     LD   (hl),e   
-0613   23                     INC   hl   
-0614   72                     LD   (hl),d   
-0615   23                     INC   hl   ; hl = array[0], de = count
-0616   3A 80 1B               LD   a,(vDataWidth)   ; vDataWidth=1?
-0619   FE 01                  CP   1   
-061B   20 10                  JR   nz,arrayEnd2   
-061D                ARRAYEND1:      ; byte
-061D   DD 7E FE               LD   a,(ix-2)   
-0620   77                     LD   (hl),a   
-0621   23                     INC   hl   
-0622   DD 2B                  DEC   ix   
-0624   DD 2B                  DEC   ix   
-0626   1B                     DEC   de   
-0627   7B                     LD   a,e   
-0628   B2                     OR   d   
-0629   20 F2                  JR   nz,arrayEnd1   
-062B   18 13                  JR   arrayEnd3   
-062D                ARRAYEND2:      ; word
-062D   DD 7E FE               LD   a,(ix-2)   
-0630   77                     LD   (hl),a   
-0631   23                     INC   hl   
-0632   DD 7E FF               LD   a,(ix-1)   
-0635   77                     LD   (hl),a   
-0636   23                     INC   hl   
-0637   DD 2B                  DEC   ix   
-0639   DD 2B                  DEC   ix   
-063B   1B                     DEC   de   
-063C   7B                     LD   a,e   
-063D   B2                     OR   d   
-063E   20 ED                  JR   nz,arrayEnd2   
-0640                ARRAYEND3:      
-0640   FD 54                  LD   d,iyh   ; de = BP, hl = end of array
-0642   FD 5D                  LD   e,iyl   
-0644   EB                     EX   de,hl   ; hl = BP, de = end of array
-0645   F9                     LD   sp,hl   ; sp = BP
-0646   E1                     POP   hl   ; hl = old BP, de = end of array
-0647   DD E1                  POP   ix   ; pop SCP (discard)
-0649   DD E1                  POP   ix   ; pop IP (discard)
-064B   F9                     LD   sp,hl   ; sp = old BP
-064C   FD 21 00 00            LD   iy,0   ; iy = sp
-0650   FD 39                  ADD   iy,sp   
-0652   DD 21 A4 0A            LD   ix,next   
-0656   2A 8C 1B               LD   hl,(vHeapPtr)   ; hl = array[0], de = end of array
-0659   23                     INC   hl   
-065A   23                     INC   hl   
-065B   E5                     PUSH   hl   ; return array[0]
-065C   EB                     EX   de,hl   ; hl = end of array, de = array[0]
-065D   B7                     OR   a   
-065E   ED 52                  SBC   hl,de   ; hl = size = end of array - array[0]
-0660   EB                     EX   de,hl   
-0661   2A 8C 1B               LD   hl,(vHeapPtr)   ; hl = array[-2]
-0664   73                     LD   (hl),e   ; array[-2] = size
-0665   23                     INC   hl   
-0666   72                     LD   (hl),d   
-0667   DD E9                  JP   (ix)   
-0669                             ; str -- num
-0669                HASH:        
-0669   E1                     POP   hl   
-066A   C5                     PUSH   bc   
-066B   44 4D                  LD   bc,hl   
-066D   CD 5D 07               CALL   hashStr   
-0670   C1                     POP   bc   
-0671   E5                     PUSH   hl   
-0672   DD E9                  JP   (ix)   
-0674                             ; str addr -- bool
-0674                DEF:         
-0674   60 69                  LD   hl,bc   ; hl = IP
-0676   D1                     POP   de   ; de = addr
-0677   C1                     POP   bc   ; bc = hash
-0678   E5                     PUSH   hl   
-0679   CD 76 07               CALL   defineEntry   
-067C   21 00 00               LD   hl,0   ; if c return TRUE
-067F   30 01                  JR   nc,def1   
-0681   2B                     DEC   hl   
-0682                DEF1:        
-0682   C1                     POP   bc   
-0683   E5                     PUSH   hl   
-0684   DD E9                  JP   (ix)   
-0686                             ; str -- addr
-0686                ADDR:        
-0686   E1                     POP   hl   ; hl = hash
-0687   C5                     PUSH   bc   
-0688   44 4D                  LD   bc,hl   
-068A   CD 9C 07               CALL   lookupEntry   
-068D   38 03                  JR   c,addr1   
-068F   21 00 00               LD   hl,0   
-0692                             ; call printStr		
-0692                             ; .cstr "Undefined"
-0692                             ; jp interpret
-0692                ADDR1:       
-0692   C1                     POP   bc   
-0693   E5                     PUSH   hl   
-0694   DD E9                  JP   (ix)   
-0696                SYMBOL:      
-0696   03                     INC   bc   
-0697   11 00 1A               LD   de,PAD   
-069A   26 02                  LD   h,msb(opcodesBase)   ; this table identifies the char type
-069C   18 02                  JR   symbol1   
-069E                SYMBOL0:      ; copy to PAD area
-069E   03                     INC   bc   ; characters that are part of the identifier
-069F   13                     INC   de   
-06A0                SYMBOL1:      ; 0-9 A-Z a-z _
-06A0   0A                     LD   a,(bc)   
-06A1   12                     LD   (de),a   
-06A2   B7                     OR   a   
-06A3   28 0A                  JR   z,symbol2   
-06A5   6F                     LD   l,a   
-06A6   7E                     LD   a,(hl)   
-06A7   FE 58                  CP   lsb(ident_)   
-06A9   28 F3                  JR   z,symbol0   
-06AB   FE 00                  CP   lsb(num_)   
-06AD   28 EF                  JR   z,symbol0   
-06AF                SYMBOL2:      
-06AF   0B                     DEC   bc   
-06B0   AF                     XOR   a   
-06B1   12                     LD   (de),a   ; terminate string with NUL
-06B2   C5                     PUSH   bc   
-06B3   01 00 1A               LD   bc,PAD   
-06B6   CD 5D 07               CALL   hashStr   ; hl = hash
-06B9   C1                     POP   bc   
-06BA   E5                     PUSH   hl   
-06BB   DD E9                  JP   (ix)   
-06BD                IDENT:       
-06BD   11 00 1A               LD   de,PAD   
-06C0   26 02                  LD   h,msb(opcodesBase)   ; this table identifies the char type
-06C2   18 02                  JR   ident1   
-06C4                IDENT0:      ; copy to PAD area
-06C4   03                     INC   bc   ; characters that are part of the identifier
-06C5   13                     INC   de   
-06C6                IDENT1:      ; 0-9 A-Z a-z _
-06C6   0A                     LD   a,(bc)   
-06C7   12                     LD   (de),a   
-06C8   B7                     OR   a   
-06C9   28 0A                  JR   z,ident2   
-06CB   6F                     LD   l,a   
-06CC   7E                     LD   a,(hl)   
-06CD   FE 58                  CP   lsb(ident_)   
-06CF   28 F3                  JR   z,ident0   
-06D1   FE 00                  CP   lsb(num_)   
-06D3   28 EF                  JR   z,ident0   
-06D5                IDENT2:      
-06D5   0B                     DEC   bc   
-06D6   AF                     XOR   a   
-06D7   12                     LD   (de),a   ; terminate string with NUL
-06D8   C5                     PUSH   bc   
-06D9   01 00 1A               LD   bc,PAD   
-06DC   CD 5D 07               CALL   hashStr   ; hl = hash
-06DF   44 4D                  LD   bc,hl   
-06E1   CD 9C 07               CALL   lookupEntry   
-06E4   C1                     POP   bc   
-06E5   38 02                  JR   c,ident3   ; todo: no entry? print an error message
-06E7   DD E9                  JP   (ix)   
-06E9                IDENT3:      
-06E9   E9                     JP   (hl)   
-06EA                FRAC:        
-06EA   2A 7E 1B               LD   hl,(vFrac)   
-06ED   E5                     PUSH   hl   
-06EE   DD E9                  JP   (ix)   
-06F0                SQRT1:       
-06F0   E1                     POP   hl   
-06F1   C5                     PUSH   bc   
-06F2   CD D9 07               CALL   squareRoot   
-06F5   ED 43 7E 1B            LD   (vFrac),bc   
-06F9   C1                     POP   bc   
-06FA   D5                     PUSH   de   
-06FB   DD E9                  JP   (ix)   
-06FD                ABS1:        
-06FD   E1                     POP   hl   
-06FE   CB 7C                  BIT   7,h   
-0700   C8                     RET   z   
-0701   AF                     XOR   a   
-0702   95                     SUB   l   
-0703   6F                     LD   l,a   
-0704   9F                     SBC   a,a   
-0705   94                     SUB   h   
-0706   67                     LD   h,a   
-0707   E5                     PUSH   hl   
-0708   DD E9                  JP   (ix)   
-070A                MOD:         
-070A   D1                     POP   de   ; get first value
-070B   E1                     POP   hl   ; get 2nd value
-070C   C5                     PUSH   bc   ; preserve the IP
-070D   44 4D                  LD   bc,hl   
-070F   CD C0 07               CALL   divide   
-0712   C1                     POP   bc   
-0713   E5                     PUSH   hl   ; push remainder
-0714   DD E9                  JP   (ix)   
-0716                             ; hl = value1, de = value2
-0716                             ; hl = result
-0716                EQUALS:      
-0716   B7                     OR   a   ; reset the carry flag
-0717   ED 52                  SBC   hl,de   ; only equality sets hl=0 here
-0719   28 10                  JR   z,true1   
-071B   C3 31 07               JP   false1   
-071E                             ; hl = value1 de = value2
-071E                             ; hl = result
-071E                LESSTHANEQ:      
-071E   B7                     OR   a   
-071F   ED 52                  SBC   hl,de   
-0721   18 05                  JR   lessthan1   
-0723                             ; hl = value1 de = value2
-0723                             ; hl = result
-0723                LESSTHAN:      
-0723   B7                     OR   a   
-0724   ED 52                  SBC   hl,de   
-0726   28 09                  JR   z,false1   
-0728                LESSTHAN1:      
-0728   FA 31 07               JP   m,false1   
-072B                TRUE1:       
-072B   21 FF FF               LD   hl,TRUE   
-072E   E5                     PUSH   hl   
-072F   DD E9                  JP   (ix)   
-0731                FALSE1:      
-0731   21 00 00               LD   hl,FALSE   
-0734   E5                     PUSH   hl   
-0735   DD E9                  JP   (ix)   
-0737                             ; Z80 port input
-0737                             ; port -- value
-0737                INPUT:       
-0737   E1                     POP   hl   
-0738   59                     LD   e,c   ; save IP
-0739   4D                     LD   c,l   
-073A   ED 68                  IN   l,(c)   
-073C   26 00                  LD   h,0   
-073E   4B                     LD   c,e   ; restore IP
-073F   E5                     PUSH   hl   
-0740   DD E9                  JP   (ix)   
-0742                             ; Z80 port output
-0742                             ; value port --
-0742                OUTPUT:      
-0742   E1                     POP   hl   
-0743   59                     LD   e,c   ; save IP
-0744   4D                     LD   c,l   
-0745   E1                     POP   hl   
-0746   ED 69                  OUT   (c),l   
-0748   4B                     LD   c,e   ; restore IP
-0749   DD E9                  JP   (ix)   
-074B                KEY:         
-074B   CD 81 00               CALL   getchar   
-074E   26 00                  LD   h,0   
-0750   6F                     LD   l,a   
-0751   E5                     PUSH   hl   
-0752   DD E9                  JP   (ix)   
-0754                NEG:         
-0754   21 00 00               LD   hl,0   ; NEGate the value on top of stack (2's complement)
-0757   D1                     POP   de   
-0758   C3 92 03               JP   sub2   ; use the SUBtract routine
-075B                LET:         
-075B                FILTER:      
-075B                MAP:         
-075B                SCAN:        
-075B   DD E9                  JP   (ix)   
-075D                             ; -------------------------------------------------------------------------------
-075D                             ; hash C-string
-075D                             ; BC = str
-075D                             ; HL = hash
-075D                HASHSTR:      
-075D   21 00 00               LD   hl,0   
-0760                HASHSTR1:      
-0760   0A                     LD   a,(bc)   ; load next char
-0761   03                     INC   bc   
-0762   FE 00                  CP   0   ; NUL?
-0764   C8                     RET   z   
-0765                HASHSTR2:      
-0765   16 00                  LD   d,0   
-0767   5F                     LD   e,a   
-0768   19                     ADD   hl,de   
-0769   54 5D                  LD   de,hl   ; hl *= 193 (11000001)
-076B   29                     ADD   hl,hl   ; shift left
-076C   19                     ADD   hl,de   ; add
-076D   29                     ADD   hl,hl   ; shift left
-076E   29                     ADD   hl,hl   ; shift left
+04A4   FE 21                  CP   " " + 1   ; ignore whitespace
+04A6   38 FA                  JR   c,block1   
+04A8   FE 27                  CP   "'"   
+04AA   28 22                  JR   z,block4   
+04AC   FE 60                  CP   "`"   
+04AE   28 1E                  JR   z,block4   
+04B0   FE 28                  CP   "("   
+04B2   28 17                  JR   z,block3   
+04B4   FE 7B                  CP   "{"   
+04B6   28 13                  JR   z,block3   
+04B8   FE 5B                  CP   "["   
+04BA   28 0F                  JR   z,block3   
+04BC   FE 29                  CP   ")"   
+04BE   28 08                  JR   z,block2   
+04C0   FE 7D                  CP   "}"   
+04C2   28 04                  JR   z,block2   
+04C4   FE 5D                  CP   "]"   
+04C6   20 DA                  JR   nz,block1   
+04C8                BLOCK2:      
+04C8   15                     DEC   d   
+04C9   18 06                  JR   block5   
+04CB                BLOCK3:      
+04CB   14                     INC   d   
+04CC   18 D4                  JR   block1   
+04CE                BLOCK4:      
+04CE   3E 80                  LD   a,$80   
+04D0   82                     ADD   a,d   
+04D1                BLOCK5:      
+04D1   20 CF                  JR   nz,block1   ; get the next element
+04D3   0B                     DEC   bc   ; balanced, exit
+04D4   DD E9                  JP   (ix)   
+04D6                BLOCKEND:      
+04D6   E1                     POP   hl   ; hl = last result
+04D7   FD 54                  LD   d,iyh   ; de = BP
+04D9   FD 5D                  LD   e,iyl   
+04DB   EB                     EX   de,hl   ; hl = BP, de = result
+04DC   F9                     LD   sp,hl   ; sp = BP
+04DD   E1                     POP   hl   ; hl = old BP
+04DE   C1                     POP   bc   ; pop SCP (discard)
+04DF   C1                     POP   bc   ; bc = IP
+04E0   F9                     LD   sp,hl   ; sp = old BP
+04E1   FD 21 00 00            LD   iy,0   ; iy = sp
+04E5   FD 39                  ADD   iy,sp   
+04E7   D5                     PUSH   de   ; push result
+04E8   DD E9                  JP   (ix)   
+04EA                ARG:         
+04EA   03                     INC   bc   ; get next char
+04EB   0A                     LD   a,(bc)   
+04EC   D6 31                  SUB   "1"   ; treat as a digit, 1 based index
+04EE   E6 07                  AND   $07   ; mask
+04F0   87                     ADD   a,a   ; double
+04F1   6F                     LD   l,a   ; hl = offset into args
+04F2   26 00                  LD   h,0   
+04F4   FD 5E 02               LD   e,(iy+2)   ; de = SCP (scope ptr)
+04F7   FD 56 03               LD   d,(iy+3)   
+04FA   EB                     EX   de,hl   ; hl = SCP - offset
+04FB   B7                     OR   a   
+04FC   ED 52                  SBC   hl,de   
+04FE   2B                     DEC   hl   ; de = arg
+04FF   56                     LD   d,(hl)   
+0500   2B                     DEC   hl   
+0501   5E                     LD   e,(hl)   
+0502   D5                     PUSH   de   ; push arg
+0503   DD E9                  JP   (ix)   
+0505                             ; addr -- value
+0505                GET:         
+0505   E1                     POP   hl   
+0506   16 00                  LD   d,0   
+0508   5E                     LD   e,(hl)   
+0509   3A 80 1B               LD   a,(vDataWidth)   
+050C   3D                     DEC   a   
+050D   28 02                  JR   z,get1   
+050F   23                     INC   hl   
+0510   56                     LD   d,(hl)   
+0511                GET1:        
+0511   D5                     PUSH   de   
+0512   DD E9                  JP   (ix)   
+0514                             ; addr value -- value0
+0514                SET:         
+0514   E1                     POP   hl   
+0515   D1                     POP   de   
+0516   7E                     LD   a,(hl)   
+0517   73                     LD   (hl),e   
+0518   5F                     LD   e,a   
+0519   3A 80 1B               LD   a,(vDataWidth)   
+051C   3D                     DEC   a   
+051D   28 04                  JR   z,set1   
+051F   23                     INC   hl   
+0520   7E                     LD   a,(hl)   
+0521   72                     LD   (hl),d   
+0522   57                     LD   d,a   
+0523                SET1:        
+0523   D5                     PUSH   de   ; return old value
+0524   DD E9                  JP   (ix)   
+0526                             ; 
+0526                             ; in:
+0526                             ;  pop hl                      ; hl = string
+0526                             ;  pop de                      ; de = char
+0526                             ; in1:
+0526                             ;  ld a,(hl)
+0526                             ;  inc hl
+0526                             ;  cp 0                        ; is end of string
+0526                             ;  jr z,in2
+0526                             ;  cp e
+0526                             ;  jr nz,in1
+0526                             ;  or a                        ; a is never 0, or a resets zero flag
+0526                             ; in2:
+0526                             ;  ld hl,0                     ; hl = result
+0526                             ;  jr z,in3
+0526                             ;  dec hl                      ; if nz de = $ffff
+0526                             ; in3:
+0526                             ;  push hl                     ; push result
+0526                             ;  jp (ix)
+0526                             ; newAdd2:
+0526                             ;  push bc                     ; push IP
+0526                             ;  ld e,(iy+2)                 ; get SCP from parent stack frame
+0526                             ;  ld d,(iy+3)                 ; make this the old BP for this stack frame
+0526                             ;  push de                     ; push SCP
+0526                             ;  push iy                     ; push base pointer
+0526                             ;  ld iy,(3+2)*2               ; base pointer = stack pointer - (stack frame vars) - 2 args
+0526                             ;  add iy,sp                   ;
+0526                             ;  ld d,(iy-1)
+0526                             ;  ld e,(iy-2)
+0526                             ;  ld h,(iy-3)
+0526                             ;  ld l,(iy-4)
+0526                             ;  add hl,de                   ; hl = hl + de
+0526                             ;  ex de,hl                    ; de = result
+0526                             ;  pop hl                      ; hl = old BP
+0526                             ;  pop bc                      ; pop SCP (discard)
+0526                             ;  pop bc                      ; bc = IP
+0526                             ;  ld sp,hl                    ; sp = old BP
+0526                             ;  ld iy,0
+0526                             ;  add iy,sp
+0526                             ;  push de                     ; push result
+0526                             ;  jp (ix)
+0526                IF:          
+0526   11 00 00               LD   de,0   ; NUL pointer for else
+0529   18 01                  JR   ifte1   
+052B                IFTE:        
+052B   D1                     POP   de   ; de = else
+052C                IFTE1:       
+052C   E1                     POP   hl   ; hl = then
+052D   E3                     EX   (sp),hl   ; hl = condition, (sp) = then
+052E   23                     INC   hl   ; check for true
+052F   7C                     LD   a,h   
+0530   B5                     OR   l   
+0531   E1                     POP   hl   ; hl = then
+0532   28 01                  JR   z,ifte2   
+0534   EB                     EX   de,hl   ; condition = false, hl = else
+0535                IFTE2:       
+0535   7C                     LD   a,h   ; check if hl is NUL
+0536   B5                     OR   l   
+0537   28 13                  JR   z,ifte3   
+0539   C5                     PUSH   bc   ; push IP
+053A   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
+053D   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
+0540   D5                     PUSH   de   ; push SCP
+0541   FD E5                  PUSH   iy   ; push BP
+0543   FD 21 00 00            LD   iy,0   ; iy = sp
+0547   FD 39                  ADD   iy,sp   
+0549   44 4D                  LD   bc,hl   ; IP = then
+054B   0B                     DEC   bc   
+054C                IFTE3:       
+054C   DD E9                  JP   (ix)   
+054E                             ; c b --
+054E                             ; loops until c = 0
+054E                LOOP:        
+054E   D1                     POP   de   ; de = block                    c
+054F   E1                     POP   hl   ; hl = condition
+0550   D5                     PUSH   de   
+0551   C5                     PUSH   bc   ; push IP
+0552   42 4B                  LD   bc,de   ; bc = block
+0554   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
+0557   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
+055A   D5                     PUSH   de   ; push SCP
+055B   FD E5                  PUSH   iy   ; push BP
+055D   FD 21 00 00            LD   iy,0   ; iy = sp
+0561   FD 39                  ADD   iy,sp   
+0563                LOOP1:       
+0563   7D                     LD   a,l   ; bc = block, hl = condition = zero?
+0564   B4                     OR   h   
+0565   28 21                  JR   z,loop3   
+0567   11 7D 05               LD   de,loop2-1   ; IP return address
+056A   D5                     PUSH   de   
+056B   FD 5E 02               LD   e,(iy+2)   ; push parent SCP
+056E   FD 56 03               LD   d,(iy+3)   
+0571   D5                     PUSH   de   ; 
+0572   FD E5                  PUSH   iy   ; push BP
+0574   FD 21 00 00            LD   iy,0   ; iy = sp
+0578   FD 39                  ADD   iy,sp   
+057A   E5                     PUSH   hl   ; push condition
+057B   0B                     DEC   bc   
+057C   DD E9                  JP   (ix)   
+057E                LOOP2:       
+057E   1B                     DB   ESC   ; escape from interpreter
+057F   FD 4E 06               LD   c,(iy+6)   ; bc = block
+0582   FD 46 07               LD   b,(iy+7)   
+0585   E1                     POP   hl   ; hl = condition
+0586   18 DB                  JR   loop1   
+0588                LOOP3:       
+0588   FD 54                  LD   d,iyh   ; de = BP
+058A   FD 5D                  LD   e,iyl   
+058C   EB                     EX   de,hl   ; hl = BP, de = result
+058D   F9                     LD   sp,hl   ; sp = BP
+058E   E1                     POP   hl   ; hl = old BP
+058F   C1                     POP   bc   ; pop SCP (discard)
+0590   C1                     POP   bc   ; bc = IP
+0591   F9                     LD   sp,hl   ; sp = old BP
+0592   FD 21 00 00            LD   iy,0   ; iy = sp
+0596   FD 39                  ADD   iy,sp   
+0598   DD 21 A8 0A            LD   ix,next   
+059C   DD E9                  JP   (ix)   
+059E                SWITCH:      
+059E   E1                     POP   hl   ; get selector from stack
+059F   C5                     PUSH   bc   ; create stack frame, push IP (replace later)
+05A0   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
+05A3   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
+05A6   D5                     PUSH   de   ; push SCP
+05A7   FD E5                  PUSH   iy   ; push BP
+05A9   FD 21 00 00            LD   iy,0   ; BP = SP
+05AD   FD 39                  ADD   iy,sp   
+05AF   E5                     PUSH   hl   ; push selector as first arg of new frame
+05B0   DD E9                  JP   (ix)   
+05B2                CASE:        
+05B2   FD 66 FF               LD   h,(iy-1)   ; hl = selector
+05B5   FD 6E FE               LD   l,(iy-2)   
+05B8   23                     INC   hl   ; hl -= 1 index from second arg
+05B9   29                     ADD   hl,hl   ; hl *= 2 word offset
+05BA   FD 54                  LD   d,iyh   ; hl = BP, de = offset
+05BC   FD 5D                  LD   e,iyl   
+05BE   EB                     EX   de,hl   
+05BF   B7                     OR   a   ; hl = BP - offset
+05C0   ED 52                  SBC   hl,de   
+05C2   54 5D                  LD   de,hl   ; save arg ptr
+05C4   2B                     DEC   hl   ; hl += 2
+05C5   2B                     DEC   hl   
+05C6   B7                     OR   a   ; arg ptr - stack pointer
+05C7   ED 72                  SBC   hl,sp   
+05C9   30 03                  JR   nc,case0   
+05CB   D1                     POP   de   ; pop last arg
+05CC   18 05                  JR   case1   
+05CE                CASE0:       
+05CE   EB                     EX   de,hl   
+05CF   2B                     DEC   hl   ; de = arg
+05D0   56                     LD   d,(hl)   
+05D1   2B                     DEC   hl   
+05D2   5E                     LD   e,(hl)   
+05D3                CASE1:       
+05D3   7A                     LD   a,d   ; is arg == NUL ? then skip
+05D4   B3                     OR   e   
+05D5   28 09                  JR   z,case2   
+05D7   FD 71 04               LD   (iy+4),c   ; update return address in stack frame
+05DA   FD 70 05               LD   (iy+5),b   
+05DD   42 4B                  LD   bc,de   ; IP = arg
+05DF   0B                     DEC   bc   
+05E0                CASE2:       
+05E0   DD E9                  JP   (ix)   
+05E2                WORDS:       
+05E2   21 02 00               LD   hl,2   
+05E5   18 03                  JR   bytes1   
+05E7                BYTES:       
+05E7   21 01 00               LD   hl,1   
+05EA                BYTES1:      
+05EA   22 80 1B               LD   (vDataWidth),hl   
+05ED   DD E9                  JP   (ix)   
+05EF                ARRAY:       
+05EF   C5                     PUSH   bc   ; create stack frame, push IP
+05F0   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
+05F3   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
+05F6   D5                     PUSH   de   ; push SCP
+05F7   FD E5                  PUSH   iy   ; push BP
+05F9   FD 21 00 00            LD   iy,0   ; BP = SP
+05FD   FD 39                  ADD   iy,sp   
+05FF   DD E9                  JP   (ix)   
+0601                ARRAYEND:      
+0601   FD 54                  LD   d,iyh   ; de = BP
+0603   FD 5D                  LD   e,iyl   
+0605   DD 62                  LD   ixh,d   ; ix = BP
+0607   DD 6B                  LD   ixl,e   
+0609   62 6B                  LD   hl,de   ; hl = de
+060B   B7                     OR   a   
+060C   ED 72                  SBC   hl,sp   ; hl = array count (items on stack)
+060E   CB 3C                  SRL   h   
+0610   CB 1D                  RR   l   
+0612   EB                     EX   de,hl   ; de = count
+0613   2A 8C 1B               LD   hl,(vHeapPtr)   ; hl = array[-2]
+0616   73                     LD   (hl),e   
+0617   23                     INC   hl   
+0618   72                     LD   (hl),d   
+0619   23                     INC   hl   ; hl = array[0], de = count
+061A   3A 80 1B               LD   a,(vDataWidth)   ; vDataWidth=1?
+061D   FE 01                  CP   1   
+061F   20 10                  JR   nz,arrayEnd2   
+0621                ARRAYEND1:      ; byte
+0621   DD 7E FE               LD   a,(ix-2)   
+0624   77                     LD   (hl),a   
+0625   23                     INC   hl   
+0626   DD 2B                  DEC   ix   
+0628   DD 2B                  DEC   ix   
+062A   1B                     DEC   de   
+062B   7B                     LD   a,e   
+062C   B2                     OR   d   
+062D   20 F2                  JR   nz,arrayEnd1   
+062F   18 13                  JR   arrayEnd3   
+0631                ARRAYEND2:      ; word
+0631   DD 7E FE               LD   a,(ix-2)   
+0634   77                     LD   (hl),a   
+0635   23                     INC   hl   
+0636   DD 7E FF               LD   a,(ix-1)   
+0639   77                     LD   (hl),a   
+063A   23                     INC   hl   
+063B   DD 2B                  DEC   ix   
+063D   DD 2B                  DEC   ix   
+063F   1B                     DEC   de   
+0640   7B                     LD   a,e   
+0641   B2                     OR   d   
+0642   20 ED                  JR   nz,arrayEnd2   
+0644                ARRAYEND3:      
+0644   FD 54                  LD   d,iyh   ; de = BP, hl = end of array
+0646   FD 5D                  LD   e,iyl   
+0648   EB                     EX   de,hl   ; hl = BP, de = end of array
+0649   F9                     LD   sp,hl   ; sp = BP
+064A   E1                     POP   hl   ; hl = old BP, de = end of array
+064B   DD E1                  POP   ix   ; pop SCP (discard)
+064D   DD E1                  POP   ix   ; pop IP (discard)
+064F   F9                     LD   sp,hl   ; sp = old BP
+0650   FD 21 00 00            LD   iy,0   ; iy = sp
+0654   FD 39                  ADD   iy,sp   
+0656   DD 21 A8 0A            LD   ix,next   
+065A   2A 8C 1B               LD   hl,(vHeapPtr)   ; hl = array[0], de = end of array
+065D   23                     INC   hl   
+065E   23                     INC   hl   
+065F   E5                     PUSH   hl   ; return array[0]
+0660   EB                     EX   de,hl   ; hl = end of array, de = array[0]
+0661   B7                     OR   a   
+0662   ED 52                  SBC   hl,de   ; hl = size = end of array - array[0]
+0664   EB                     EX   de,hl   
+0665   2A 8C 1B               LD   hl,(vHeapPtr)   ; hl = array[-2]
+0668   73                     LD   (hl),e   ; array[-2] = size
+0669   23                     INC   hl   
+066A   72                     LD   (hl),d   
+066B   DD E9                  JP   (ix)   
+066D                             ; str -- num
+066D                HASH:        
+066D   E1                     POP   hl   
+066E   C5                     PUSH   bc   
+066F   44 4D                  LD   bc,hl   
+0671   CD 61 07               CALL   hashStr   
+0674   C1                     POP   bc   
+0675   E5                     PUSH   hl   
+0676   DD E9                  JP   (ix)   
+0678                             ; str addr -- bool
+0678                DEF:         
+0678   60 69                  LD   hl,bc   ; hl = IP
+067A   D1                     POP   de   ; de = addr
+067B   C1                     POP   bc   ; bc = hash
+067C   E5                     PUSH   hl   
+067D   CD 7A 07               CALL   defineEntry   
+0680   21 00 00               LD   hl,0   ; if c return TRUE
+0683   30 01                  JR   nc,def1   
+0685   2B                     DEC   hl   
+0686                DEF1:        
+0686   C1                     POP   bc   
+0687   E5                     PUSH   hl   
+0688   DD E9                  JP   (ix)   
+068A                             ; str -- addr
+068A                ADDR:        
+068A   E1                     POP   hl   ; hl = hash
+068B   C5                     PUSH   bc   
+068C   44 4D                  LD   bc,hl   
+068E   CD A0 07               CALL   lookupEntry   
+0691   38 03                  JR   c,addr1   
+0693   21 00 00               LD   hl,0   
+0696                             ; call printStr		
+0696                             ; .cstr "Undefined"
+0696                             ; jp interpret
+0696                ADDR1:       
+0696   C1                     POP   bc   
+0697   E5                     PUSH   hl   
+0698   DD E9                  JP   (ix)   
+069A                SYMBOL:      
+069A   03                     INC   bc   
+069B   11 00 1A               LD   de,PAD   
+069E   26 02                  LD   h,msb(opcodesBase)   ; this table identifies the char type
+06A0   18 02                  JR   symbol1   
+06A2                SYMBOL0:      ; copy to PAD area
+06A2   03                     INC   bc   ; characters that are part of the identifier
+06A3   13                     INC   de   
+06A4                SYMBOL1:      ; 0-9 A-Z a-z _
+06A4   0A                     LD   a,(bc)   
+06A5   12                     LD   (de),a   
+06A6   B7                     OR   a   
+06A7   28 0A                  JR   z,symbol2   
+06A9   6F                     LD   l,a   
+06AA   7E                     LD   a,(hl)   
+06AB   FE 58                  CP   lsb(ident_)   
+06AD   28 F3                  JR   z,symbol0   
+06AF   FE 00                  CP   lsb(num_)   
+06B1   28 EF                  JR   z,symbol0   
+06B3                SYMBOL2:      
+06B3   0B                     DEC   bc   
+06B4   AF                     XOR   a   
+06B5   12                     LD   (de),a   ; terminate string with NUL
+06B6   C5                     PUSH   bc   
+06B7   01 00 1A               LD   bc,PAD   
+06BA   CD 61 07               CALL   hashStr   ; hl = hash
+06BD   C1                     POP   bc   
+06BE   E5                     PUSH   hl   
+06BF   DD E9                  JP   (ix)   
+06C1                IDENT:       
+06C1   11 00 1A               LD   de,PAD   
+06C4   26 02                  LD   h,msb(opcodesBase)   ; this table identifies the char type
+06C6   18 02                  JR   ident1   
+06C8                IDENT0:      ; copy to PAD area
+06C8   03                     INC   bc   ; characters that are part of the identifier
+06C9   13                     INC   de   
+06CA                IDENT1:      ; 0-9 A-Z a-z _
+06CA   0A                     LD   a,(bc)   
+06CB   12                     LD   (de),a   
+06CC   B7                     OR   a   
+06CD   28 0A                  JR   z,ident2   
+06CF   6F                     LD   l,a   
+06D0   7E                     LD   a,(hl)   
+06D1   FE 58                  CP   lsb(ident_)   
+06D3   28 F3                  JR   z,ident0   
+06D5   FE 00                  CP   lsb(num_)   
+06D7   28 EF                  JR   z,ident0   
+06D9                IDENT2:      
+06D9   0B                     DEC   bc   
+06DA   AF                     XOR   a   
+06DB   12                     LD   (de),a   ; terminate string with NUL
+06DC   C5                     PUSH   bc   
+06DD   01 00 1A               LD   bc,PAD   
+06E0   CD 61 07               CALL   hashStr   ; hl = hash
+06E3   44 4D                  LD   bc,hl   
+06E5   CD A0 07               CALL   lookupEntry   
+06E8   C1                     POP   bc   
+06E9   38 02                  JR   c,ident3   ; todo: no entry? print an error message
+06EB   DD E9                  JP   (ix)   
+06ED                IDENT3:      
+06ED   E9                     JP   (hl)   
+06EE                FRAC:        
+06EE   2A 7E 1B               LD   hl,(vFrac)   
+06F1   E5                     PUSH   hl   
+06F2   DD E9                  JP   (ix)   
+06F4                SQRT1:       
+06F4   E1                     POP   hl   
+06F5   C5                     PUSH   bc   
+06F6   CD DD 07               CALL   squareRoot   
+06F9   ED 43 7E 1B            LD   (vFrac),bc   
+06FD   C1                     POP   bc   
+06FE   D5                     PUSH   de   
+06FF   DD E9                  JP   (ix)   
+0701                ABS1:        
+0701   E1                     POP   hl   
+0702   CB 7C                  BIT   7,h   
+0704   C8                     RET   z   
+0705   AF                     XOR   a   
+0706   95                     SUB   l   
+0707   6F                     LD   l,a   
+0708   9F                     SBC   a,a   
+0709   94                     SUB   h   
+070A   67                     LD   h,a   
+070B   E5                     PUSH   hl   
+070C   DD E9                  JP   (ix)   
+070E                MOD:         
+070E   D1                     POP   de   ; get first value
+070F   E1                     POP   hl   ; get 2nd value
+0710   C5                     PUSH   bc   ; preserve the IP
+0711   44 4D                  LD   bc,hl   
+0713   CD C4 07               CALL   divide   
+0716   C1                     POP   bc   
+0717   E5                     PUSH   hl   ; push remainder
+0718   DD E9                  JP   (ix)   
+071A                             ; hl = value1, de = value2
+071A                             ; hl = result
+071A                EQUALS:      
+071A   B7                     OR   a   ; reset the carry flag
+071B   ED 52                  SBC   hl,de   ; only equality sets hl=0 here
+071D   28 10                  JR   z,true1   
+071F   C3 35 07               JP   false1   
+0722                             ; hl = value1 de = value2
+0722                             ; hl = result
+0722                LESSTHANEQ:      
+0722   B7                     OR   a   
+0723   ED 52                  SBC   hl,de   
+0725   18 05                  JR   lessthan1   
+0727                             ; hl = value1 de = value2
+0727                             ; hl = result
+0727                LESSTHAN:      
+0727   B7                     OR   a   
+0728   ED 52                  SBC   hl,de   
+072A   28 09                  JR   z,false1   
+072C                LESSTHAN1:      
+072C   FA 35 07               JP   m,false1   
+072F                TRUE1:       
+072F   21 FF FF               LD   hl,TRUE   
+0732   E5                     PUSH   hl   
+0733   DD E9                  JP   (ix)   
+0735                FALSE1:      
+0735   21 00 00               LD   hl,FALSE   
+0738   E5                     PUSH   hl   
+0739   DD E9                  JP   (ix)   
+073B                             ; Z80 port input
+073B                             ; port -- value
+073B                INPUT:       
+073B   E1                     POP   hl   
+073C   59                     LD   e,c   ; save IP
+073D   4D                     LD   c,l   
+073E   ED 68                  IN   l,(c)   
+0740   26 00                  LD   h,0   
+0742   4B                     LD   c,e   ; restore IP
+0743   E5                     PUSH   hl   
+0744   DD E9                  JP   (ix)   
+0746                             ; Z80 port output
+0746                             ; value port --
+0746                OUTPUT:      
+0746   E1                     POP   hl   
+0747   59                     LD   e,c   ; save IP
+0748   4D                     LD   c,l   
+0749   E1                     POP   hl   
+074A   ED 69                  OUT   (c),l   
+074C   4B                     LD   c,e   ; restore IP
+074D   DD E9                  JP   (ix)   
+074F                KEY:         
+074F   CD 81 00               CALL   getchar   
+0752   26 00                  LD   h,0   
+0754   6F                     LD   l,a   
+0755   E5                     PUSH   hl   
+0756   DD E9                  JP   (ix)   
+0758                NEG:         
+0758   21 00 00               LD   hl,0   ; NEGate the value on top of stack (2's complement)
+075B   D1                     POP   de   
+075C   C3 92 03               JP   sub2   ; use the SUBtract routine
+075F                LET:         
+075F                FILTER:      
+075F                MAP:         
+075F                SCAN:        
+075F   DD E9                  JP   (ix)   
+0761                             ; -------------------------------------------------------------------------------
+0761                             ; hash C-string
+0761                             ; BC = str
+0761                             ; HL = hash
+0761                HASHSTR:      
+0761   21 00 00               LD   hl,0   
+0764                HASHSTR1:      
+0764   0A                     LD   a,(bc)   ; load next char
+0765   03                     INC   bc   
+0766   FE 00                  CP   0   ; NUL?
+0768   C8                     RET   z   
+0769                HASHSTR2:      
+0769   16 00                  LD   d,0   
+076B   5F                     LD   e,a   
+076C   19                     ADD   hl,de   
+076D   54 5D                  LD   de,hl   ; hl *= 193 (11000001)
 076F   29                     ADD   hl,hl   ; shift left
-0770   29                     ADD   hl,hl   ; shift left
+0770   19                     ADD   hl,de   ; add
 0771   29                     ADD   hl,hl   ; shift left
 0772   29                     ADD   hl,hl   ; shift left
-0773   19                     ADD   hl,de   ; add
-0774   18 EA                  JR   hashStr1   
-0776                             ; add entry to hash slots and hash pointers
-0776                             ; bc = hash (b = hi, c = lo), de = addr
-0776                             ; sets carry if successful
-0776                DEFINEENTRY:      
-0776   CB 21                  SLA   c   ; lo = lo * 2
-0778   69                     LD   l,c   ; lo1 = lo
-0779   26 1C                  LD   h,msb(hashSlots)   ; hl = slots[lo*4]
-077B                DEFINEENTRY0:      
-077B   7E                     LD   a,(hl)   ; a = (lo1)
-077C   FE FF                  CP   UNUSED   ; is it unused?
-077E   28 12                  JR   z,defineEntry3   ; yes, add entry
-0780   79                     LD   a,c   ; a = lo
-0781   BE                     CP   (hl)   ; compare (lo1) with lo
-0782   20 06                  JR   nz,defineEntry1   ; no match loop around
-0784   2C                     INC   l   
-0785   78                     LD   a,b   ; a = hi
-0786   BE                     CP   (hl)   ; compare (lo1+1) with hi
-0787   28 07                  JR   z,defineEntry2   ; identical hash, collision, exit
-0789   2D                     DEC   l   ; restore l
-078A                DEFINEENTRY1:      
-078A   2C                     INC   l   ; try next entry
-078B   2C                     INC   l   
-078C   79                     LD   a,c   ; compare lo and lo1
-078D   BD                     CP   l   ; if equal then there's no space left, reject
-078E   20 EB                  JR   nz,defineEntry0   
-0790                DEFINEENTRY2:      
-0790   B7                     OR   a   ; clear carry flag, failure
-0791   C9                     RET      
-0792                DEFINEENTRY3:      ; new entry
-0792   71                     LD   (hl),c   ; (lo1) = hash lo
-0793   23                     INC   hl   
-0794   70                     LD   (hl),b   ; (lo1 + 1) = hash hi
-0795   26 1D                  LD   h,msb(hashWords)   ; hl = slots[lo*4]
-0797   72                     LD   (hl),d   
-0798   2B                     DEC   hl   
-0799   73                     LD   (hl),e   ; (slot + 2) = address
-079A   37                     SCF      ; set carry flag, success
-079B   C9                     RET      
-079C                             ; looks up hash and returns address
-079C                             ; bc = hash
-079C                             ; returns addr in hl, sets carry if successful
-079C                LOOKUPENTRY:      
-079C   CB 21                  SLA   c   ; lo = lo * 2
-079E   69                     LD   l,c   ; lo1 = lo
-079F   26 1C                  LD   h,msb(hashSlots)   ; hl = slots[lo*4]
-07A1                LOOKUPENTRY0:      
-07A1   7E                     LD   a,(hl)   ; a = (hl), slot
-07A2   FE FF                  CP   UNUSED   ; is it unused?
-07A4   28 EA                  JR   z,defineEntry2   ; yes, does not exist
-07A6   79                     LD   a,c   ; a = lo
-07A7   BE                     CP   (hl)   ; compare (lo1) with lo
-07A8   20 06                  JR   nz,lookupEntry1   ; no match loop around
-07AA   2C                     INC   l   
-07AB   78                     LD   a,b   ; a = hi
-07AC   BE                     CP   (hl)   ; compare (lo1+1) with hi
-07AD   28 09                  JR   z,lookupEntry3   
-07AF   2D                     DEC   l   
-07B0                LOOKUPENTRY1:      
-07B0   2C                     INC   l   
-07B1   2C                     INC   l   
-07B2   79                     LD   a,c   
-07B3   BD                     CP   l   ; no space left, reject
-07B4   20 EB                  JR   nz,lookupEntry0   
-07B6                LOOKUPENTRY2:      
-07B6   B7                     OR   a   ; clear carry flag, failure
-07B7   C9                     RET      
-07B8                LOOKUPENTRY3:      
-07B8   26 1D                  LD   h,msb(hashWords)   ; hl = slots[lo*4]
-07BA   56                     LD   d,(hl)   
-07BB   2D                     DEC   l   ; restore l
-07BC   5E                     LD   e,(hl)   ; (slot + 2) = address
-07BD   EB                     EX   de,hl   
-07BE   37                     SCF      
-07BF   C9                     RET      
-07C0                             ; division subroutine.
-07C0                             ; bc: divisor, de: dividend, hl: remainder
-07C0                DIVIDE:      
-07C0   21 00 00               LD   hl,0   ; zero the remainder
-07C3   3E 10                  LD   a,16   ; loop counter
-07C5                DIVIDE1:      ; shift the bits from bc (numerator) into hl (accumulator)
-07C5   CB 21                  SLA   c   
-07C7   CB 10                  RL   b   
-07C9   ED 6A                  ADC   hl,hl   
-07CB   ED 52                  SBC   hl,de   ; check if remainder >= denominator (hl>=de)
-07CD   38 03                  JR   c,divide2   
-07CF   0C                     INC   c   
-07D0   18 01                  JR   divide3   
-07D2                DIVIDE2:      ; remainder is not >= denominator, so we have to add de back to hl
-07D2   19                     ADD   hl,de   
-07D3                DIVIDE3:      
-07D3   3D                     DEC   a   
-07D4   20 EF                  JR   nz,divide1   
-07D6   50 59                  LD   de,bc   ; result from bc to de
-07D8   C9                     RET      
-07D9                             ; squareroot
-07D9                             ; Input: HL = value
-07D9                             ; Result: DE = square root BC = remainder
-07D9                SQUAREROOT:      
-07D9   01 00 08               LD   bc,0800h   
-07DC   59                     LD   e,c   
-07DD   AF                     XOR   a   
-07DE                SQUAREROOT1:      
-07DE   29                     ADD   hl,hl   
-07DF   CB 11                  RL   c   
-07E1   ED 6A                  ADC   hl,hl   
+0773   29                     ADD   hl,hl   ; shift left
+0774   29                     ADD   hl,hl   ; shift left
+0775   29                     ADD   hl,hl   ; shift left
+0776   29                     ADD   hl,hl   ; shift left
+0777   19                     ADD   hl,de   ; add
+0778   18 EA                  JR   hashStr1   
+077A                             ; add entry to hash slots and hash pointers
+077A                             ; bc = hash (b = hi, c = lo), de = addr
+077A                             ; sets carry if successful
+077A                DEFINEENTRY:      
+077A   CB 21                  SLA   c   ; lo = lo * 2
+077C   69                     LD   l,c   ; lo1 = lo
+077D   26 1C                  LD   h,msb(hashSlots)   ; hl = slots[lo*4]
+077F                DEFINEENTRY0:      
+077F   7E                     LD   a,(hl)   ; a = (lo1)
+0780   FE FF                  CP   UNUSED   ; is it unused?
+0782   28 12                  JR   z,defineEntry3   ; yes, add entry
+0784   79                     LD   a,c   ; a = lo
+0785   BE                     CP   (hl)   ; compare (lo1) with lo
+0786   20 06                  JR   nz,defineEntry1   ; no match loop around
+0788   2C                     INC   l   
+0789   78                     LD   a,b   ; a = hi
+078A   BE                     CP   (hl)   ; compare (lo1+1) with hi
+078B   28 07                  JR   z,defineEntry2   ; identical hash, collision, exit
+078D   2D                     DEC   l   ; restore l
+078E                DEFINEENTRY1:      
+078E   2C                     INC   l   ; try next entry
+078F   2C                     INC   l   
+0790   79                     LD   a,c   ; compare lo and lo1
+0791   BD                     CP   l   ; if equal then there's no space left, reject
+0792   20 EB                  JR   nz,defineEntry0   
+0794                DEFINEENTRY2:      
+0794   B7                     OR   a   ; clear carry flag, failure
+0795   C9                     RET      
+0796                DEFINEENTRY3:      ; new entry
+0796   71                     LD   (hl),c   ; (lo1) = hash lo
+0797   23                     INC   hl   
+0798   70                     LD   (hl),b   ; (lo1 + 1) = hash hi
+0799   26 1D                  LD   h,msb(hashWords)   ; hl = slots[lo*4]
+079B   72                     LD   (hl),d   
+079C   2B                     DEC   hl   
+079D   73                     LD   (hl),e   ; (slot + 2) = address
+079E   37                     SCF      ; set carry flag, success
+079F   C9                     RET      
+07A0                             ; looks up hash and returns address
+07A0                             ; bc = hash
+07A0                             ; returns addr in hl, sets carry if successful
+07A0                LOOKUPENTRY:      
+07A0   CB 21                  SLA   c   ; lo = lo * 2
+07A2   69                     LD   l,c   ; lo1 = lo
+07A3   26 1C                  LD   h,msb(hashSlots)   ; hl = slots[lo*4]
+07A5                LOOKUPENTRY0:      
+07A5   7E                     LD   a,(hl)   ; a = (hl), slot
+07A6   FE FF                  CP   UNUSED   ; is it unused?
+07A8   28 EA                  JR   z,defineEntry2   ; yes, does not exist
+07AA   79                     LD   a,c   ; a = lo
+07AB   BE                     CP   (hl)   ; compare (lo1) with lo
+07AC   20 06                  JR   nz,lookupEntry1   ; no match loop around
+07AE   2C                     INC   l   
+07AF   78                     LD   a,b   ; a = hi
+07B0   BE                     CP   (hl)   ; compare (lo1+1) with hi
+07B1   28 09                  JR   z,lookupEntry3   
+07B3   2D                     DEC   l   
+07B4                LOOKUPENTRY1:      
+07B4   2C                     INC   l   
+07B5   2C                     INC   l   
+07B6   79                     LD   a,c   
+07B7   BD                     CP   l   ; no space left, reject
+07B8   20 EB                  JR   nz,lookupEntry0   
+07BA                LOOKUPENTRY2:      
+07BA   B7                     OR   a   ; clear carry flag, failure
+07BB   C9                     RET      
+07BC                LOOKUPENTRY3:      
+07BC   26 1D                  LD   h,msb(hashWords)   ; hl = slots[lo*4]
+07BE   56                     LD   d,(hl)   
+07BF   2D                     DEC   l   ; restore l
+07C0   5E                     LD   e,(hl)   ; (slot + 2) = address
+07C1   EB                     EX   de,hl   
+07C2   37                     SCF      
+07C3   C9                     RET      
+07C4                             ; division subroutine.
+07C4                             ; bc: divisor, de: dividend, hl: remainder
+07C4                DIVIDE:      
+07C4   21 00 00               LD   hl,0   ; zero the remainder
+07C7   3E 10                  LD   a,16   ; loop counter
+07C9                DIVIDE1:      ; shift the bits from bc (numerator) into hl (accumulator)
+07C9   CB 21                  SLA   c   
+07CB   CB 10                  RL   b   
+07CD   ED 6A                  ADC   hl,hl   
+07CF   ED 52                  SBC   hl,de   ; check if remainder >= denominator (hl>=de)
+07D1   38 03                  JR   c,divide2   
+07D3   0C                     INC   c   
+07D4   18 01                  JR   divide3   
+07D6                DIVIDE2:      ; remainder is not >= denominator, so we have to add de back to hl
+07D6   19                     ADD   hl,de   
+07D7                DIVIDE3:      
+07D7   3D                     DEC   a   
+07D8   20 EF                  JR   nz,divide1   
+07DA   50 59                  LD   de,bc   ; result from bc to de
+07DC   C9                     RET      
+07DD                             ; squareroot
+07DD                             ; Input: HL = value
+07DD                             ; Result: DE = square root BC = remainder
+07DD                SQUAREROOT:      
+07DD   01 00 08               LD   bc,0800h   
+07E0   59                     LD   e,c   
+07E1   AF                     XOR   a   
+07E2                SQUAREROOT1:      
+07E2   29                     ADD   hl,hl   
 07E3   CB 11                  RL   c   
-07E5   30 02                  JR   nc,$+4   
-07E7   CB C5                  SET   0,l   
-07E9   7B                     LD   a,e   
-07EA   87                     ADD   a,a   
-07EB   5F                     LD   e,a   
-07EC   87                     ADD   a,a   
-07ED   CB 45                  BIT   0,l   
-07EF   20 03                  JR   nz,$+5   
-07F1   91                     SUB   c   
-07F2   30 05                  JR   nc,squareRoot4   
-07F4   79                     LD   a,c   
-07F5   93                     SUB   e   
-07F6   1C                     INC   e   
-07F7   93                     SUB   e   
-07F8   4F                     LD   c,a   
-07F9                SQUAREROOT4:      
-07F9   10 E3                  DJNZ   squareRoot1   
-07FB   CB 45                  BIT   0,l   
-07FD   28 01                  JR   z,squareRoot5   
-07FF   04                     INC   b   
-0800                SQUAREROOT5:      
-0800   16 00                  LD   d,0   
-0802   C9                     RET      
-0803                PRTDEC:      
-0803   CB 7C                  BIT   7,h   
-0805   28 0B                  JR   z,prtdec0   
-0807   3E 2D                  LD   a,"-"   
-0809   CD 85 00               CALL   putchar   
-080C   AF                     XOR   a   
-080D   95                     SUB   l   
-080E   6F                     LD   l,a   
-080F   9F                     SBC   a,a   
-0810   94                     SUB   h   
-0811   67                     LD   h,a   
-0812                PRTDEC0:      
-0812   C5                     PUSH   bc   
-0813   0E 00                  LD   c,0   ; leading zeros flag = false
-0815   11 F0 D8               LD   de,-10000   
-0818   CD 34 08               CALL   prtdec1   
-081B   11 18 FC               LD   de,-1000   
-081E   CD 34 08               CALL   prtdec1   
-0821   11 9C FF               LD   de,-100   
-0824   CD 34 08               CALL   prtdec1   
-0827   1E F6                  LD   e,-10   
-0829   CD 34 08               CALL   prtdec1   
-082C   0C                     INC   c   ; flag = true for at least digit
-082D   1E FF                  LD   e,-1   
-082F   CD 34 08               CALL   prtdec1   
-0832   C1                     POP   bc   
-0833   C9                     RET      
-0834                PRTDEC1:      
-0834   06 2F                  LD   b,"0"-1   
-0836                PRTDEC2:      
-0836   04                     INC   b   
-0837   19                     ADD   hl,de   
-0838   38 FC                  JR   c,prtdec2   
-083A   ED 52                  SBC   hl,de   
-083C   3E 30                  LD   a,"0"   
-083E   B8                     CP   b   
-083F   20 05                  JR   nz,prtdec3   
-0841   AF                     XOR   a   
-0842   B1                     OR   c   
-0843   C8                     RET   z   
-0844   18 01                  JR   prtdec4   
-0846                PRTDEC3:      
-0846   0C                     INC   c   
-0847                PRTDEC4:      
-0847   78                     LD   a,b   
-0848   C3 85 00               JP   putchar   
-084B                PRTHEX:      ; display hl as a 16-bit number in hex.
-084B   C5                     PUSH   bc   ; preserve the IP
-084C   7C                     LD   a,h   
-084D   CD 56 08               CALL   prthex2   
-0850   7D                     LD   a,l   
-0851   CD 56 08               CALL   prthex2   
-0854   C1                     POP   bc   
-0855   C9                     RET      
-0856                PRTHEX2:      
-0856   4F                     LD   c,a   
-0857   1F                     RRA      
-0858   1F                     RRA      
-0859   1F                     RRA      
-085A   1F                     RRA      
-085B   CD 5F 08               CALL   prthex3   
-085E   79                     LD   a,c   
-085F                PRTHEX3:      
-085F   E6 0F                  AND   0x0F   
-0861   C6 90                  ADD   a,0x90   
-0863   27                     DAA      
-0864   CE 40                  ADC   a,0x40   
-0866   27                     DAA      
-0867   C3 85 00               JP   putchar   
-086A                PRTSTR0:      
-086A   CD 85 00               CALL   putchar   
-086D   23                     INC   hl   
-086E                PRTSTR:      
-086E   7E                     LD   a,(hl)   
-086F   B7                     OR   a   
-0870   20 F8                  JR   nz,prtstr0   
-0872   C9                     RET      
-0873                             ; **************************************************************************
-0873                             ; calculate nesting value
-0873                             ; a is char to be tested,
-0873                             ; e is the nesting value (initially 0)
-0873                             ; e is increased by ( and [
-0873                             ; e is decreased by ) and ]
-0873                             ; e has its bit 7 toggled by `
-0873                             ; limited to 127 levels
-0873                             ; **************************************************************************
-0873                NESTING:      
-0873   FE 22                  CP   $22   ; quote char
-0875   20 0A                  JR   nz,nesting1   
-0877   CB 7B                  BIT   7,e   
-0879   28 03                  JR   z,nesting1a   
-087B   CB BB                  RES   7,e   
-087D   C9                     RET      
-087E                NESTING1A:      
-087E   CB FB                  SET   7,e   
-0880   C9                     RET      
-0881                NESTING1:      
-0881   CB 7B                  BIT   7,e   
-0883   C0                     RET   nz   
-0884   FE 7B                  CP   "{"   
-0886   28 08                  JR   z,nesting2   
-0888   FE 5B                  CP   "["   
-088A   28 04                  JR   z,nesting2   
-088C   FE 28                  CP   "("   
-088E   20 02                  JR   nz,nesting3   
-0890                NESTING2:      
-0890   1C                     INC   e   
-0891   C9                     RET      
-0892                NESTING3:      
-0892   FE 7D                  CP   "}"   
-0894   28 07                  JR   z,nesting4   
-0896   FE 5D                  CP   "]"   
-0898   28 03                  JR   z,nesting4   
-089A   FE 29                  CP   ")"   
-089C   C0                     RET   nz   
-089D                NESTING4:      
-089D   1D                     DEC   e   
-089E   C9                     RET      
-089F                PROMPT:      
-089F   CD AF 08               CALL   printStr   
-08A2   0D 0A 3E 20 00         .CSTR   "\r\n> "   
-08A7   C9                     RET      
-08A8                CRLF:        
-08A8   CD AF 08               CALL   printStr   
-08AB   0D 0A 00               .CSTR   "\r\n"   
-08AE   C9                     RET      
-08AF                PRINTSTR:      
-08AF   E3                     EX   (sp),hl   ; swap			
-08B0   CD 6E 08               CALL   prtstr   
-08B3   23                     INC   hl   ; inc past NUL
-08B4   E3                     EX   (sp),hl   ; put it back	
-08B5   C9                     RET      
-08B6                DEFINE:      
-08B6   E1                     POP   hl   
-08B7   7E                     LD   a,(hl)   
-08B8   23                     INC   hl   
-08B9   44 4D                  LD   bc,hl   
-08BB   5F                     LD   e,a   
-08BC   16 00                  LD   d,0   
-08BE   19                     ADD   hl,de   
-08BF   5E                     LD   e,(hl)   
-08C0   23                     INC   hl   
-08C1   56                     LD   d,(hl)   
-08C2   23                     INC   hl   
-08C3   E5                     PUSH   hl   ; bc = str
-08C4   D5                     PUSH   de   
-08C5   CD 5D 07               CALL   hashStr   ; hl = hash
-08C8   D1                     POP   de   
-08C9   44 4D                  LD   bc,hl   
-08CB   C3 76 07               JP   defineEntry   
-08CE                INIT:        
-08CE   DD 21 A4 0A            LD   ix,next   
-08D2   FD 21 00 1A            LD   iy,DSTACK   
-08D6   21 80 01               LD   hl,isysVars   
-08D9   11 7E 1B               LD   de,sysVars   
-08DC   01 10 00               LD   bc,8 * 2   
-08DF   ED B0                  LDIR      
-08E1   3E FF                  LD   a,UNUSED   
-08E3   06 00                  LD   b,0   
-08E5   21 00 1C               LD   hl,hashSlots   
-08E8                INIT1:       
-08E8   77                     LD   (hl),a   
-08E9   23                     INC   hl   
-08EA   10 FC                  DJNZ   init1   
-08EC   CD B6 08               CALL   define   
-08EF   04 61 62 73 00         .PSTR   "abs",0   
-08F4   FD 06                  DW   abs1   
-08F6   CD B6 08               CALL   define   
-08F9   05 61 64 64 72 00      .PSTR   "addr",0   
-08FF   86 06                  DW   addr   
-0901   CD B6 08               CALL   define   
-0904   06 62 79 74 65 73 00   .PSTR   "bytes",0   
-090B   E3 05                  DW   bytes   
-090D   CD B6 08               CALL   define   
-0910   05 63 61 6C 6C 00      .PSTR   "call",0   
-0916   D7 0A                  DW   call   
-0918   CD B6 08               CALL   define   
-091B   05 63 61 73 65 00      .PSTR   "case",0   
-0921   AE 05                  DW   case   
-0923   CD B6 08               CALL   define   
-0926   04 64 65 66 00         .PSTR   "def",0   
-092B   74 06                  DW   def   
-092D   CD B6 08               CALL   define   
-0930   05 65 78 65 63 00      .PSTR   "exec",0   
-0936   EC 0A                  DW   exec   
-0938   CD B6 08               CALL   define   
-093B   06 66 61 6C 73 65 00   .PSTR   "false",0   
-0942   00 00                  DW   false   
-0944   CD B6 08               CALL   define   
-0947   07 66 69 6C 74 65 72 00 .PSTR   "filter",0   
-094F   5B 07                  DW   filter   
-0951   CD B6 08               CALL   define   
-0954   05 66 72 61 63 00      .PSTR   "frac",0   
-095A   EA 06                  DW   frac   
-095C   CD B6 08               CALL   define   
-095F   04 67 65 74 00         .PSTR   "get",0   
-0964   01 05                  DW   get   
-0966   CD B6 08               CALL   define   
-0969   05 68 61 73 68 00      .PSTR   "hash",0   
-096F   69 06                  DW   hash   
-0971   CD B6 08               CALL   define   
-0974   06 69 6E 70 75 74 00   .PSTR   "input",0   
-097B   37 07                  DW   input   
-097D   CD B6 08               CALL   define   
-0980   03 69 66 00            .PSTR   "if",0   
-0984   22 05                  DW   if   
-0986   CD B6 08               CALL   define   
-0989   05 69 66 74 65 00      .PSTR   "ifte",0   
-098F   27 05                  DW   ifte   
-0991   CD B6 08               CALL   define   
-0994   04 6B 65 79 00         .PSTR   "key",0   
-0999   4B 07                  DW   key   
-099B   CD B6 08               CALL   define   
-099E   04 6C 65 74 00         .PSTR   "let",0   
-09A3   5B 07                  DW   let   
-09A5   CD B6 08               CALL   define   
-09A8   05 6C 6F 6F 70 00      .PSTR   "loop",0   
-09AE   4A 05                  DW   loop   
-09B0   CD B6 08               CALL   define   
-09B3   04 6D 61 70 00         .PSTR   "map",0   
-09B8   5B 07                  DW   map   
-09BA   CD B6 08               CALL   define   
-09BD   04 6D 6F 64 00         .PSTR   "mod",0   
-09C2   0A 07                  DW   mod   
-09C4   CD B6 08               CALL   define   
-09C7   04 6E 65 67 00         .PSTR   "neg",0   
-09CC   54 07                  DW   neg   
-09CE   CD B6 08               CALL   define   
-09D1   07 6F 75 74 70 75 74 00 .PSTR   "output",0   
-09D9   42 07                  DW   output   
-09DB   CD B6 08               CALL   define   
-09DE   05 73 63 61 6E 00      .PSTR   "scan",0   
-09E4   01 00                  DW   scan   
-09E6   CD B6 08               CALL   define   
-09E9   04 73 65 74 00         .PSTR   "set",0   
-09EE   10 05                  DW   set   
-09F0   CD B6 08               CALL   define   
-09F3   04 73 68 6C 00         .PSTR   "shl",0   
-09F8   C8 03                  DW   shl   
-09FA   CD B6 08               CALL   define   
-09FD   04 73 68 72 00         .PSTR   "shr",0   
-0A02   D8 03                  DW   shr   
-0A04   CD B6 08               CALL   define   
-0A07   05 73 71 72 74 00      .PSTR   "sqrt",0   
-0A0D   F0 06                  DW   sqrt1   
-0A0F   CD B6 08               CALL   define   
-0A12   07 73 77 69 74 63 68 00 .PSTR   "switch",0   
-0A1A   9A 05                  DW   switch   
-0A1C   CD B6 08               CALL   define   
-0A1F   05 74 72 75 65 00      .PSTR   "true",0   
-0A25   FF FF                  DW   true   
-0A27   CD B6 08               CALL   define   
-0A2A   06 77 6F 72 64 73 00   .PSTR   "words",0   
-0A31   DE 05                  DW   words   
-0A33   C9                     RET      
-0A34                START:       
-0A34   31 00 1A               LD   sp,DSTACK   ; start of Siena
-0A37   CD CE 08               CALL   init   ; setups
-0A3A   CD AF 08               CALL   printStr   ; prog count to stack, put code line 235 on stack then call print
-0A3D   53 69 65 6E 61 20 56 30 2E 30 0D 0A 00 .CSTR   "Siena V0.0\r\n"   
-0A4A                INTERPRET:      
-0A4A   CD 9F 08               CALL   prompt   
-0A4D   01 00 00               LD   bc,0   ; load bc with offset into TIB, decide char into tib or execute or control
-0A50   ED 43 82 1B            LD   (vTIBPtr),bc   
-0A54                INTERPRET2:      ; calc nesting (a macro might have changed it)
-0A54   1E 00                  LD   e,0   ; initilize nesting value
-0A56   C5                     PUSH   bc   ; save offset into TIB,
-0A57                             ; bc is also the count of chars in TIB
-0A57   21 00 18               LD   hl,TIB   ; hl is start of TIB
-0A5A   18 06                  JR   interpret4   
-0A5C                INTERPRET3:      
-0A5C   7E                     LD   a,(hl)   ; a = char in TIB
-0A5D   23                     INC   hl   ; inc pointer into TIB
-0A5E   0B                     DEC   bc   ; dec count of chars in TIB
-0A5F   CD 73 08               CALL   nesting   ; update nesting value
-0A62                INTERPRET4:      
-0A62   79                     LD   a,c   ; is count zero?
-0A63   B0                     OR   b   
-0A64   20 F6                  JR   nz,interpret3   ; if not loop
-0A66   C1                     POP   bc   ; restore offset into TIB
-0A67                WAITCHAR:      
-0A67   CD 81 00               CALL   getchar   ; loop around waiting for character from serial port
-0A6A   FE 20                  CP   $20   ; compare to space
-0A6C   30 0A                  JR   nc,waitchar1   ; if >= space, if below 20 set cary flag
-0A6E   FE 00                  CP   $0   ; is it end of string? NUL end of string
-0A70                             ; ???? NEEDED?
-0A70   28 2A                  JR   z,waitchar4   
-0A72   FE 0D                  CP   "\r"   ; carriage return? ascii 13
-0A74   28 10                  JR   z,waitchar3   ; if anything else its macro/control
-0A76                MACRO:       
-0A76                             ;  ld (vTIBPtr),bc
-0A76                             ;  ld hl,ctrlCodes
-0A76                             ;  add a,l			            ; look up key of macros
-0A76                             ;  ld l,a
-0A76                             ;  ld e,(hl)
-0A76                             ;  ld a,e
-0A76                             ;  or a
-0A76                             ;  jr z,macro1
-0A76                             ;  ld d,msb(macros)
-0A76                             ;  push de
-0A76                             ;  call call		            ; Siena exec_ operation and jump to it
-0A76                             ;  db DC1,0
-0A76                             ; macro1:
-0A76                             ;  ld bc,(vTIBPtr)
-0A76   18 DC                  JR   interpret2   
-0A78                WAITCHAR1:      
-0A78   21 00 18               LD   hl,TIB   
-0A7B   09                     ADD   hl,bc   
-0A7C   77                     LD   (hl),a   ; store the character in textbuf
-0A7D   03                     INC   bc   
-0A7E   CD 85 00               CALL   putchar   ; echo character to screen
-0A81   CD 73 08               CALL   nesting   
-0A84   18 E1                  JR   waitchar   ; wait for next character
-0A86                WAITCHAR3:      
-0A86   21 00 18               LD   hl,TIB   
-0A89   09                     ADD   hl,bc   
-0A8A   36 0D                  LD   (hl),"\r"   ; store the crlf in textbuf
-0A8C   23                     INC   hl   
-0A8D   36 0A                  LD   (hl),"\n"   
-0A8F   23                     INC   hl   
-0A90   03                     INC   bc   
-0A91   03                     INC   bc   
-0A92   CD A8 08               CALL   crlf   ; echo character to screen
-0A95   7B                     LD   a,e   ; if zero nesting append and ETX after \r
-0A96   B7                     OR   a   
-0A97   20 CE                  JR   nz,waitchar   
-0A99   36 03                  LD   (hl),ETX   ; store end of text ETX in text buffer ??? NEEDED?
-0A9B   03                     INC   bc   
-0A9C                WAITCHAR4:      
-0A9C   ED 43 82 1B            LD   (vTIBPtr),bc   
-0AA0   01 00 18               LD   bc,TIB   ; Instructions stored on heap at address HERE,
-0AA3                             ; we pressed enter
-0AA3   0B                     DEC   bc   
-0AA4                NEXT:        
-0AA4   03                     INC   bc   ; Increment the IP
-0AA5   0A                     LD   a,(bc)   ; Get the next character and dispatch
-0AA6                             ; bit 7,a                   ; is 15-bit opcode ?
-0AA6                             ; jr nz,next3
-0AA6   FE 20                  CP   " "   ; whitespace?
-0AA8   28 FA                  JR   z,next   ; space? ignore
-0AAA   38 07                  JR   c,next1   
-0AAC   6F                     LD   l,a   ; index into table
-0AAD   26 02                  LD   h,msb(opcodesBase)   ; start address of jump table
-0AAF   6E                     LD   l,(hl)   ; get low jump address
-0AB0   26 03                  LD   h,msb(page4)   ; Load h with the 1st page address
-0AB2   E9                     JP   (hl)   ; Jump to routine
-0AB3                NEXT1:       
-0AB3   FE 1B                  CP   ESC   ; escape from interpreter
-0AB5   28 07                  JR   z,escape   
-0AB7   FE 00                  CP   NUL   ; end of input string?
-0AB9   28 07                  JR   z,exit   
-0ABB                             ; cp ETX                      ; end of command line input text?
-0ABB                             ; jr nz,next
-0ABB                             ;     ld hl,-DSTACK               ; etx, is SP valid? (too many pops?)
-0ABB                             ;     add hl,sp
-0ABB                             ;     jr nc,next2
-0ABB                             ;     ld sp,DSTACK                ; yes, reset stack
-0ABB                             ; next2:
-0ABB   C3 4A 0A               JP   interpret   ; no, other whitespace, macros?
-0ABE                             ; next3:
-0ABE                             ;     ld h,a                    ; build address
-0ABE                             ;     inc bc
-0ABE                             ;     ld a,(bc)
-0ABE                             ;     ld l,a
-0ABE                             ;     add hl,hl
-0ABE                             ;     jp (hl)
-0ABE                ESCAPE:      
-0ABE   60 69                  LD   hl,bc   ; address of code after escape opcode
-0AC0   23                     INC   hl   
-0AC1   E9                     JP   (hl)   
-0AC2                EXIT:        
-0AC2   50 59                  LD   de,bc   ; address of code after exit opcode
-0AC4   13                     INC   de   
-0AC5   D9                     EXX      
-0AC6   C1                     POP   bc   ; bc = last result
-0AC7   FD 54                  LD   d,iyh   ; de = BP
-0AC9   FD 5D                  LD   e,iyl   
-0ACB   EB                     EX   de,hl   ; hl = BP
-0ACC   F9                     LD   sp,hl   ; sp = BP
-0ACD   D9                     EXX      
-0ACE   E1                     POP   hl   ; hl = old BP
-0ACF   C1                     POP   bc   ; pop SCP (discard)
-0AD0   C1                     POP   bc   ; bc = IP
-0AD1   F9                     LD   sp,hl   ; sp = old BP
-0AD2   D9                     EXX      
-0AD3   C5                     PUSH   bc   ; push result
-0AD4   D9                     EXX      
-0AD5   EB                     EX   de,hl   
-0AD6   E9                     JP   (hl)   
-0AD7                             ; call with args
-0AD7                             ; creates a scope
-0AD7                CALL:        ; execute code at pointer
-0AD7   E1                     POP   hl   ; hl = pointer to code
-0AD8   7C                     LD   a,h   ; skip if destination address is NUL
-0AD9   B5                     OR   l   
-0ADA   28 0E                  JR   z,call2   
-0ADC   C5                     PUSH   bc   ; push IP
-0ADD   FD E5                  PUSH   iy   ; push SCP (scope pointer)
-0ADF   FD E5                  PUSH   iy   ; push BP
-0AE1   FD 21 00 00            LD   iy,0   ; BP = SP
-0AE5   FD 39                  ADD   iy,sp   
-0AE7   44 4D                  LD   bc,hl   ; IP = pointer to code
-0AE9   0B                     DEC   bc   ; dec to prepare for next routine
-0AEA                CALL2:       
-0AEA   DD E9                  JP   (ix)   
-0AEC                             ; execute a block of code
-0AEC                             ; uses parent scope
-0AEC                EXEC:        ; execute code at pointer
-0AEC   E1                     POP   hl   ; hl = pointer to code
-0AED   7C                     LD   a,h   ; skip if destination address is NUL
-0AEE   B5                     OR   l   
-0AEF   28 13                  JR   z,exec2   
-0AF1   C5                     PUSH   bc   ; push IP
-0AF2   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
-0AF5   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
-0AF8   D5                     PUSH   de   ; push SCP
-0AF9   FD E5                  PUSH   iy   ; push BP
-0AFB   FD 21 00 00            LD   iy,0   ; BP = SP
-0AFF   FD 39                  ADD   iy,sp   
-0B01   44 4D                  LD   bc,hl   ; IP = pointer to code
-0B03   0B                     DEC   bc   ; dec to prepare for next routine
-0B04                EXEC2:       
-0B04   DD E9                  JP   (ix)   
+07E5   ED 6A                  ADC   hl,hl   
+07E7   CB 11                  RL   c   
+07E9   30 02                  JR   nc,$+4   
+07EB   CB C5                  SET   0,l   
+07ED   7B                     LD   a,e   
+07EE   87                     ADD   a,a   
+07EF   5F                     LD   e,a   
+07F0   87                     ADD   a,a   
+07F1   CB 45                  BIT   0,l   
+07F3   20 03                  JR   nz,$+5   
+07F5   91                     SUB   c   
+07F6   30 05                  JR   nc,squareRoot4   
+07F8   79                     LD   a,c   
+07F9   93                     SUB   e   
+07FA   1C                     INC   e   
+07FB   93                     SUB   e   
+07FC   4F                     LD   c,a   
+07FD                SQUAREROOT4:      
+07FD   10 E3                  DJNZ   squareRoot1   
+07FF   CB 45                  BIT   0,l   
+0801   28 01                  JR   z,squareRoot5   
+0803   04                     INC   b   
+0804                SQUAREROOT5:      
+0804   16 00                  LD   d,0   
+0806   C9                     RET      
+0807                PRTDEC:      
+0807   CB 7C                  BIT   7,h   
+0809   28 0B                  JR   z,prtdec0   
+080B   3E 2D                  LD   a,"-"   
+080D   CD 85 00               CALL   putchar   
+0810   AF                     XOR   a   
+0811   95                     SUB   l   
+0812   6F                     LD   l,a   
+0813   9F                     SBC   a,a   
+0814   94                     SUB   h   
+0815   67                     LD   h,a   
+0816                PRTDEC0:      
+0816   C5                     PUSH   bc   
+0817   0E 00                  LD   c,0   ; leading zeros flag = false
+0819   11 F0 D8               LD   de,-10000   
+081C   CD 38 08               CALL   prtdec1   
+081F   11 18 FC               LD   de,-1000   
+0822   CD 38 08               CALL   prtdec1   
+0825   11 9C FF               LD   de,-100   
+0828   CD 38 08               CALL   prtdec1   
+082B   1E F6                  LD   e,-10   
+082D   CD 38 08               CALL   prtdec1   
+0830   0C                     INC   c   ; flag = true for at least digit
+0831   1E FF                  LD   e,-1   
+0833   CD 38 08               CALL   prtdec1   
+0836   C1                     POP   bc   
+0837   C9                     RET      
+0838                PRTDEC1:      
+0838   06 2F                  LD   b,"0"-1   
+083A                PRTDEC2:      
+083A   04                     INC   b   
+083B   19                     ADD   hl,de   
+083C   38 FC                  JR   c,prtdec2   
+083E   ED 52                  SBC   hl,de   
+0840   3E 30                  LD   a,"0"   
+0842   B8                     CP   b   
+0843   20 05                  JR   nz,prtdec3   
+0845   AF                     XOR   a   
+0846   B1                     OR   c   
+0847   C8                     RET   z   
+0848   18 01                  JR   prtdec4   
+084A                PRTDEC3:      
+084A   0C                     INC   c   
+084B                PRTDEC4:      
+084B   78                     LD   a,b   
+084C   C3 85 00               JP   putchar   
+084F                PRTHEX:      ; display hl as a 16-bit number in hex.
+084F   C5                     PUSH   bc   ; preserve the IP
+0850   7C                     LD   a,h   
+0851   CD 5A 08               CALL   prthex2   
+0854   7D                     LD   a,l   
+0855   CD 5A 08               CALL   prthex2   
+0858   C1                     POP   bc   
+0859   C9                     RET      
+085A                PRTHEX2:      
+085A   4F                     LD   c,a   
+085B   1F                     RRA      
+085C   1F                     RRA      
+085D   1F                     RRA      
+085E   1F                     RRA      
+085F   CD 63 08               CALL   prthex3   
+0862   79                     LD   a,c   
+0863                PRTHEX3:      
+0863   E6 0F                  AND   0x0F   
+0865   C6 90                  ADD   a,0x90   
+0867   27                     DAA      
+0868   CE 40                  ADC   a,0x40   
+086A   27                     DAA      
+086B   C3 85 00               JP   putchar   
+086E                PRTSTR0:      
+086E   CD 85 00               CALL   putchar   
+0871   23                     INC   hl   
+0872                PRTSTR:      
+0872   7E                     LD   a,(hl)   
+0873   B7                     OR   a   
+0874   20 F8                  JR   nz,prtstr0   
+0876   C9                     RET      
+0877                             ; **************************************************************************
+0877                             ; calculate nesting value
+0877                             ; a is char to be tested,
+0877                             ; e is the nesting value (initially 0)
+0877                             ; e is increased by ( and [
+0877                             ; e is decreased by ) and ]
+0877                             ; e has its bit 7 toggled by `
+0877                             ; limited to 127 levels
+0877                             ; **************************************************************************
+0877                NESTING:      
+0877   FE 22                  CP   $22   ; quote char
+0879   20 0A                  JR   nz,nesting1   
+087B   CB 7B                  BIT   7,e   
+087D   28 03                  JR   z,nesting1a   
+087F   CB BB                  RES   7,e   
+0881   C9                     RET      
+0882                NESTING1A:      
+0882   CB FB                  SET   7,e   
+0884   C9                     RET      
+0885                NESTING1:      
+0885   CB 7B                  BIT   7,e   
+0887   C0                     RET   nz   
+0888   FE 7B                  CP   "{"   
+088A   28 08                  JR   z,nesting2   
+088C   FE 5B                  CP   "["   
+088E   28 04                  JR   z,nesting2   
+0890   FE 28                  CP   "("   
+0892   20 02                  JR   nz,nesting3   
+0894                NESTING2:      
+0894   1C                     INC   e   
+0895   C9                     RET      
+0896                NESTING3:      
+0896   FE 7D                  CP   "}"   
+0898   28 07                  JR   z,nesting4   
+089A   FE 5D                  CP   "]"   
+089C   28 03                  JR   z,nesting4   
+089E   FE 29                  CP   ")"   
+08A0   C0                     RET   nz   
+08A1                NESTING4:      
+08A1   1D                     DEC   e   
+08A2   C9                     RET      
+08A3                PROMPT:      
+08A3   CD B3 08               CALL   printStr   
+08A6   0D 0A 3E 20 00         .CSTR   "\r\n> "   
+08AB   C9                     RET      
+08AC                CRLF:        
+08AC   CD B3 08               CALL   printStr   
+08AF   0D 0A 00               .CSTR   "\r\n"   
+08B2   C9                     RET      
+08B3                PRINTSTR:      
+08B3   E3                     EX   (sp),hl   ; swap			
+08B4   CD 72 08               CALL   prtstr   
+08B7   23                     INC   hl   ; inc past NUL
+08B8   E3                     EX   (sp),hl   ; put it back	
+08B9   C9                     RET      
+08BA                DEFINE:      
+08BA   E1                     POP   hl   
+08BB   7E                     LD   a,(hl)   
+08BC   23                     INC   hl   
+08BD   44 4D                  LD   bc,hl   
+08BF   5F                     LD   e,a   
+08C0   16 00                  LD   d,0   
+08C2   19                     ADD   hl,de   
+08C3   5E                     LD   e,(hl)   
+08C4   23                     INC   hl   
+08C5   56                     LD   d,(hl)   
+08C6   23                     INC   hl   
+08C7   E5                     PUSH   hl   ; bc = str
+08C8   D5                     PUSH   de   
+08C9   CD 61 07               CALL   hashStr   ; hl = hash
+08CC   D1                     POP   de   
+08CD   44 4D                  LD   bc,hl   
+08CF   C3 7A 07               JP   defineEntry   
+08D2                INIT:        
+08D2   DD 21 A8 0A            LD   ix,next   
+08D6   FD 21 00 1A            LD   iy,DSTACK   
+08DA   21 80 01               LD   hl,isysVars   
+08DD   11 7E 1B               LD   de,sysVars   
+08E0   01 10 00               LD   bc,8 * 2   
+08E3   ED B0                  LDIR      
+08E5   3E FF                  LD   a,UNUSED   
+08E7   06 00                  LD   b,0   
+08E9   21 00 1C               LD   hl,hashSlots   
+08EC                INIT1:       
+08EC   77                     LD   (hl),a   
+08ED   23                     INC   hl   
+08EE   10 FC                  DJNZ   init1   
+08F0   CD BA 08               CALL   define   
+08F3   04 61 62 73 00         .PSTR   "abs",0   
+08F8   01 07                  DW   abs1   
+08FA   CD BA 08               CALL   define   
+08FD   05 61 64 64 72 00      .PSTR   "addr",0   
+0903   8A 06                  DW   addr   
+0905   CD BA 08               CALL   define   
+0908   06 62 79 74 65 73 00   .PSTR   "bytes",0   
+090F   E7 05                  DW   bytes   
+0911   CD BA 08               CALL   define   
+0914   05 63 61 6C 6C 00      .PSTR   "call",0   
+091A   DB 0A                  DW   call   
+091C   CD BA 08               CALL   define   
+091F   05 63 61 73 65 00      .PSTR   "case",0   
+0925   B2 05                  DW   case   
+0927   CD BA 08               CALL   define   
+092A   04 64 65 66 00         .PSTR   "def",0   
+092F   78 06                  DW   def   
+0931   CD BA 08               CALL   define   
+0934   05 65 78 65 63 00      .PSTR   "exec",0   
+093A   F0 0A                  DW   exec   
+093C   CD BA 08               CALL   define   
+093F   06 66 61 6C 73 65 00   .PSTR   "false",0   
+0946   00 00                  DW   false   
+0948   CD BA 08               CALL   define   
+094B   07 66 69 6C 74 65 72 00 .PSTR   "filter",0   
+0953   5F 07                  DW   filter   
+0955   CD BA 08               CALL   define   
+0958   05 66 72 61 63 00      .PSTR   "frac",0   
+095E   EE 06                  DW   frac   
+0960   CD BA 08               CALL   define   
+0963   04 67 65 74 00         .PSTR   "get",0   
+0968   05 05                  DW   get   
+096A   CD BA 08               CALL   define   
+096D   05 68 61 73 68 00      .PSTR   "hash",0   
+0973   6D 06                  DW   hash   
+0975   CD BA 08               CALL   define   
+0978   06 69 6E 70 75 74 00   .PSTR   "input",0   
+097F   3B 07                  DW   input   
+0981   CD BA 08               CALL   define   
+0984   03 69 66 00            .PSTR   "if",0   
+0988   26 05                  DW   if   
+098A   CD BA 08               CALL   define   
+098D   05 69 66 74 65 00      .PSTR   "ifte",0   
+0993   2B 05                  DW   ifte   
+0995   CD BA 08               CALL   define   
+0998   04 6B 65 79 00         .PSTR   "key",0   
+099D   4F 07                  DW   key   
+099F   CD BA 08               CALL   define   
+09A2   04 6C 65 74 00         .PSTR   "let",0   
+09A7   5F 07                  DW   let   
+09A9   CD BA 08               CALL   define   
+09AC   05 6C 6F 6F 70 00      .PSTR   "loop",0   
+09B2   4E 05                  DW   loop   
+09B4   CD BA 08               CALL   define   
+09B7   04 6D 61 70 00         .PSTR   "map",0   
+09BC   5F 07                  DW   map   
+09BE   CD BA 08               CALL   define   
+09C1   04 6D 6F 64 00         .PSTR   "mod",0   
+09C6   0E 07                  DW   mod   
+09C8   CD BA 08               CALL   define   
+09CB   04 6E 65 67 00         .PSTR   "neg",0   
+09D0   58 07                  DW   neg   
+09D2   CD BA 08               CALL   define   
+09D5   07 6F 75 74 70 75 74 00 .PSTR   "output",0   
+09DD   46 07                  DW   output   
+09DF   CD BA 08               CALL   define   
+09E2   05 73 63 61 6E 00      .PSTR   "scan",0   
+09E8   01 00                  DW   scan   
+09EA   CD BA 08               CALL   define   
+09ED   04 73 65 74 00         .PSTR   "set",0   
+09F2   14 05                  DW   set   
+09F4   CD BA 08               CALL   define   
+09F7   04 73 68 6C 00         .PSTR   "shl",0   
+09FC   C8 03                  DW   shl   
+09FE   CD BA 08               CALL   define   
+0A01   04 73 68 72 00         .PSTR   "shr",0   
+0A06   D8 03                  DW   shr   
+0A08   CD BA 08               CALL   define   
+0A0B   05 73 71 72 74 00      .PSTR   "sqrt",0   
+0A11   F4 06                  DW   sqrt1   
+0A13   CD BA 08               CALL   define   
+0A16   07 73 77 69 74 63 68 00 .PSTR   "switch",0   
+0A1E   9E 05                  DW   switch   
+0A20   CD BA 08               CALL   define   
+0A23   05 74 72 75 65 00      .PSTR   "true",0   
+0A29   FF FF                  DW   true   
+0A2B   CD BA 08               CALL   define   
+0A2E   06 77 6F 72 64 73 00   .PSTR   "words",0   
+0A35   E2 05                  DW   words   
+0A37   C9                     RET      
+0A38                START:       
+0A38   31 00 1A               LD   sp,DSTACK   ; start of Siena
+0A3B   CD D2 08               CALL   init   ; setups
+0A3E   CD B3 08               CALL   printStr   ; prog count to stack, put code line 235 on stack then call print
+0A41   53 69 65 6E 61 20 56 30 2E 30 0D 0A 00 .CSTR   "Siena V0.0\r\n"   
+0A4E                INTERPRET:      
+0A4E   CD A3 08               CALL   prompt   
+0A51   01 00 00               LD   bc,0   ; load bc with offset into TIB, decide char into tib or execute or control
+0A54   ED 43 82 1B            LD   (vTIBPtr),bc   
+0A58                INTERPRET2:      ; calc nesting (a macro might have changed it)
+0A58   1E 00                  LD   e,0   ; initilize nesting value
+0A5A   C5                     PUSH   bc   ; save offset into TIB,
+0A5B                             ; bc is also the count of chars in TIB
+0A5B   21 00 18               LD   hl,TIB   ; hl is start of TIB
+0A5E   18 06                  JR   interpret4   
+0A60                INTERPRET3:      
+0A60   7E                     LD   a,(hl)   ; a = char in TIB
+0A61   23                     INC   hl   ; inc pointer into TIB
+0A62   0B                     DEC   bc   ; dec count of chars in TIB
+0A63   CD 77 08               CALL   nesting   ; update nesting value
+0A66                INTERPRET4:      
+0A66   79                     LD   a,c   ; is count zero?
+0A67   B0                     OR   b   
+0A68   20 F6                  JR   nz,interpret3   ; if not loop
+0A6A   C1                     POP   bc   ; restore offset into TIB
+0A6B                WAITCHAR:      
+0A6B   CD 81 00               CALL   getchar   ; loop around waiting for character from serial port
+0A6E   FE 20                  CP   $20   ; compare to space
+0A70   30 0A                  JR   nc,waitchar1   ; if >= space, if below 20 set cary flag
+0A72   FE 00                  CP   $0   ; is it end of string? NUL end of string
+0A74                             ; ???? NEEDED?
+0A74   28 2A                  JR   z,waitchar4   
+0A76   FE 0D                  CP   "\r"   ; carriage return? ascii 13
+0A78   28 10                  JR   z,waitchar3   ; if anything else its macro/control
+0A7A                MACRO:       
+0A7A                             ;  ld (vTIBPtr),bc
+0A7A                             ;  ld hl,ctrlCodes
+0A7A                             ;  add a,l			            ; look up key of macros
+0A7A                             ;  ld l,a
+0A7A                             ;  ld e,(hl)
+0A7A                             ;  ld a,e
+0A7A                             ;  or a
+0A7A                             ;  jr z,macro1
+0A7A                             ;  ld d,msb(macros)
+0A7A                             ;  push de
+0A7A                             ;  call call		            ; Siena exec_ operation and jump to it
+0A7A                             ;  db DC1,0
+0A7A                             ; macro1:
+0A7A                             ;  ld bc,(vTIBPtr)
+0A7A   18 DC                  JR   interpret2   
+0A7C                WAITCHAR1:      
+0A7C   21 00 18               LD   hl,TIB   
+0A7F   09                     ADD   hl,bc   
+0A80   77                     LD   (hl),a   ; store the character in textbuf
+0A81   03                     INC   bc   
+0A82   CD 85 00               CALL   putchar   ; echo character to screen
+0A85   CD 77 08               CALL   nesting   
+0A88   18 E1                  JR   waitchar   ; wait for next character
+0A8A                WAITCHAR3:      
+0A8A   21 00 18               LD   hl,TIB   
+0A8D   09                     ADD   hl,bc   
+0A8E   36 0D                  LD   (hl),"\r"   ; store the crlf in textbuf
+0A90   23                     INC   hl   
+0A91   36 0A                  LD   (hl),"\n"   
+0A93   23                     INC   hl   
+0A94   03                     INC   bc   
+0A95   03                     INC   bc   
+0A96   CD AC 08               CALL   crlf   ; echo character to screen
+0A99   7B                     LD   a,e   ; if zero nesting append and ETX after \r
+0A9A   B7                     OR   a   
+0A9B   20 CE                  JR   nz,waitchar   
+0A9D   36 03                  LD   (hl),ETX   ; store end of text ETX in text buffer ??? NEEDED?
+0A9F   03                     INC   bc   
+0AA0                WAITCHAR4:      
+0AA0   ED 43 82 1B            LD   (vTIBPtr),bc   
+0AA4   01 00 18               LD   bc,TIB   ; Instructions stored on heap at address HERE,
+0AA7                             ; we pressed enter
+0AA7   0B                     DEC   bc   
+0AA8                NEXT:        
+0AA8   03                     INC   bc   ; Increment the IP
+0AA9   0A                     LD   a,(bc)   ; Get the next character and dispatch
+0AAA                             ; bit 7,a                   ; is 15-bit opcode ?
+0AAA                             ; jr nz,next3
+0AAA   FE 20                  CP   " "   ; whitespace?
+0AAC   28 FA                  JR   z,next   ; space? ignore
+0AAE   38 07                  JR   c,next1   
+0AB0   6F                     LD   l,a   ; index into table
+0AB1   26 02                  LD   h,msb(opcodesBase)   ; start address of jump table
+0AB3   6E                     LD   l,(hl)   ; get low jump address
+0AB4   26 03                  LD   h,msb(page4)   ; Load h with the 1st page address
+0AB6   E9                     JP   (hl)   ; Jump to routine
+0AB7                NEXT1:       
+0AB7   FE 1B                  CP   ESC   ; escape from interpreter
+0AB9   28 07                  JR   z,escape   
+0ABB   FE 00                  CP   NUL   ; end of input string?
+0ABD   28 07                  JR   z,exit   
+0ABF                             ; cp ETX                      ; end of command line input text?
+0ABF                             ; jr nz,next
+0ABF                             ;     ld hl,-DSTACK               ; etx, is SP valid? (too many pops?)
+0ABF                             ;     add hl,sp
+0ABF                             ;     jr nc,next2
+0ABF                             ;     ld sp,DSTACK                ; yes, reset stack
+0ABF                             ; next2:
+0ABF   C3 4E 0A               JP   interpret   ; no, other whitespace, macros?
+0AC2                             ; next3:
+0AC2                             ;     ld h,a                    ; build address
+0AC2                             ;     inc bc
+0AC2                             ;     ld a,(bc)
+0AC2                             ;     ld l,a
+0AC2                             ;     add hl,hl
+0AC2                             ;     jp (hl)
+0AC2                ESCAPE:      
+0AC2   60 69                  LD   hl,bc   ; address of code after escape opcode
+0AC4   23                     INC   hl   
+0AC5   E9                     JP   (hl)   
+0AC6                EXIT:        
+0AC6   50 59                  LD   de,bc   ; address of code after exit opcode
+0AC8   13                     INC   de   
+0AC9   D9                     EXX      
+0ACA   C1                     POP   bc   ; bc = last result
+0ACB   FD 54                  LD   d,iyh   ; de = BP
+0ACD   FD 5D                  LD   e,iyl   
+0ACF   EB                     EX   de,hl   ; hl = BP
+0AD0   F9                     LD   sp,hl   ; sp = BP
+0AD1   D9                     EXX      
+0AD2   E1                     POP   hl   ; hl = old BP
+0AD3   C1                     POP   bc   ; pop SCP (discard)
+0AD4   C1                     POP   bc   ; bc = IP
+0AD5   F9                     LD   sp,hl   ; sp = old BP
+0AD6   D9                     EXX      
+0AD7   C5                     PUSH   bc   ; push result
+0AD8   D9                     EXX      
+0AD9   EB                     EX   de,hl   
+0ADA   E9                     JP   (hl)   
+0ADB                             ; call with args
+0ADB                             ; creates a scope
+0ADB                CALL:        ; execute code at pointer
+0ADB   E1                     POP   hl   ; hl = pointer to code
+0ADC   7C                     LD   a,h   ; skip if destination address is NUL
+0ADD   B5                     OR   l   
+0ADE   28 0E                  JR   z,call2   
+0AE0   C5                     PUSH   bc   ; push IP
+0AE1   FD E5                  PUSH   iy   ; push SCP (scope pointer)
+0AE3   FD E5                  PUSH   iy   ; push BP
+0AE5   FD 21 00 00            LD   iy,0   ; BP = SP
+0AE9   FD 39                  ADD   iy,sp   
+0AEB   44 4D                  LD   bc,hl   ; IP = pointer to code
+0AED   0B                     DEC   bc   ; dec to prepare for next routine
+0AEE                CALL2:       
+0AEE   DD E9                  JP   (ix)   
+0AF0                             ; execute a block of code
+0AF0                             ; uses parent scope
+0AF0                EXEC:        ; execute code at pointer
+0AF0   E1                     POP   hl   ; hl = pointer to code
+0AF1   7C                     LD   a,h   ; skip if destination address is NUL
+0AF2   B5                     OR   l   
+0AF3   28 13                  JR   z,exec2   
+0AF5   C5                     PUSH   bc   ; push IP
+0AF6   FD 5E 02               LD   e,(iy+2)   ; get SCP from parent stack frame
+0AF9   FD 56 03               LD   d,(iy+3)   ; make this the old BP for this stack frame
+0AFC   D5                     PUSH   de   ; push SCP
+0AFD   FD E5                  PUSH   iy   ; push BP
+0AFF   FD 21 00 00            LD   iy,0   ; BP = SP
+0B03   FD 39                  ADD   iy,sp   
+0B05   44 4D                  LD   bc,hl   ; IP = pointer to code
+0B07   0B                     DEC   bc   ; dec to prepare for next routine
+0B08                EXEC2:       
+0B08   DD E9                  JP   (ix)   
 1800                          .ORG   RAMSTART   
 1800                TIB:      DS   TIBSIZE   
 1900                          DS   RSIZE   
@@ -2244,188 +2246,188 @@
 1E00                BASE:     .SET   37   
 4000                          .ORG   $4000   
 4000                TESTSSTART:      
-4000                          ;*Macro unroll:  test "2 (1 2 +) *", 6
+4000                          ;*Macro unroll:  test "1 2 {$1 $2 +} call", 3
 4000   31 00 1A               LD   SP,DSTACK   
-4003   CD CE 08               CALL   init   
-4006   CD EC 0A               CALL   exec   
-4009   32 20 28 31 20 32 20 2B 29 20 2A 00 .CSTR   "2 (1 2 +) *"   
-4015                          ;*Macro unroll:  expect "2 (1 2 +) *",6
-4015   E1                     POP   HL   
-4016   E5                     PUSH   HL   
-4017   11 06 00               LD   DE,6   
-401A   B7                     OR   A   
-401B   ED 52                  SBC   HL,DE   
-401D   7D                     LD   A,L   
-401E   B4                     OR   H   
-401F   28 56                  JR   Z,expectM_0_2246S43   
-4021   CD AF 08               CALL   printStr   
-4024   43 6F 64 65 3A 20 32 20 28 31 20 32 20 2B 29 20 2A 00 .CSTR   "Code: ","2 (1 2 +) *"   
-4036   CD AF 08               CALL   printStr   
-4039   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
-4048   21 06 00               LD   HL,6   
-404B   CD 03 08               CALL   prtdec   
-404E   CD AF 08               CALL   printStr   
-4051   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
-405E   E1                     POP   hl   
-405F   E5                     PUSH   hl   
-4060   CD 03 08               CALL   prtdec   
-4063   E1                     POP   hl   
-4064   CD AF 08               CALL   printStr   
-4067   20 28 23 00            .CSTR   " (#"   
-406B   CD 4B 08               CALL   prthex   
-406E   CD AF 08               CALL   printStr   
-4071   29 0D 0A 00            .CSTR   ")\r\n"   
-4075   76                     HALT      
-4076   00                     .CSTR      
-4077                EXPECTM_0_2246S43:      
-4077   E1                     POP   HL   
-4078                             ; test ":xyz {10} def :xyz addr exec", 10
-4078                             ; test ":xyz {10} def :xyz addr call", 10
-4078                             ; test ":xyz {$1 $2 +} def 1 2 :xyz addr call", 3
-4078                             ; test "1 2 {$1 $2 +} call", 3
-4078                             ; test "'hello' hash", $7f54
-4078                             ; test ":hello", $7f54
-4078                             ; test ":hello 2 def", TRUE
-4078                             ; test ":hello 2 def :hello addr", 2
-4078                             ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
-4078                             ; test "bytes [1 2 3]", $1e02
-4078                             ; test "bytes [1 2 3] 1? get", 2
-4078                             ; test "bytes :xx [1 2 3] def :xx addr", 2
-4078                             ; test "words [1 2 3]", $1e02
-4078                             ; test "bytes [`A` `B` `C`] 1 ? get", "B"
-4078                             ; test "bytes [`A` `B` `C`] 1 ? `Z` set 1 ? get", "Z"
-4078                             ; test "words [10 20 30] 1 ? get", 10
-4078                             ; test "words [10 20 30] 1 ? 50 set 1 ? get", 50
-4078                             ; test "{{{1} exec} exec} exec", 1
-4078                             ; test "5 {{{$1} exec} exec} call", 5
-4078                             ; test "5 {$1} call", 5
-4078                             ; test "5 {{$1} exec} call", 5
-4078                             ; test "2 1 {{$1} call} call", 2
-4078                             ; test "2 1 {$2} call", 1
-4078                             ; test "2 1 {$1} call", 2
-4078                             ; test "2 1 {$2} call", 1
-4078                             ; test "2 4 {$2} call", 4
-4078                             ; test "{{1} call} call", 1
-4078                             ; test "5 {-1 {$1} if} call", 5
-4078                             ; test "0 {} loop", 0
-4078                             ; test "1 {1-} loop", $1a00
-4078                             ; test "65 .c", 0
-4078                             ; test "1 2 <", TRUE
-4078                             ; test "2 2 <=", TRUE
-4078                             ; test "2 1 <", FALSE
-4078                             ; test "1 2 >", FALSE
-4078                             ; test "2 2 >=", TRUE
-4078                             ; test "2 1 >", TRUE
-4078                             ; test "10 sqrt", 3
-4078                             ; test "10 sqrt frac", 1
-4078                             ; test "7 3 /", 2
-4078                             ; test "7 3 / frac", 1
-4078                             ; test "1 2 +", 3
-4078                             ; test ":h {1} def :h addr call", 1
-4078                             ; test "1 2 +", 3
-4078                             ; test "4 1 2 +", 3
-4078                             ; test "1", 1
-4078                             ; test "2", 2
-4078                             ; test "``", 0
-4078                             ; test "`a`", $61
-4078                             ; test "`\\``", $60
-4078                             ; test "`b` 'cba' in", -1
-4078                             ; test "`x` 'cba' in", 0
-4078                             ; test "5 0 {1} if", 5
-4078                             ; test "0 {1} {2} ifte", 2
-4078                             ; test "5 -1 {1} if", 1
-4078                             ; test "-1 {1} {2} ifte", 1
-4078                             ; test "9 sw {1} {5} ca", 5
-4078                             ; test "0 sw {1} ca", 1
-4078                             ; test "1 sw {1} {2} {3} ca", 2
-4078                             ; test "5 -1 {2} if", 2
-4078                             ; test "5 0 {2} if", 5
-4078                             ; test "5 0 {0 {2} if} if", 5
-4078                             ; test "5 0 {-1 {2} if} if", 5
-4078                             ; test "5 -1 {2} if", 2
-4078                             ; test "5 -1 {-1 {2} if} if", 2
-4078                             ; test "{1} ex", 1
-4078                             ; test "'A' @", 65
-4078                             ; test "1", 1
-4078                             ; test "0", 0
-4078                             ; test "10", 10
-4078                             ; test "123", 123
-4078                             ; test "$10", $10
-4078                             ; test "$FF", $FF
-4078                             ; test "2 3 =", 0
-4078                             ; test "3 3 =", 1
-4078                             ; test "2 3 <", 1
-4078                             ; test "3 3 <", 0
-4078                             ; test "3 3 >", 0
-4078                             ; test "4 3 >", 1
-4078                             ; test "1 2 +", 3
-4078                             ; test "123 456 +", 123+456
-4078                             ; test "64 128 +", 64+128
-4078                             ; test "5 3 -", 2
-4078                             ; test "3 5 &", 1
-4078                             ; test "3 5 |", 7
-4078                             ; test "2 3 *", 6
-4078                             ; test "1 2 3 + *", 5
-4078                             ; ; test "1 2 3 ' +", 3
-4078                             ; ; test "1_ 2 +",1
-4078                             ; ; test "1_ 1 +",0
-4078                             ; ; call enter
-4078                             ; ;     .cstr "1 3",$22,"+"
-4078                             ; ; expect "1 3 DUP +", 6
-4078                             ; ; test "5 2/'", 2
-4078                             ; ; test "3 5$ -", 2
-4078                             ; ; test "5 2/$ '", 1
-4078                             ; ; test "2 3%++", 7
-4078                             ; ; test "1 2 3~''", 2
-4078                             ; ; test "1 2 3~+*", 8
-4078                             ; ; test "2a!a@",2
-4078                             ; ; test "3x! 1 x@+x! x@", 4
-4078                             ; ; test "3x! 1_ x@+x! x@", 2
-4078                             ; ; test "1{", 2
-4078                             ; ; test "1}", 0
-4078                             ; ; test "2}", 1
-4078                             ; ; test "10 11 12\\#3$ '$ '$ '", 4
-4078                             ; ; test "{2} \\^", 2
-4078                             ; ; test ":X1; X", 1
-4078                             ; ; test ":A100;A", 100
-4078                             ; ; test ":Aa!; 3A a@", 3
-4078                             ; ; test ":Aa!;:Ba@;4AB", 4
-4078                             ; ; test "[]$ '", 0
-4078                             ; ; test "[3]$ '", 1
-4078                             ; ; test "[3]'@", 3
-4078                             ; ; test "[1 2 3]'@", 1
-4078                             ; ; test "[1 2 3]'2+@", 2
-4078                             ; ; test "\\h@[1]''\\h@$-", 2
-4078                             ; ; test "\\h@[1 2 3]''\\h@$-", 6
-4078                             ; ; test "\\[]$ '", 0
-4078                             ; ; test "\\[3]'\\@", 3
-4078                             ; ; test "\\[3]$ '", 1
-4078                             ; ; test "\\[1 2 3]'\\@", 1
-4078                             ; ; test "\\[1 2 3]'1+\\@", 2
-4078                             ; ; test "\\h@\\[1 2 3]''\\h@$-", 3
-4078                             ; ; test "\\h@\\[1]''\\h@$-", 1
-4078                             ; ; test "\\`A`\\@",65
-4078                             ; ; test "0 0{1+}", 0
-4078                             ; ; test "0 1{1+}", 1
-4078                             ; ; test "0 2{1+}", 2
-4078                             ; ; test "0 1{0{1+}}", 0
-4078                             ; ; test "0 1{1{1+}}", 1
-4078                             ; ; test "0 2{1{1+}}", 2
-4078                             ; ; test "0 2{2{1+}}", 4
-4078                             ; ; test "0 1{\\i@+}", 0
-4078                             ; ; test "0 2{\\i@+}", 1
-4078                             ; ; test "0 3{\\i@+}", 3
-4078                             ; ; test "0 2{2{\\i@ \\i6+@ ++}}", 4
-4078                             ; ; test "0t! 10{1 t@+t!} t@",10
-4078                             ; ; test "0{100}{200}",200
-4078                             ; ; test "1{100}{200}",100
-4078                             ; ; test "0t! 10{\\i@ 4>\\~ \\i@ 1 t@+t!} t@",5
-4078                             ; ; test "0t! [1 2 3] $ a! { a@ \\i@ {+ @ t@+t! } t@", 6
-4078                             ; ; test ":X10;\\0X", 10
-4078                             ; ; test "2 \\1x! \\1x@", 2
-4078   CD AF 08               CALL   printStr   
-407B   44 6F 6E 65 21 00      .CSTR   "Done!"   
-4081   76                     HALT      
+4003   CD D2 08               CALL   init   
+4006   CD F0 0A               CALL   exec   
+4009   31 20 32 20 7B 24 31 20 24 32 20 2B 7D 20 63 61 6C 6C 00 .CSTR   "1 2 {$1 $2 +} call"   
+401C                          ;*Macro unroll:  expect "1 2 {$1 $2 +} call",3
+401C   E1                     POP   HL   
+401D   E5                     PUSH   HL   
+401E   11 03 00               LD   DE,3   
+4021   B7                     OR   A   
+4022   ED 52                  SBC   HL,DE   
+4024   7D                     LD   A,L   
+4025   B4                     OR   H   
+4026   28 5D                  JR   Z,expectM_0_2248S43   
+4028   CD B3 08               CALL   printStr   
+402B   43 6F 64 65 3A 20 31 20 32 20 7B 24 31 20 24 32 20 2B 7D 20 63 61 6C 6C 00 .CSTR   "Code: ","1 2 {$1 $2 +} call"   
+4044   CD B3 08               CALL   printStr   
+4047   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+4056   21 03 00               LD   HL,3   
+4059   CD 07 08               CALL   prtdec   
+405C   CD B3 08               CALL   printStr   
+405F   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+406C   E1                     POP   hl   
+406D   E5                     PUSH   hl   
+406E   CD 07 08               CALL   prtdec   
+4071   E1                     POP   hl   
+4072   CD B3 08               CALL   printStr   
+4075   20 28 23 00            .CSTR   " (#"   
+4079   CD 4F 08               CALL   prthex   
+407C   CD B3 08               CALL   printStr   
+407F   29 0D 0A 00            .CSTR   ")\r\n"   
+4083   76                     HALT      
+4084   00                     .CSTR      
+4085                EXPECTM_0_2248S43:      
+4085   E1                     POP   HL   
+4086                             ; test "2 (1 2 +) *", 6
+4086                             ; test ":xyz {10} def :xyz addr exec", 10
+4086                             ; test ":xyz {10} def :xyz addr call", 10
+4086                             ; test ":xyz {$1 $2 +} def 1 2 :xyz addr call", 3
+4086                             ; test "'hello' hash", $7f54
+4086                             ; test ":hello", $7f54
+4086                             ; test ":hello 2 def", TRUE
+4086                             ; test ":hello 2 def :hello addr", 2
+4086                             ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
+4086                             ; test "bytes [1 2 3]", $1e02
+4086                             ; test "bytes [1 2 3] 1? get", 2
+4086                             ; test "bytes :xx [1 2 3] def :xx addr", 2
+4086                             ; test "words [1 2 3]", $1e02
+4086                             ; test "bytes [`A` `B` `C`] 1 ? get", "B"
+4086                             ; test "bytes [`A` `B` `C`] 1 ? `Z` set 1 ? get", "Z"
+4086                             ; test "words [10 20 30] 1 ? get", 10
+4086                             ; test "words [10 20 30] 1 ? 50 set 1 ? get", 50
+4086                             ; test "{{{1} exec} exec} exec", 1
+4086                             ; test "5 {{{$1} exec} exec} call", 5
+4086                             ; test "5 {$1} call", 5
+4086                             ; test "5 {{$1} exec} call", 5
+4086                             ; test "2 1 {{$1} call} call", 2
+4086                             ; test "2 1 {$2} call", 1
+4086                             ; test "2 1 {$1} call", 2
+4086                             ; test "2 1 {$2} call", 1
+4086                             ; test "2 4 {$2} call", 4
+4086                             ; test "{{1} call} call", 1
+4086                             ; test "5 {-1 {$1} if} call", 5
+4086                             ; test "0 {} loop", 0
+4086                             ; test "1 {1-} loop", $1a00
+4086                             ; test "65 .c", 0
+4086                             ; test "1 2 <", TRUE
+4086                             ; test "2 2 <=", TRUE
+4086                             ; test "2 1 <", FALSE
+4086                             ; test "1 2 >", FALSE
+4086                             ; test "2 2 >=", TRUE
+4086                             ; test "2 1 >", TRUE
+4086                             ; test "10 sqrt", 3
+4086                             ; test "10 sqrt frac", 1
+4086                             ; test "7 3 /", 2
+4086                             ; test "7 3 / frac", 1
+4086                             ; test "1 2 +", 3
+4086                             ; test ":h {1} def :h addr call", 1
+4086                             ; test "1 2 +", 3
+4086                             ; test "4 1 2 +", 3
+4086                             ; test "1", 1
+4086                             ; test "2", 2
+4086                             ; test "``", 0
+4086                             ; test "`a`", $61
+4086                             ; test "`\\``", $60
+4086                             ; test "`b` 'cba' in", -1
+4086                             ; test "`x` 'cba' in", 0
+4086                             ; test "5 0 {1} if", 5
+4086                             ; test "0 {1} {2} ifte", 2
+4086                             ; test "5 -1 {1} if", 1
+4086                             ; test "-1 {1} {2} ifte", 1
+4086                             ; test "9 sw {1} {5} ca", 5
+4086                             ; test "0 sw {1} ca", 1
+4086                             ; test "1 sw {1} {2} {3} ca", 2
+4086                             ; test "5 -1 {2} if", 2
+4086                             ; test "5 0 {2} if", 5
+4086                             ; test "5 0 {0 {2} if} if", 5
+4086                             ; test "5 0 {-1 {2} if} if", 5
+4086                             ; test "5 -1 {2} if", 2
+4086                             ; test "5 -1 {-1 {2} if} if", 2
+4086                             ; test "{1} ex", 1
+4086                             ; test "'A' @", 65
+4086                             ; test "1", 1
+4086                             ; test "0", 0
+4086                             ; test "10", 10
+4086                             ; test "123", 123
+4086                             ; test "$10", $10
+4086                             ; test "$FF", $FF
+4086                             ; test "2 3 =", 0
+4086                             ; test "3 3 =", 1
+4086                             ; test "2 3 <", 1
+4086                             ; test "3 3 <", 0
+4086                             ; test "3 3 >", 0
+4086                             ; test "4 3 >", 1
+4086                             ; test "1 2 +", 3
+4086                             ; test "123 456 +", 123+456
+4086                             ; test "64 128 +", 64+128
+4086                             ; test "5 3 -", 2
+4086                             ; test "3 5 &", 1
+4086                             ; test "3 5 |", 7
+4086                             ; test "2 3 *", 6
+4086                             ; test "1 2 3 + *", 5
+4086                             ; ; test "1 2 3 ' +", 3
+4086                             ; ; test "1_ 2 +",1
+4086                             ; ; test "1_ 1 +",0
+4086                             ; ; call enter
+4086                             ; ;     .cstr "1 3",$22,"+"
+4086                             ; ; expect "1 3 DUP +", 6
+4086                             ; ; test "5 2/'", 2
+4086                             ; ; test "3 5$ -", 2
+4086                             ; ; test "5 2/$ '", 1
+4086                             ; ; test "2 3%++", 7
+4086                             ; ; test "1 2 3~''", 2
+4086                             ; ; test "1 2 3~+*", 8
+4086                             ; ; test "2a!a@",2
+4086                             ; ; test "3x! 1 x@+x! x@", 4
+4086                             ; ; test "3x! 1_ x@+x! x@", 2
+4086                             ; ; test "1{", 2
+4086                             ; ; test "1}", 0
+4086                             ; ; test "2}", 1
+4086                             ; ; test "10 11 12\\#3$ '$ '$ '", 4
+4086                             ; ; test "{2} \\^", 2
+4086                             ; ; test ":X1; X", 1
+4086                             ; ; test ":A100;A", 100
+4086                             ; ; test ":Aa!; 3A a@", 3
+4086                             ; ; test ":Aa!;:Ba@;4AB", 4
+4086                             ; ; test "[]$ '", 0
+4086                             ; ; test "[3]$ '", 1
+4086                             ; ; test "[3]'@", 3
+4086                             ; ; test "[1 2 3]'@", 1
+4086                             ; ; test "[1 2 3]'2+@", 2
+4086                             ; ; test "\\h@[1]''\\h@$-", 2
+4086                             ; ; test "\\h@[1 2 3]''\\h@$-", 6
+4086                             ; ; test "\\[]$ '", 0
+4086                             ; ; test "\\[3]'\\@", 3
+4086                             ; ; test "\\[3]$ '", 1
+4086                             ; ; test "\\[1 2 3]'\\@", 1
+4086                             ; ; test "\\[1 2 3]'1+\\@", 2
+4086                             ; ; test "\\h@\\[1 2 3]''\\h@$-", 3
+4086                             ; ; test "\\h@\\[1]''\\h@$-", 1
+4086                             ; ; test "\\`A`\\@",65
+4086                             ; ; test "0 0{1+}", 0
+4086                             ; ; test "0 1{1+}", 1
+4086                             ; ; test "0 2{1+}", 2
+4086                             ; ; test "0 1{0{1+}}", 0
+4086                             ; ; test "0 1{1{1+}}", 1
+4086                             ; ; test "0 2{1{1+}}", 2
+4086                             ; ; test "0 2{2{1+}}", 4
+4086                             ; ; test "0 1{\\i@+}", 0
+4086                             ; ; test "0 2{\\i@+}", 1
+4086                             ; ; test "0 3{\\i@+}", 3
+4086                             ; ; test "0 2{2{\\i@ \\i6+@ ++}}", 4
+4086                             ; ; test "0t! 10{1 t@+t!} t@",10
+4086                             ; ; test "0{100}{200}",200
+4086                             ; ; test "1{100}{200}",100
+4086                             ; ; test "0t! 10{\\i@ 4>\\~ \\i@ 1 t@+t!} t@",5
+4086                             ; ; test "0t! [1 2 3] $ a! { a@ \\i@ {+ @ t@+t! } t@", 6
+4086                             ; ; test ":X10;\\0X", 10
+4086                             ; ; test "2 \\1x! \\1x@", 2
+4086   CD B3 08               CALL   printStr   
+4089   44 6F 6E 65 21 00      .CSTR   "Done!"   
+408F   76                     HALT      
 
 
 TEC_1:              0001 DEFINED AT LINE 1 IN constants.asm
@@ -2487,8 +2489,8 @@ OVRN:               0005 DEFINED AT LINE 66 IN IOSerial.asm
 PE:                 0006 DEFINED AT LINE 67 IN IOSerial.asm
 IRQ:                0007 DEFINED AT LINE 68 IN IOSerial.asm
 KEYBUF:             0000 DEFINED AT LINE 76 IN IOSerial.asm
-SCAN:               075B DEFINED AT LINE 1145 IN Siena.asm
-                    > USED AT LINE 1578 IN Siena.asm
+SCAN:               075F DEFINED AT LINE 1147 IN Siena.asm
+                    > USED AT LINE 1580 IN Siena.asm
 DISPLY:             0002 DEFINED AT LINE 78 IN IOSerial.asm
 PORT3:              0003 DEFINED AT LINE 79 IN IOSerial.asm
 PORT4:              0004 DEFINED AT LINE 80 IN IOSerial.asm
@@ -2496,8 +2498,8 @@ PORT5:              0005 DEFINED AT LINE 81 IN IOSerial.asm
 PORT6:              0006 DEFINED AT LINE 82 IN IOSerial.asm
 PORT7:              0007 DEFINED AT LINE 83 IN IOSerial.asm
 ESC:                001B DEFINED AT LINE 25 IN Siena.asm
-                    > USED AT LINE 761 IN Siena.asm
-                    > USED AT LINE 1713 IN Siena.asm
+                    > USED AT LINE 763 IN Siena.asm
+                    > USED AT LINE 1715 IN Siena.asm
 CR:                 000D DEFINED AT LINE 97 IN IOSerial.asm
 LF:                 000A DEFINED AT LINE 98 IN IOSerial.asm
 RSTVEC:             0000 DEFINED AT LINE 102 IN IOSerial.asm
@@ -2519,16 +2521,16 @@ RXDATA:             0078 DEFINED AT LINE 309 IN IOSerial.asm
 RXCHAR:             0078 DEFINED AT LINE 310 IN IOSerial.asm
                     > USED AT LINE 314 IN IOSerial.asm
 GETCHAR:            0081 DEFINED AT LINE 434 IN IOSerial.asm
-                    > USED AT LINE 1131 IN Siena.asm
-                    > USED AT LINE 1642 IN Siena.asm
+                    > USED AT LINE 1133 IN Siena.asm
+                    > USED AT LINE 1644 IN Siena.asm
 PUTCHAR:            0085 DEFINED AT LINE 438 IN IOSerial.asm
                     > USED AT LINE 232 IN Siena.asm
                     > USED AT LINE 239 IN Siena.asm
-                    > USED AT LINE 1317 IN Siena.asm
-                    > USED AT LINE 1358 IN Siena.asm
-                    > USED AT LINE 1382 IN Siena.asm
-                    > USED AT LINE 1385 IN Siena.asm
-                    > USED AT LINE 1673 IN Siena.asm
+                    > USED AT LINE 1319 IN Siena.asm
+                    > USED AT LINE 1360 IN Siena.asm
+                    > USED AT LINE 1384 IN Siena.asm
+                    > USED AT LINE 1387 IN Siena.asm
+                    > USED AT LINE 1675 IN Siena.asm
 RESET:              008B DEFINED AT LINE 444 IN IOSerial.asm
                     > USED AT LINE 103 IN IOSerial.asm
 DSIZE:              0080 DEFINED AT LINE 16 IN Siena.asm
@@ -2538,23 +2540,23 @@ RSIZE:              0080 DEFINED AT LINE 17 IN Siena.asm
 TIBSIZE:            0100 DEFINED AT LINE 18 IN Siena.asm
                     > USED AT LINE 3 IN ram.asm
 TRUE:               00-1 DEFINED AT LINE 19 IN Siena.asm
-                    > USED AT LINE 1098 IN Siena.asm
-                    > USED AT LINE 1602 IN Siena.asm
+                    > USED AT LINE 1100 IN Siena.asm
+                    > USED AT LINE 1604 IN Siena.asm
 FALSE:              0000 DEFINED AT LINE 20 IN Siena.asm
-                    > USED AT LINE 1103 IN Siena.asm
-                    > USED AT LINE 1518 IN Siena.asm
+                    > USED AT LINE 1105 IN Siena.asm
+                    > USED AT LINE 1520 IN Siena.asm
 EMPTY:              0000 DEFINED AT LINE 21 IN Siena.asm
 UNUSED:             00FF DEFINED AT LINE 22 IN Siena.asm
-                    > USED AT LINE 1187 IN Siena.asm
-                    > USED AT LINE 1226 IN Siena.asm
-                    > USED AT LINE 1480 IN Siena.asm
+                    > USED AT LINE 1189 IN Siena.asm
+                    > USED AT LINE 1228 IN Siena.asm
+                    > USED AT LINE 1482 IN Siena.asm
 NUL:                0000 DEFINED AT LINE 23 IN Siena.asm
-                    > USED AT LINE 1715 IN Siena.asm
+                    > USED AT LINE 1717 IN Siena.asm
 ETX:                0003 DEFINED AT LINE 24 IN Siena.asm
-                    > USED AT LINE 1690 IN Siena.asm
+                    > USED AT LINE 1692 IN Siena.asm
 MACROS:             0180 DEFINED AT LINE 36 IN Siena.asm
 ISYSVARS:           0180 DEFINED AT LINE 41 IN Siena.asm
-                    > USED AT LINE 1475 IN Siena.asm
+                    > USED AT LINE 1477 IN Siena.asm
 OPCODESBASE:        0200 DEFINED AT LINE 53 IN Siena.asm
 CTRLCODES:          0200 DEFINED AT LINE 58 IN Siena.asm
 OPCODES:            0220 DEFINED AT LINE 92 IN Siena.asm
@@ -2601,7 +2603,7 @@ HDOT_:              0386 DEFINED AT LINE 314 IN Siena.asm
 MUL_:               038D DEFINED AT LINE 319 IN Siena.asm
 SUB_:               0390 DEFINED AT LINE 322 IN Siena.asm
 SUB2:               0392 DEFINED AT LINE 325 IN Siena.asm
-                    > USED AT LINE 1140 IN Siena.asm
+                    > USED AT LINE 1142 IN Siena.asm
 EQ_:                0398 DEFINED AT LINE 331 IN Siena.asm
 GT_:                039D DEFINED AT LINE 335 IN Siena.asm
 LT_:                03A1 DEFINED AT LINE 339 IN Siena.asm
@@ -2612,13 +2614,13 @@ COMMENT_:           03BD DEFINED AT LINE 361 IN Siena.asm
                     > USED AT LINE 365 IN Siena.asm
 NOP_:               03C6 DEFINED AT LINE 369 IN Siena.asm
 SHL:                03C8 DEFINED AT LINE 379 IN Siena.asm
-                    > USED AT LINE 1586 IN Siena.asm
+                    > USED AT LINE 1588 IN Siena.asm
 SHL1:               03D0 DEFINED AT LINE 386 IN Siena.asm
                     > USED AT LINE 389 IN Siena.asm
 SHL2:               03D1 DEFINED AT LINE 388 IN Siena.asm
                     > USED AT LINE 385 IN Siena.asm
 SHR:                03D8 DEFINED AT LINE 396 IN Siena.asm
-                    > USED AT LINE 1590 IN Siena.asm
+                    > USED AT LINE 1592 IN Siena.asm
 SHR1:               03E0 DEFINED AT LINE 403 IN Siena.asm
                     > USED AT LINE 407 IN Siena.asm
 SHR2:               03E4 DEFINED AT LINE 406 IN Siena.asm
@@ -2670,349 +2672,350 @@ BLOCK:              049E DEFINED AT LINE 549 IN Siena.asm
                     > USED AT LINE 256 IN Siena.asm
                     > USED AT LINE 533 IN Siena.asm
 BLOCK1:             04A2 DEFINED AT LINE 553 IN Siena.asm
-                    > USED AT LINE 571 IN Siena.asm
-                    > USED AT LINE 577 IN Siena.asm
-                    > USED AT LINE 582 IN Siena.asm
-BLOCK2:             04C4 DEFINED AT LINE 572 IN Siena.asm
-                    > USED AT LINE 567 IN Siena.asm
+                    > USED AT LINE 557 IN Siena.asm
+                    > USED AT LINE 573 IN Siena.asm
+                    > USED AT LINE 579 IN Siena.asm
+                    > USED AT LINE 584 IN Siena.asm
+BLOCK2:             04C8 DEFINED AT LINE 574 IN Siena.asm
                     > USED AT LINE 569 IN Siena.asm
-BLOCK3:             04C7 DEFINED AT LINE 575 IN Siena.asm
-                    > USED AT LINE 561 IN Siena.asm
+                    > USED AT LINE 571 IN Siena.asm
+BLOCK3:             04CB DEFINED AT LINE 577 IN Siena.asm
                     > USED AT LINE 563 IN Siena.asm
                     > USED AT LINE 565 IN Siena.asm
-BLOCK4:             04CA DEFINED AT LINE 578 IN Siena.asm
-                    > USED AT LINE 557 IN Siena.asm
+                    > USED AT LINE 567 IN Siena.asm
+BLOCK4:             04CE DEFINED AT LINE 580 IN Siena.asm
                     > USED AT LINE 559 IN Siena.asm
-BLOCK5:             04CD DEFINED AT LINE 581 IN Siena.asm
-                    > USED AT LINE 574 IN Siena.asm
-BLOCKEND:           04D2 DEFINED AT LINE 586 IN Siena.asm
+                    > USED AT LINE 561 IN Siena.asm
+BLOCK5:             04D1 DEFINED AT LINE 583 IN Siena.asm
+                    > USED AT LINE 576 IN Siena.asm
+BLOCKEND:           04D6 DEFINED AT LINE 588 IN Siena.asm
                     > USED AT LINE 258 IN Siena.asm
-ARG:                04E6 DEFINED AT LINE 601 IN Siena.asm
+ARG:                04EA DEFINED AT LINE 603 IN Siena.asm
                     > USED AT LINE 204 IN Siena.asm
-GET:                0501 DEFINED AT LINE 622 IN Siena.asm
-                    > USED AT LINE 1530 IN Siena.asm
-GET1:               050D DEFINED AT LINE 631 IN Siena.asm
-                    > USED AT LINE 628 IN Siena.asm
-SET:                0510 DEFINED AT LINE 636 IN Siena.asm
-                    > USED AT LINE 1582 IN Siena.asm
-SET1:               051F DEFINED AT LINE 649 IN Siena.asm
-                    > USED AT LINE 644 IN Siena.asm
-IF:                 0522 DEFINED AT LINE 700 IN Siena.asm
-                    > USED AT LINE 1542 IN Siena.asm
-IFTE:               0527 DEFINED AT LINE 703 IN Siena.asm
-                    > USED AT LINE 1546 IN Siena.asm
-IFTE1:              0528 DEFINED AT LINE 705 IN Siena.asm
-                    > USED AT LINE 702 IN Siena.asm
-IFTE2:              0531 DEFINED AT LINE 714 IN Siena.asm
-                    > USED AT LINE 712 IN Siena.asm
-IFTE3:              0548 DEFINED AT LINE 727 IN Siena.asm
-                    > USED AT LINE 717 IN Siena.asm
-LOOP:               054A DEFINED AT LINE 732 IN Siena.asm
-                    > USED AT LINE 1558 IN Siena.asm
-LOOP1:              055F DEFINED AT LINE 744 IN Siena.asm
-                    > USED AT LINE 765 IN Siena.asm
-LOOP2:              057A DEFINED AT LINE 760 IN Siena.asm
-                    > USED AT LINE 748 IN Siena.asm
-LOOP3:              0584 DEFINED AT LINE 767 IN Siena.asm
-                    > USED AT LINE 747 IN Siena.asm
-SWITCH:             059A DEFINED AT LINE 781 IN Siena.asm
-                    > USED AT LINE 1598 IN Siena.asm
-CASE:               05AE DEFINED AT LINE 793 IN Siena.asm
-                    > USED AT LINE 1506 IN Siena.asm
-CASE0:              05CA DEFINED AT LINE 811 IN Siena.asm
-                    > USED AT LINE 808 IN Siena.asm
-CASE1:              05CF DEFINED AT LINE 817 IN Siena.asm
+GET:                0505 DEFINED AT LINE 624 IN Siena.asm
+                    > USED AT LINE 1532 IN Siena.asm
+GET1:               0511 DEFINED AT LINE 633 IN Siena.asm
+                    > USED AT LINE 630 IN Siena.asm
+SET:                0514 DEFINED AT LINE 638 IN Siena.asm
+                    > USED AT LINE 1584 IN Siena.asm
+SET1:               0523 DEFINED AT LINE 651 IN Siena.asm
+                    > USED AT LINE 646 IN Siena.asm
+IF:                 0526 DEFINED AT LINE 702 IN Siena.asm
+                    > USED AT LINE 1544 IN Siena.asm
+IFTE:               052B DEFINED AT LINE 705 IN Siena.asm
+                    > USED AT LINE 1548 IN Siena.asm
+IFTE1:              052C DEFINED AT LINE 707 IN Siena.asm
+                    > USED AT LINE 704 IN Siena.asm
+IFTE2:              0535 DEFINED AT LINE 716 IN Siena.asm
+                    > USED AT LINE 714 IN Siena.asm
+IFTE3:              054C DEFINED AT LINE 729 IN Siena.asm
+                    > USED AT LINE 719 IN Siena.asm
+LOOP:               054E DEFINED AT LINE 734 IN Siena.asm
+                    > USED AT LINE 1560 IN Siena.asm
+LOOP1:              0563 DEFINED AT LINE 746 IN Siena.asm
+                    > USED AT LINE 767 IN Siena.asm
+LOOP2:              057E DEFINED AT LINE 762 IN Siena.asm
+                    > USED AT LINE 750 IN Siena.asm
+LOOP3:              0588 DEFINED AT LINE 769 IN Siena.asm
+                    > USED AT LINE 749 IN Siena.asm
+SWITCH:             059E DEFINED AT LINE 783 IN Siena.asm
+                    > USED AT LINE 1600 IN Siena.asm
+CASE:               05B2 DEFINED AT LINE 795 IN Siena.asm
+                    > USED AT LINE 1508 IN Siena.asm
+CASE0:              05CE DEFINED AT LINE 813 IN Siena.asm
                     > USED AT LINE 810 IN Siena.asm
-CASE2:              05DC DEFINED AT LINE 825 IN Siena.asm
-                    > USED AT LINE 820 IN Siena.asm
-WORDS:              05DE DEFINED AT LINE 828 IN Siena.asm
-                    > USED AT LINE 1606 IN Siena.asm
-BYTES:              05E3 DEFINED AT LINE 831 IN Siena.asm
-                    > USED AT LINE 1498 IN Siena.asm
-BYTES1:             05E6 DEFINED AT LINE 833 IN Siena.asm
-                    > USED AT LINE 830 IN Siena.asm
-ARRAY:              05EB DEFINED AT LINE 837 IN Siena.asm
+CASE1:              05D3 DEFINED AT LINE 819 IN Siena.asm
+                    > USED AT LINE 812 IN Siena.asm
+CASE2:              05E0 DEFINED AT LINE 827 IN Siena.asm
+                    > USED AT LINE 822 IN Siena.asm
+WORDS:              05E2 DEFINED AT LINE 830 IN Siena.asm
+                    > USED AT LINE 1608 IN Siena.asm
+BYTES:              05E7 DEFINED AT LINE 833 IN Siena.asm
+                    > USED AT LINE 1500 IN Siena.asm
+BYTES1:             05EA DEFINED AT LINE 835 IN Siena.asm
+                    > USED AT LINE 832 IN Siena.asm
+ARRAY:              05EF DEFINED AT LINE 839 IN Siena.asm
                     > USED AT LINE 262 IN Siena.asm
-ARRAYEND:           05FD DEFINED AT LINE 847 IN Siena.asm
+ARRAYEND:           0601 DEFINED AT LINE 849 IN Siena.asm
                     > USED AT LINE 264 IN Siena.asm
-ARRAYEND1:          061D DEFINED AT LINE 870 IN Siena.asm
-                    > USED AT LINE 881 IN Siena.asm
-ARRAYEND2:          062D DEFINED AT LINE 884 IN Siena.asm
-                    > USED AT LINE 868 IN Siena.asm
-                    > USED AT LINE 898 IN Siena.asm
-ARRAYEND3:          0640 DEFINED AT LINE 900 IN Siena.asm
-                    > USED AT LINE 882 IN Siena.asm
-HASH:               0669 DEFINED AT LINE 932 IN Siena.asm
-                    > USED AT LINE 1534 IN Siena.asm
-DEF:                0674 DEFINED AT LINE 942 IN Siena.asm
-                    > USED AT LINE 1510 IN Siena.asm
-DEF1:               0682 DEFINED AT LINE 951 IN Siena.asm
-                    > USED AT LINE 949 IN Siena.asm
-ADDR:               0686 DEFINED AT LINE 957 IN Siena.asm
-                    > USED AT LINE 1494 IN Siena.asm
-ADDR1:              0692 DEFINED AT LINE 967 IN Siena.asm
-                    > USED AT LINE 962 IN Siena.asm
-SYMBOL:             0696 DEFINED AT LINE 972 IN Siena.asm
+ARRAYEND1:          0621 DEFINED AT LINE 872 IN Siena.asm
+                    > USED AT LINE 883 IN Siena.asm
+ARRAYEND2:          0631 DEFINED AT LINE 886 IN Siena.asm
+                    > USED AT LINE 870 IN Siena.asm
+                    > USED AT LINE 900 IN Siena.asm
+ARRAYEND3:          0644 DEFINED AT LINE 902 IN Siena.asm
+                    > USED AT LINE 884 IN Siena.asm
+HASH:               066D DEFINED AT LINE 934 IN Siena.asm
+                    > USED AT LINE 1536 IN Siena.asm
+DEF:                0678 DEFINED AT LINE 944 IN Siena.asm
+                    > USED AT LINE 1512 IN Siena.asm
+DEF1:               0686 DEFINED AT LINE 953 IN Siena.asm
+                    > USED AT LINE 951 IN Siena.asm
+ADDR:               068A DEFINED AT LINE 959 IN Siena.asm
+                    > USED AT LINE 1496 IN Siena.asm
+ADDR1:              0696 DEFINED AT LINE 969 IN Siena.asm
+                    > USED AT LINE 964 IN Siena.asm
+SYMBOL:             069A DEFINED AT LINE 974 IN Siena.asm
                     > USED AT LINE 268 IN Siena.asm
-SYMBOL0:            069E DEFINED AT LINE 977 IN Siena.asm
-                    > USED AT LINE 988 IN Siena.asm
+SYMBOL0:            06A2 DEFINED AT LINE 979 IN Siena.asm
                     > USED AT LINE 990 IN Siena.asm
-SYMBOL1:            06A0 DEFINED AT LINE 980 IN Siena.asm
-                    > USED AT LINE 976 IN Siena.asm
-SYMBOL2:            06AF DEFINED AT LINE 991 IN Siena.asm
-                    > USED AT LINE 984 IN Siena.asm
-IDENT:              06BD DEFINED AT LINE 1002 IN Siena.asm
+                    > USED AT LINE 992 IN Siena.asm
+SYMBOL1:            06A4 DEFINED AT LINE 982 IN Siena.asm
+                    > USED AT LINE 978 IN Siena.asm
+SYMBOL2:            06B3 DEFINED AT LINE 993 IN Siena.asm
+                    > USED AT LINE 986 IN Siena.asm
+IDENT:              06C1 DEFINED AT LINE 1004 IN Siena.asm
                     > USED AT LINE 266 IN Siena.asm
-IDENT0:             06C4 DEFINED AT LINE 1006 IN Siena.asm
-                    > USED AT LINE 1017 IN Siena.asm
+IDENT0:             06C8 DEFINED AT LINE 1008 IN Siena.asm
                     > USED AT LINE 1019 IN Siena.asm
-IDENT1:             06C6 DEFINED AT LINE 1009 IN Siena.asm
-                    > USED AT LINE 1005 IN Siena.asm
-IDENT2:             06D5 DEFINED AT LINE 1020 IN Siena.asm
-                    > USED AT LINE 1013 IN Siena.asm
-IDENT3:             06E9 DEFINED AT LINE 1032 IN Siena.asm
-                    > USED AT LINE 1030 IN Siena.asm
-FRAC:               06EA DEFINED AT LINE 1035 IN Siena.asm
-                    > USED AT LINE 1526 IN Siena.asm
-SQRT1:              06F0 DEFINED AT LINE 1040 IN Siena.asm
-                    > USED AT LINE 1594 IN Siena.asm
-ABS1:               06FD DEFINED AT LINE 1049 IN Siena.asm
-                    > USED AT LINE 1490 IN Siena.asm
-MOD:                070A DEFINED AT LINE 1062 IN Siena.asm
-                    > USED AT LINE 1566 IN Siena.asm
-EQUALS:             0716 DEFINED AT LINE 1074 IN Siena.asm
+                    > USED AT LINE 1021 IN Siena.asm
+IDENT1:             06CA DEFINED AT LINE 1011 IN Siena.asm
+                    > USED AT LINE 1007 IN Siena.asm
+IDENT2:             06D9 DEFINED AT LINE 1022 IN Siena.asm
+                    > USED AT LINE 1015 IN Siena.asm
+IDENT3:             06ED DEFINED AT LINE 1034 IN Siena.asm
+                    > USED AT LINE 1032 IN Siena.asm
+FRAC:               06EE DEFINED AT LINE 1037 IN Siena.asm
+                    > USED AT LINE 1528 IN Siena.asm
+SQRT1:              06F4 DEFINED AT LINE 1042 IN Siena.asm
+                    > USED AT LINE 1596 IN Siena.asm
+ABS1:               0701 DEFINED AT LINE 1051 IN Siena.asm
+                    > USED AT LINE 1492 IN Siena.asm
+MOD:                070E DEFINED AT LINE 1064 IN Siena.asm
+                    > USED AT LINE 1568 IN Siena.asm
+EQUALS:             071A DEFINED AT LINE 1076 IN Siena.asm
                     > USED AT LINE 334 IN Siena.asm
-LESSTHANEQ:         071E DEFINED AT LINE 1082 IN Siena.asm
+LESSTHANEQ:         0722 DEFINED AT LINE 1084 IN Siena.asm
                     > USED AT LINE 346 IN Siena.asm
-LESSTHAN:           0723 DEFINED AT LINE 1089 IN Siena.asm
+LESSTHAN:           0727 DEFINED AT LINE 1091 IN Siena.asm
                     > USED AT LINE 348 IN Siena.asm
-LESSTHAN1:          0728 DEFINED AT LINE 1094 IN Siena.asm
-                    > USED AT LINE 1085 IN Siena.asm
-TRUE1:              072B DEFINED AT LINE 1097 IN Siena.asm
-                    > USED AT LINE 1077 IN Siena.asm
-FALSE1:             0731 DEFINED AT LINE 1102 IN Siena.asm
-                    > USED AT LINE 1078 IN Siena.asm
-                    > USED AT LINE 1092 IN Siena.asm
-                    > USED AT LINE 1095 IN Siena.asm
-INPUT:              0737 DEFINED AT LINE 1109 IN Siena.asm
-                    > USED AT LINE 1538 IN Siena.asm
-OUTPUT:             0742 DEFINED AT LINE 1121 IN Siena.asm
-                    > USED AT LINE 1574 IN Siena.asm
-KEY:                074B DEFINED AT LINE 1130 IN Siena.asm
-                    > USED AT LINE 1550 IN Siena.asm
-NEG:                0754 DEFINED AT LINE 1137 IN Siena.asm
-                    > USED AT LINE 1570 IN Siena.asm
-LET:                075B DEFINED AT LINE 1142 IN Siena.asm
-                    > USED AT LINE 1554 IN Siena.asm
-FILTER:             075B DEFINED AT LINE 1143 IN Siena.asm
-                    > USED AT LINE 1522 IN Siena.asm
-MAP:                075B DEFINED AT LINE 1144 IN Siena.asm
-                    > USED AT LINE 1562 IN Siena.asm
-HASHSTR:            075D DEFINED AT LINE 1155 IN Siena.asm
-                    > USED AT LINE 936 IN Siena.asm
-                    > USED AT LINE 997 IN Siena.asm
-                    > USED AT LINE 1026 IN Siena.asm
-                    > USED AT LINE 1467 IN Siena.asm
-HASHSTR1:           0760 DEFINED AT LINE 1157 IN Siena.asm
-                    > USED AT LINE 1176 IN Siena.asm
-HASHSTR2:           0765 DEFINED AT LINE 1162 IN Siena.asm
-DEFINEENTRY:        0776 DEFINED AT LINE 1181 IN Siena.asm
-                    > USED AT LINE 947 IN Siena.asm
-                    > USED AT LINE 1470 IN Siena.asm
-DEFINEENTRY0:       077B DEFINED AT LINE 1185 IN Siena.asm
-                    > USED AT LINE 1202 IN Siena.asm
-DEFINEENTRY1:       078A DEFINED AT LINE 1197 IN Siena.asm
-                    > USED AT LINE 1191 IN Siena.asm
-DEFINEENTRY2:       0790 DEFINED AT LINE 1203 IN Siena.asm
-                    > USED AT LINE 1195 IN Siena.asm
-                    > USED AT LINE 1227 IN Siena.asm
-DEFINEENTRY3:       0792 DEFINED AT LINE 1206 IN Siena.asm
-                    > USED AT LINE 1188 IN Siena.asm
-LOOKUPENTRY:        079C DEFINED AT LINE 1220 IN Siena.asm
-                    > USED AT LINE 961 IN Siena.asm
+LESSTHAN1:          072C DEFINED AT LINE 1096 IN Siena.asm
+                    > USED AT LINE 1087 IN Siena.asm
+TRUE1:              072F DEFINED AT LINE 1099 IN Siena.asm
+                    > USED AT LINE 1079 IN Siena.asm
+FALSE1:             0735 DEFINED AT LINE 1104 IN Siena.asm
+                    > USED AT LINE 1080 IN Siena.asm
+                    > USED AT LINE 1094 IN Siena.asm
+                    > USED AT LINE 1097 IN Siena.asm
+INPUT:              073B DEFINED AT LINE 1111 IN Siena.asm
+                    > USED AT LINE 1540 IN Siena.asm
+OUTPUT:             0746 DEFINED AT LINE 1123 IN Siena.asm
+                    > USED AT LINE 1576 IN Siena.asm
+KEY:                074F DEFINED AT LINE 1132 IN Siena.asm
+                    > USED AT LINE 1552 IN Siena.asm
+NEG:                0758 DEFINED AT LINE 1139 IN Siena.asm
+                    > USED AT LINE 1572 IN Siena.asm
+LET:                075F DEFINED AT LINE 1144 IN Siena.asm
+                    > USED AT LINE 1556 IN Siena.asm
+FILTER:             075F DEFINED AT LINE 1145 IN Siena.asm
+                    > USED AT LINE 1524 IN Siena.asm
+MAP:                075F DEFINED AT LINE 1146 IN Siena.asm
+                    > USED AT LINE 1564 IN Siena.asm
+HASHSTR:            0761 DEFINED AT LINE 1157 IN Siena.asm
+                    > USED AT LINE 938 IN Siena.asm
+                    > USED AT LINE 999 IN Siena.asm
                     > USED AT LINE 1028 IN Siena.asm
-LOOKUPENTRY0:       07A1 DEFINED AT LINE 1224 IN Siena.asm
-                    > USED AT LINE 1241 IN Siena.asm
-LOOKUPENTRY1:       07B0 DEFINED AT LINE 1236 IN Siena.asm
-                    > USED AT LINE 1230 IN Siena.asm
-LOOKUPENTRY2:       07B6 DEFINED AT LINE 1242 IN Siena.asm
-LOOKUPENTRY3:       07B8 DEFINED AT LINE 1245 IN Siena.asm
-                    > USED AT LINE 1234 IN Siena.asm
-DIVIDE:             07C0 DEFINED AT LINE 1257 IN Siena.asm
+                    > USED AT LINE 1469 IN Siena.asm
+HASHSTR1:           0764 DEFINED AT LINE 1159 IN Siena.asm
+                    > USED AT LINE 1178 IN Siena.asm
+HASHSTR2:           0769 DEFINED AT LINE 1164 IN Siena.asm
+DEFINEENTRY:        077A DEFINED AT LINE 1183 IN Siena.asm
+                    > USED AT LINE 949 IN Siena.asm
+                    > USED AT LINE 1472 IN Siena.asm
+DEFINEENTRY0:       077F DEFINED AT LINE 1187 IN Siena.asm
+                    > USED AT LINE 1204 IN Siena.asm
+DEFINEENTRY1:       078E DEFINED AT LINE 1199 IN Siena.asm
+                    > USED AT LINE 1193 IN Siena.asm
+DEFINEENTRY2:       0794 DEFINED AT LINE 1205 IN Siena.asm
+                    > USED AT LINE 1197 IN Siena.asm
+                    > USED AT LINE 1229 IN Siena.asm
+DEFINEENTRY3:       0796 DEFINED AT LINE 1208 IN Siena.asm
+                    > USED AT LINE 1190 IN Siena.asm
+LOOKUPENTRY:        07A0 DEFINED AT LINE 1222 IN Siena.asm
+                    > USED AT LINE 963 IN Siena.asm
+                    > USED AT LINE 1030 IN Siena.asm
+LOOKUPENTRY0:       07A5 DEFINED AT LINE 1226 IN Siena.asm
+                    > USED AT LINE 1243 IN Siena.asm
+LOOKUPENTRY1:       07B4 DEFINED AT LINE 1238 IN Siena.asm
+                    > USED AT LINE 1232 IN Siena.asm
+LOOKUPENTRY2:       07BA DEFINED AT LINE 1244 IN Siena.asm
+LOOKUPENTRY3:       07BC DEFINED AT LINE 1247 IN Siena.asm
+                    > USED AT LINE 1236 IN Siena.asm
+DIVIDE:             07C4 DEFINED AT LINE 1259 IN Siena.asm
                     > USED AT LINE 355 IN Siena.asm
-                    > USED AT LINE 1067 IN Siena.asm
-DIVIDE1:            07C5 DEFINED AT LINE 1260 IN Siena.asm
-                    > USED AT LINE 1272 IN Siena.asm
-DIVIDE2:            07D2 DEFINED AT LINE 1268 IN Siena.asm
-                    > USED AT LINE 1265 IN Siena.asm
-DIVIDE3:            07D3 DEFINED AT LINE 1270 IN Siena.asm
+                    > USED AT LINE 1069 IN Siena.asm
+DIVIDE1:            07C9 DEFINED AT LINE 1262 IN Siena.asm
+                    > USED AT LINE 1274 IN Siena.asm
+DIVIDE2:            07D6 DEFINED AT LINE 1270 IN Siena.asm
                     > USED AT LINE 1267 IN Siena.asm
-SQUAREROOT:         07D9 DEFINED AT LINE 1280 IN Siena.asm
-                    > USED AT LINE 1043 IN Siena.asm
-SQUAREROOT1:        07DE DEFINED AT LINE 1284 IN Siena.asm
-                    > USED AT LINE 1305 IN Siena.asm
-SQUAREROOT4:        07F9 DEFINED AT LINE 1304 IN Siena.asm
-                    > USED AT LINE 1298 IN Siena.asm
-SQUAREROOT5:        0800 DEFINED AT LINE 1309 IN Siena.asm
+DIVIDE3:            07D7 DEFINED AT LINE 1272 IN Siena.asm
+                    > USED AT LINE 1269 IN Siena.asm
+SQUAREROOT:         07DD DEFINED AT LINE 1282 IN Siena.asm
+                    > USED AT LINE 1045 IN Siena.asm
+SQUAREROOT1:        07E2 DEFINED AT LINE 1286 IN Siena.asm
                     > USED AT LINE 1307 IN Siena.asm
-PRTDEC:             0803 DEFINED AT LINE 1313 IN Siena.asm
+SQUAREROOT4:        07FD DEFINED AT LINE 1306 IN Siena.asm
+                    > USED AT LINE 1300 IN Siena.asm
+SQUAREROOT5:        0804 DEFINED AT LINE 1311 IN Siena.asm
+                    > USED AT LINE 1309 IN Siena.asm
+PRTDEC:             0807 DEFINED AT LINE 1315 IN Siena.asm
                     > USED AT LINE 236 IN Siena.asm
                     > USED AT LINE 18
                     > USED AT LINE 24
-PRTDEC0:            0812 DEFINED AT LINE 1324 IN Siena.asm
-                    > USED AT LINE 1315 IN Siena.asm
-PRTDEC1:            0834 DEFINED AT LINE 1340 IN Siena.asm
-                    > USED AT LINE 1328 IN Siena.asm
+PRTDEC0:            0816 DEFINED AT LINE 1326 IN Siena.asm
+                    > USED AT LINE 1317 IN Siena.asm
+PRTDEC1:            0838 DEFINED AT LINE 1342 IN Siena.asm
                     > USED AT LINE 1330 IN Siena.asm
                     > USED AT LINE 1332 IN Siena.asm
                     > USED AT LINE 1334 IN Siena.asm
-                    > USED AT LINE 1337 IN Siena.asm
-PRTDEC2:            0836 DEFINED AT LINE 1342 IN Siena.asm
-                    > USED AT LINE 1345 IN Siena.asm
-PRTDEC3:            0846 DEFINED AT LINE 1354 IN Siena.asm
-                    > USED AT LINE 1349 IN Siena.asm
-PRTDEC4:            0847 DEFINED AT LINE 1356 IN Siena.asm
-                    > USED AT LINE 1353 IN Siena.asm
-PRTHEX:             084B DEFINED AT LINE 1360 IN Siena.asm
+                    > USED AT LINE 1336 IN Siena.asm
+                    > USED AT LINE 1339 IN Siena.asm
+PRTDEC2:            083A DEFINED AT LINE 1344 IN Siena.asm
+                    > USED AT LINE 1347 IN Siena.asm
+PRTDEC3:            084A DEFINED AT LINE 1356 IN Siena.asm
+                    > USED AT LINE 1351 IN Siena.asm
+PRTDEC4:            084B DEFINED AT LINE 1358 IN Siena.asm
+                    > USED AT LINE 1355 IN Siena.asm
+PRTHEX:             084F DEFINED AT LINE 1362 IN Siena.asm
                     > USED AT LINE 221 IN Siena.asm
                     > USED AT LINE 316 IN Siena.asm
                     > USED AT LINE 28
-PRTHEX2:            0856 DEFINED AT LINE 1368 IN Siena.asm
-                    > USED AT LINE 1363 IN Siena.asm
+PRTHEX2:            085A DEFINED AT LINE 1370 IN Siena.asm
                     > USED AT LINE 1365 IN Siena.asm
-PRTHEX3:            085F DEFINED AT LINE 1376 IN Siena.asm
-                    > USED AT LINE 1374 IN Siena.asm
-PRTSTR0:            086A DEFINED AT LINE 1384 IN Siena.asm
-                    > USED AT LINE 1390 IN Siena.asm
-PRTSTR:             086E DEFINED AT LINE 1387 IN Siena.asm
+                    > USED AT LINE 1367 IN Siena.asm
+PRTHEX3:            0863 DEFINED AT LINE 1378 IN Siena.asm
+                    > USED AT LINE 1376 IN Siena.asm
+PRTSTR0:            086E DEFINED AT LINE 1386 IN Siena.asm
+                    > USED AT LINE 1392 IN Siena.asm
+PRTSTR:             0872 DEFINED AT LINE 1389 IN Siena.asm
                     > USED AT LINE 226 IN Siena.asm
-                    > USED AT LINE 1448 IN Siena.asm
-NESTING:            0873 DEFINED AT LINE 1403 IN Siena.asm
-                    > USED AT LINE 1633 IN Siena.asm
-                    > USED AT LINE 1674 IN Siena.asm
-NESTING1A:          087E DEFINED AT LINE 1410 IN Siena.asm
+                    > USED AT LINE 1450 IN Siena.asm
+NESTING:            0877 DEFINED AT LINE 1405 IN Siena.asm
+                    > USED AT LINE 1635 IN Siena.asm
+                    > USED AT LINE 1676 IN Siena.asm
+NESTING1A:          0882 DEFINED AT LINE 1412 IN Siena.asm
+                    > USED AT LINE 1409 IN Siena.asm
+NESTING1:           0885 DEFINED AT LINE 1415 IN Siena.asm
                     > USED AT LINE 1407 IN Siena.asm
-NESTING1:           0881 DEFINED AT LINE 1413 IN Siena.asm
-                    > USED AT LINE 1405 IN Siena.asm
-NESTING2:           0890 DEFINED AT LINE 1422 IN Siena.asm
-                    > USED AT LINE 1417 IN Siena.asm
+NESTING2:           0894 DEFINED AT LINE 1424 IN Siena.asm
                     > USED AT LINE 1419 IN Siena.asm
-NESTING3:           0892 DEFINED AT LINE 1425 IN Siena.asm
                     > USED AT LINE 1421 IN Siena.asm
-NESTING4:           089D DEFINED AT LINE 1432 IN Siena.asm
-                    > USED AT LINE 1427 IN Siena.asm
+NESTING3:           0896 DEFINED AT LINE 1427 IN Siena.asm
+                    > USED AT LINE 1423 IN Siena.asm
+NESTING4:           08A1 DEFINED AT LINE 1434 IN Siena.asm
                     > USED AT LINE 1429 IN Siena.asm
-PROMPT:             089F DEFINED AT LINE 1436 IN Siena.asm
-                    > USED AT LINE 1617 IN Siena.asm
-CRLF:               08A8 DEFINED AT LINE 1441 IN Siena.asm
-                    > USED AT LINE 1686 IN Siena.asm
-PRINTSTR:           08AF DEFINED AT LINE 1446 IN Siena.asm
-                    > USED AT LINE 1437 IN Siena.asm
-                    > USED AT LINE 1442 IN Siena.asm
-                    > USED AT LINE 1613 IN Siena.asm
+                    > USED AT LINE 1431 IN Siena.asm
+PROMPT:             08A3 DEFINED AT LINE 1438 IN Siena.asm
+                    > USED AT LINE 1619 IN Siena.asm
+CRLF:               08AC DEFINED AT LINE 1443 IN Siena.asm
+                    > USED AT LINE 1688 IN Siena.asm
+PRINTSTR:           08B3 DEFINED AT LINE 1448 IN Siena.asm
+                    > USED AT LINE 1439 IN Siena.asm
+                    > USED AT LINE 1444 IN Siena.asm
+                    > USED AT LINE 1615 IN Siena.asm
                     > USED AT LINE 12
                     > USED AT LINE 15
                     > USED AT LINE 20
                     > USED AT LINE 26
                     > USED AT LINE 29
                     > USED AT LINE 190
-DEFINE:             08B6 DEFINED AT LINE 1453 IN Siena.asm
-                    > USED AT LINE 1488 IN Siena.asm
-                    > USED AT LINE 1492 IN Siena.asm
-                    > USED AT LINE 1496 IN Siena.asm
-                    > USED AT LINE 1500 IN Siena.asm
-                    > USED AT LINE 1504 IN Siena.asm
-                    > USED AT LINE 1508 IN Siena.asm
-                    > USED AT LINE 1512 IN Siena.asm
-                    > USED AT LINE 1516 IN Siena.asm
-                    > USED AT LINE 1520 IN Siena.asm
-                    > USED AT LINE 1524 IN Siena.asm
-                    > USED AT LINE 1528 IN Siena.asm
-                    > USED AT LINE 1532 IN Siena.asm
-                    > USED AT LINE 1536 IN Siena.asm
-                    > USED AT LINE 1540 IN Siena.asm
-                    > USED AT LINE 1544 IN Siena.asm
-                    > USED AT LINE 1548 IN Siena.asm
-                    > USED AT LINE 1552 IN Siena.asm
-                    > USED AT LINE 1556 IN Siena.asm
-                    > USED AT LINE 1560 IN Siena.asm
-                    > USED AT LINE 1564 IN Siena.asm
-                    > USED AT LINE 1568 IN Siena.asm
-                    > USED AT LINE 1572 IN Siena.asm
-                    > USED AT LINE 1576 IN Siena.asm
-                    > USED AT LINE 1580 IN Siena.asm
-                    > USED AT LINE 1584 IN Siena.asm
-                    > USED AT LINE 1588 IN Siena.asm
-                    > USED AT LINE 1592 IN Siena.asm
-                    > USED AT LINE 1596 IN Siena.asm
-                    > USED AT LINE 1600 IN Siena.asm
-                    > USED AT LINE 1604 IN Siena.asm
-INIT:               08CE DEFINED AT LINE 1472 IN Siena.asm
+DEFINE:             08BA DEFINED AT LINE 1455 IN Siena.asm
+                    > USED AT LINE 1490 IN Siena.asm
+                    > USED AT LINE 1494 IN Siena.asm
+                    > USED AT LINE 1498 IN Siena.asm
+                    > USED AT LINE 1502 IN Siena.asm
+                    > USED AT LINE 1506 IN Siena.asm
+                    > USED AT LINE 1510 IN Siena.asm
+                    > USED AT LINE 1514 IN Siena.asm
+                    > USED AT LINE 1518 IN Siena.asm
+                    > USED AT LINE 1522 IN Siena.asm
+                    > USED AT LINE 1526 IN Siena.asm
+                    > USED AT LINE 1530 IN Siena.asm
+                    > USED AT LINE 1534 IN Siena.asm
+                    > USED AT LINE 1538 IN Siena.asm
+                    > USED AT LINE 1542 IN Siena.asm
+                    > USED AT LINE 1546 IN Siena.asm
+                    > USED AT LINE 1550 IN Siena.asm
+                    > USED AT LINE 1554 IN Siena.asm
+                    > USED AT LINE 1558 IN Siena.asm
+                    > USED AT LINE 1562 IN Siena.asm
+                    > USED AT LINE 1566 IN Siena.asm
+                    > USED AT LINE 1570 IN Siena.asm
+                    > USED AT LINE 1574 IN Siena.asm
+                    > USED AT LINE 1578 IN Siena.asm
+                    > USED AT LINE 1582 IN Siena.asm
+                    > USED AT LINE 1586 IN Siena.asm
+                    > USED AT LINE 1590 IN Siena.asm
+                    > USED AT LINE 1594 IN Siena.asm
+                    > USED AT LINE 1598 IN Siena.asm
+                    > USED AT LINE 1602 IN Siena.asm
+                    > USED AT LINE 1606 IN Siena.asm
+INIT:               08D2 DEFINED AT LINE 1474 IN Siena.asm
                     > USED AT LINE 9
-                    > USED AT LINE 1612 IN Siena.asm
+                    > USED AT LINE 1614 IN Siena.asm
                     > USED AT LINE 40
-INIT1:              08E8 DEFINED AT LINE 1483 IN Siena.asm
-                    > USED AT LINE 1486 IN Siena.asm
-START:              0A34 DEFINED AT LINE 1610 IN Siena.asm
-INTERPRET:          0A4A DEFINED AT LINE 1616 IN Siena.asm
-                    > USED AT LINE 1724 IN Siena.asm
-INTERPRET2:         0A54 DEFINED AT LINE 1622 IN Siena.asm
-                    > USED AT LINE 1666 IN Siena.asm
-INTERPRET3:         0A5C DEFINED AT LINE 1629 IN Siena.asm
-                    > USED AT LINE 1638 IN Siena.asm
-INTERPRET4:         0A62 DEFINED AT LINE 1635 IN Siena.asm
-                    > USED AT LINE 1627 IN Siena.asm
-WAITCHAR:           0A67 DEFINED AT LINE 1641 IN Siena.asm
-                    > USED AT LINE 1675 IN Siena.asm
-                    > USED AT LINE 1689 IN Siena.asm
-MACRO:              0A76 DEFINED AT LINE 1651 IN Siena.asm
-WAITCHAR1:          0A78 DEFINED AT LINE 1668 IN Siena.asm
-                    > USED AT LINE 1644 IN Siena.asm
-WAITCHAR3:          0A86 DEFINED AT LINE 1677 IN Siena.asm
+INIT1:              08EC DEFINED AT LINE 1485 IN Siena.asm
+                    > USED AT LINE 1488 IN Siena.asm
+START:              0A38 DEFINED AT LINE 1612 IN Siena.asm
+INTERPRET:          0A4E DEFINED AT LINE 1618 IN Siena.asm
+                    > USED AT LINE 1726 IN Siena.asm
+INTERPRET2:         0A58 DEFINED AT LINE 1624 IN Siena.asm
+                    > USED AT LINE 1668 IN Siena.asm
+INTERPRET3:         0A60 DEFINED AT LINE 1631 IN Siena.asm
+                    > USED AT LINE 1640 IN Siena.asm
+INTERPRET4:         0A66 DEFINED AT LINE 1637 IN Siena.asm
+                    > USED AT LINE 1629 IN Siena.asm
+WAITCHAR:           0A6B DEFINED AT LINE 1643 IN Siena.asm
+                    > USED AT LINE 1677 IN Siena.asm
+                    > USED AT LINE 1691 IN Siena.asm
+MACRO:              0A7A DEFINED AT LINE 1653 IN Siena.asm
+WAITCHAR1:          0A7C DEFINED AT LINE 1670 IN Siena.asm
+                    > USED AT LINE 1646 IN Siena.asm
+WAITCHAR3:          0A8A DEFINED AT LINE 1679 IN Siena.asm
+                    > USED AT LINE 1651 IN Siena.asm
+WAITCHAR4:          0AA0 DEFINED AT LINE 1695 IN Siena.asm
                     > USED AT LINE 1649 IN Siena.asm
-WAITCHAR4:          0A9C DEFINED AT LINE 1693 IN Siena.asm
-                    > USED AT LINE 1647 IN Siena.asm
-NEXT:               0AA4 DEFINED AT LINE 1699 IN Siena.asm
+NEXT:               0AA8 DEFINED AT LINE 1701 IN Siena.asm
                     > USED AT LINE 535 IN Siena.asm
                     > USED AT LINE 546 IN Siena.asm
-                    > USED AT LINE 778 IN Siena.asm
-                    > USED AT LINE 913 IN Siena.asm
-                    > USED AT LINE 1473 IN Siena.asm
-                    > USED AT LINE 1705 IN Siena.asm
-NEXT1:              0AB3 DEFINED AT LINE 1712 IN Siena.asm
-                    > USED AT LINE 1706 IN Siena.asm
-ESCAPE:             0ABE DEFINED AT LINE 1733 IN Siena.asm
-                    > USED AT LINE 1714 IN Siena.asm
-EXIT:               0AC2 DEFINED AT LINE 1738 IN Siena.asm
+                    > USED AT LINE 780 IN Siena.asm
+                    > USED AT LINE 915 IN Siena.asm
+                    > USED AT LINE 1475 IN Siena.asm
+                    > USED AT LINE 1707 IN Siena.asm
+NEXT1:              0AB7 DEFINED AT LINE 1714 IN Siena.asm
+                    > USED AT LINE 1708 IN Siena.asm
+ESCAPE:             0AC2 DEFINED AT LINE 1735 IN Siena.asm
                     > USED AT LINE 1716 IN Siena.asm
-CALL:               0AD7 DEFINED AT LINE 1760 IN Siena.asm
-                    > USED AT LINE 1502 IN Siena.asm
-CALL2:              0AEA DEFINED AT LINE 1772 IN Siena.asm
-                    > USED AT LINE 1764 IN Siena.asm
-EXEC:               0AEC DEFINED AT LINE 1777 IN Siena.asm
+EXIT:               0AC6 DEFINED AT LINE 1740 IN Siena.asm
+                    > USED AT LINE 1718 IN Siena.asm
+CALL:               0ADB DEFINED AT LINE 1762 IN Siena.asm
+                    > USED AT LINE 1504 IN Siena.asm
+CALL2:              0AEE DEFINED AT LINE 1774 IN Siena.asm
+                    > USED AT LINE 1766 IN Siena.asm
+EXEC:               0AF0 DEFINED AT LINE 1779 IN Siena.asm
                     > USED AT LINE 536 IN Siena.asm
-                    > USED AT LINE 1514 IN Siena.asm
+                    > USED AT LINE 1516 IN Siena.asm
                     > USED AT LINE 41
-EXEC2:              0B04 DEFINED AT LINE 1791 IN Siena.asm
-                    > USED AT LINE 1781 IN Siena.asm
+EXEC2:              0B08 DEFINED AT LINE 1793 IN Siena.asm
+                    > USED AT LINE 1783 IN Siena.asm
 TIB:                1800 DEFINED AT LINE 3 IN ram.asm
-                    > USED AT LINE 1626 IN Siena.asm
-                    > USED AT LINE 1669 IN Siena.asm
-                    > USED AT LINE 1678 IN Siena.asm
-                    > USED AT LINE 1695 IN Siena.asm
+                    > USED AT LINE 1628 IN Siena.asm
+                    > USED AT LINE 1671 IN Siena.asm
+                    > USED AT LINE 1680 IN Siena.asm
+                    > USED AT LINE 1697 IN Siena.asm
 RSTACK:             1980 DEFINED AT LINE 6 IN ram.asm
 DSTACK:             1A00 DEFINED AT LINE 9 IN ram.asm
                     > USED AT LINE 8
-                    > USED AT LINE 1474 IN Siena.asm
-                    > USED AT LINE 1611 IN Siena.asm
+                    > USED AT LINE 1476 IN Siena.asm
+                    > USED AT LINE 1613 IN Siena.asm
                     > USED AT LINE 39
 STACK:              1A00 DEFINED AT LINE 10 IN ram.asm
                     > USED AT LINE 445 IN IOSerial.asm
 PAD:                1A00 DEFINED AT LINE 13 IN ram.asm
-                    > USED AT LINE 974 IN Siena.asm
-                    > USED AT LINE 996 IN Siena.asm
-                    > USED AT LINE 1003 IN Siena.asm
-                    > USED AT LINE 1025 IN Siena.asm
+                    > USED AT LINE 976 IN Siena.asm
+                    > USED AT LINE 998 IN Siena.asm
+                    > USED AT LINE 1005 IN Siena.asm
+                    > USED AT LINE 1027 IN Siena.asm
 VBYTEMODE:          1B30 DEFINED AT LINE 17 IN ram.asm
 TBPTR:              1B32 DEFINED AT LINE 18 IN ram.asm
 RST08:              1B34 DEFINED AT LINE 20 IN ram.asm
@@ -3047,34 +3050,34 @@ PUTCVEC:            1B48 DEFINED AT LINE 30 IN ram.asm
                     > USED AT LINE 440 IN IOSerial.asm
                     > USED AT LINE 459 IN IOSerial.asm
 SYSVARS:            1B7E DEFINED AT LINE 33 IN ram.asm
-                    > USED AT LINE 1476 IN Siena.asm
+                    > USED AT LINE 1478 IN Siena.asm
 VFRAC:              1B7E DEFINED AT LINE 35 IN ram.asm
                     > USED AT LINE 356 IN Siena.asm
-                    > USED AT LINE 1036 IN Siena.asm
-                    > USED AT LINE 1044 IN Siena.asm
+                    > USED AT LINE 1038 IN Siena.asm
+                    > USED AT LINE 1046 IN Siena.asm
 VDATAWIDTH:         1B80 DEFINED AT LINE 36 IN ram.asm
                     > USED AT LINE 246 IN Siena.asm
-                    > USED AT LINE 626 IN Siena.asm
-                    > USED AT LINE 642 IN Siena.asm
-                    > USED AT LINE 834 IN Siena.asm
-                    > USED AT LINE 866 IN Siena.asm
+                    > USED AT LINE 628 IN Siena.asm
+                    > USED AT LINE 644 IN Siena.asm
+                    > USED AT LINE 836 IN Siena.asm
+                    > USED AT LINE 868 IN Siena.asm
 VTIBPTR:            1B82 DEFINED AT LINE 37 IN ram.asm
-                    > USED AT LINE 1620 IN Siena.asm
-                    > USED AT LINE 1694 IN Siena.asm
+                    > USED AT LINE 1622 IN Siena.asm
+                    > USED AT LINE 1696 IN Siena.asm
 VLASTDEF:           1B86 DEFINED AT LINE 39 IN ram.asm
 VHEAPPTR:           1B8C DEFINED AT LINE 42 IN ram.asm
                     > USED AT LINE 495 IN Siena.asm
                     > USED AT LINE 510 IN Siena.asm
-                    > USED AT LINE 860 IN Siena.asm
-                    > USED AT LINE 915 IN Siena.asm
-                    > USED AT LINE 924 IN Siena.asm
+                    > USED AT LINE 862 IN Siena.asm
+                    > USED AT LINE 917 IN Siena.asm
+                    > USED AT LINE 926 IN Siena.asm
 HASHSLOTS:          1C00 DEFINED AT LINE 63 IN ram.asm
-                    > USED AT LINE 1482 IN Siena.asm
+                    > USED AT LINE 1484 IN Siena.asm
 HASHWORDS:          1D00 DEFINED AT LINE 66 IN ram.asm
 HEAP:               1E00 DEFINED AT LINE 68 IN ram.asm
                     > USED AT LINE 49 IN Siena.asm
 BASE:               0025 DEFINED AT LINE 15
 TESTSSTART:         4000 DEFINED AT LINE 18
                     > USED AT LINE 10
-EXPECTM_0_2246S43:  4077 DEFINED AT LINE 34
+EXPECTM_0_2248S43:  4085 DEFINED AT LINE 34
                     > USED AT LINE 10
