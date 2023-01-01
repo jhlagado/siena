@@ -98,8 +98,8 @@ opcodes:                        ; still available ! " % , @ \ { }
     DB lsb(nop_)                ; %  
     DB lsb(and_)                ; &
     DB lsb(string_)             ; '
-    DB lsb(block_)              ; (    
-    DB lsb(blockend_)           ; )
+    DB lsb(paren_)              ; (    
+    DB lsb(parenEnd_)           ; )
     DB lsb(mul_)                ; *  
     DB lsb(add_)                ; +
     DB lsb(nop_)                ; ,  
@@ -181,9 +181,9 @@ opcodes:                        ; still available ! " % , @ \ { }
     DB lsb(ident_)              ; x  
     DB lsb(ident_)              ; y  
     DB lsb(ident_)              ; z  
-    DB lsb(nop_)                ; {
+    DB lsb(block_)              ; {
     DB lsb(or_)                 ; |  
-    DB lsb(nop_)                ; }  
+    DB lsb(block_)              ; }  
     DB lsb(inv_)                ; ~    
     DB lsb(nop_)                ; DEL	
 
@@ -196,16 +196,21 @@ page4:
 
 num_:    
     jp  num
+
 hexnum_:    
     jp hexnum
+
 arg_:
     jp arg
+
 string_:
     jp string
-; lambda_:    
-;     jp lambda
-; lambdaEnd_:
-;     jp lambdaEnd
+
+paren_:    
+    jp paren
+
+parenEnd_:
+    jp parenEnd
 
 dot_:  
     pop hl
@@ -521,59 +526,25 @@ char2:
     jr char1
 char3:
     push hl
-    ; dec bc
     jp (ix)  
 
-; lambda:              
-;     inc bc
-;     ld hl,(vHeapPtr)            ; start of lambda defintion
-;     push hl
-;     ld d,1                      ; nesting: count first parenthesis
-; lambda1:                        ; Skip to end of definition    
-;     ld a,(bc)                   ; Get the next character
-;     inc bc                      ; Point to next character
-;     ld (hl),a
-;     inc hl
-;     cp "'"
-;     jr z,lambda2
-;     cp "("
-;     jr z,lambda2
-;     cp ")"
-;     jr z,lambda2
-;     cp "{"
-;     jr z,lambda2
-;     cp "}"                      ; Is it the end of the definition? 
-;     jr z,lambda2
-;     cp "["
-;     jr z,lambda2
-;     cp "]"
-;     jr z,lambda2
-;     cp "`"
-;     jr nz,lambda1
-; lambda2:
-;     inc d
-;     bit 0,d                     ; balanced?
-;     jr nz, lambda1              ; not balanced, get the next element
-;     cp "}"                      ; Is it the end of the definition? 
-;     jr nz, lambda1              ; get the next element
-;     dec bc
-;     ld (vHeapPtr),hl            ; bump heap ptr to after definiton
-;     jp (ix)  
+paren:
+    ld ix,paren2
+    jr block
+paren2:
+    ld ix,next
+    jp exec    
 
-; lambdaEnd:
-;     pop hl                      ; hl = last result 
-;     ld d,iyh                    ; de = BP
-;     ld e,iyl
-;     ex de,hl                    ; hl = BP, de = result
-;     ld sp,hl                    ; sp = BP
-;     pop hl                      ; hl = old BP
-;     pop bc                      ; pop scope ptr (discard)
-;     pop bc                      ; bc = IP
-;     ld sp,hl                    ; sp = old BP
-;     ld iy,0                     ; iy = sp = old BP
-;     add iy,sp
-;     push de                     ; push result    
-;     jp (ix)    
+parenEnd:
+    pop hl                      ; hl = last result 
+    pop de
+    pop bc
+    pop bc
+    push hl
+    ld iyh,d
+    ld iyl,e
+    ld ix,next
+    jp (ix)
 
 block:
     inc bc
@@ -807,21 +778,6 @@ loop3:
     ld ix,next
     jp (ix)
 
-; xxxblockend:
-;     pop hl                      ; hl = last result 
-;     ld d,iyh                    ; de = BP
-;     ld e,iyl
-;     ex de,hl                    ; hl = BP, de = result
-;     ld sp,hl                    ; sp = BP
-;     pop hl                      ; hl = old BP
-;     pop bc                      ; pop SCP (discard)
-;     pop bc                      ; bc = IP
-;     ld sp,hl                    ; sp = old BP
-;     ld iy,0                     ; iy = sp
-;     add iy,sp
-;     push de                     ; push result    
-;     jp (ix)    
-    
 switch:
     pop hl                      ; get selector from stack
     push bc                     ; create stack frame, push IP (replace later)
