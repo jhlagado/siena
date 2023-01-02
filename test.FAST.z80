@@ -33,7 +33,6 @@ testsStart:
 
     test ":xyz {1} def :xyz addr call", 1
     test ":xyz {$1 $2 +} def ; 1 2 :xyz addr call", 3
-    ; test ":xyz {$1 $2 +} def ; 1 2 (:xyz addr) call", 3
     ; test ":xyz {10} def :xyz addr exec", 10
     ; test ":xyz {10} def :xyz addr call", 10
 
