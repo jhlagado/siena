@@ -17,15 +17,16 @@ base:   .set 37
     .org $4000
 testsStart:
 
+    ; test ":xyz 123 const ; xyz", 123
+    test ":xyz 123 let ; xyz get", 123
     ; test "1 2 {$1 $2 +} call", 3
-    ; test ":xyz {1} def (:xyz addr) call", 1
-    ; test ":xyz {$1 $2 +} def ; 1 2 (:xyz addr) call", 3
-    test ":xyz {$1 $2 +} def ; 1 2 xyz", 3
+    ; test ":xyz {1} let (:xyz addr) call", 1
+    ; test ":xyz {$1 $2 +} let ; 1 2 (:xyz addr) call", 3
+    ; test ":xyz {$1 $2 +} def ; 1 2 xyz", 3
 
     ; test "2 (1 2 +) *", 6
     ; test ":xyz {10} def :xyz addr exec", 10
     ; test ":xyz {10} def :xyz addr call", 10
-
 
     ; test "'hello' hash", $7f54
     ; test ":hello", $7f54

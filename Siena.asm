@@ -558,33 +558,37 @@ block1:                         ; Skip to end of definition
     inc bc                      ; Point to next character
     cp " " + 1                  ; ignore whitespace 
     jr c,block1
-    cp "'"
+
+    cp ")"
     jr z,block4
-    cp "`"
+    cp "}"                       
     jr z,block4
+    cp "]"
+    jr z,block4
+
     cp "("
     jr z,block3
     cp "{"
     jr z,block3
     cp "["
     jr z,block3
-    cp ")"
-    jr z,block2
-    cp "}"                       
-    jr z,block2
-    cp "]"
+
+    cp "'"
+    jr z,block3
+    cp "`"
     jr nz,block1
 block2:
-    dec d
-    jr block5                   
-block3:
     inc d
     jr block1                   
-block4:
+block3:
     ld a,$80
-    add a,d
-block5:
-    jr nz, block1               ; get the next element
+    xor d
+    ld b,a
+    jr block1                   
+block4:
+    dec d
+    jr nz, block1                 ; get the next element
+
     dec bc                      ; balanced, exit
     jp (ix)  
 
@@ -943,20 +947,137 @@ hash:
     push hl
     jp (ix)
 
-; str addr -- bool
+; symbol addr -- 
 def:
-    ld hl,bc                            ; hl = IP
-    pop de                              ; de = addr
-    pop bc                              ; bc = hash
-    push hl
-    call defineEntry
-    jr c,def1
-    ; call error
-    ; .cstr "Collision"
+    ld hl,bc                            ; de = addr (sp) = IP (sp+2) = symbol
+    ex (sp),hl                          
+    ex de,hl                            
+    ld b,1                              ; b = nesting
+    ld hl,(vHeapPtr)                    ; hl = heap
+    ld (hl),$cd                         ; compile "call exec"
+    inc hl
+    ld (hl),lsb(call)
+    inc hl
+    ld (hl),msb(call)
+    inc hl
 def1:
+    ld a,(de)                           
+    inc de
+    ld (hl),a
+    inc hl
+    
+    cp ")"
+    jr z,def4
+    cp "}"                       
+    jr z,def4
+    cp "]"
+    jr z,def4
+
+    cp "("
+    jr z,def3
+    cp "{"
+    jr z,def3
+    cp "["
+    jr z,def3
+
+    cp "'"
+    jr z,def3
+    cp "`"
+    jr nz,def1
+def2:
+    inc b
+    jr def1                   
+def3:
+    ld a,$80
+    xor b
+    ld b,a
+    jr def1                   
+def4:
+    dec b
+    jr nz, def1                 ; get the next element
+    xor a                       ; end with NUL ??? needed?
+    ld (hl),a
+
+    ld de,(vHeapPtr)            ; de = start of defintion
+    ld (vHeapPtr),hl            ; update heap ptr to end of defintion
+
+    pop hl                      ; de = addr, hl = IP
+    ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
+    ld bc,hl                    ; bc = symbol
+    call defineEntry
+    jr c,def5
+    ; call error
+    ; .cstr "Def Collision"
+def5:
     pop bc
     jp (ix)
+
+; symbol value -- 
+let:
+    ld hl,bc                            ; de = addr (sp) = IP (sp+2) = symbol
+    ex (sp),hl                          
+    ex de,hl                            
+    ld b,1                              ; b = nesting
+    ld hl,(vHeapPtr)                    ; hl = heap
+    ld (hl),$cd                         ; compile "call dovar"
+    inc hl
+    ld (hl),lsb(dovar)
+    inc hl
+    ld (hl),msb(dovar)
+    inc hl
+let1:
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    dec hl
+
+    ld de,(vHeapPtr)            ; de = start of defintion
+    ld (vHeapPtr),hl            ; update heap ptr to end of defintion
+
+    pop hl                      ; de = addr, hl = IP
+    ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
+    ld bc,hl                    ; bc = symbol
+    call defineEntry
+    jr c,let2
+    ; call error
+    ; .cstr "Let Collision"
+let2:
+    pop bc
+    jp (ix)
+
+; symbol value -- 
+const:
+    ld hl,bc                            ; de = addr (sp) = IP (sp+2) = symbol
+    ex (sp),hl                          
+    ex de,hl                            
+    ld b,1                              ; b = nesting
+    ld hl,(vHeapPtr)                    ; hl = heap
+    ld (hl),$cd                         ; compile "call doconst"
+    inc hl
+    ld (hl),lsb(doconst)
+    inc hl
+    ld (hl),msb(doconst)
+    inc hl
+const1:
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    inc hl
     
+    ld de,(vHeapPtr)            ; de = start of defintion
+    ld (vHeapPtr),hl            ; update heap ptr to end of defintion
+
+    pop hl                      ; de = addr, hl = IP
+    ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
+    ld bc,hl                    ; bc = symbol
+    call defineEntry
+    jr c,const2
+    ; call error
+    ; .cstr "Const Collision"
+const2:
+    pop bc
+    jp (ix)
+
 ; str -- addr
 addr:
     pop hl                              ; hl = hash
@@ -1143,7 +1264,6 @@ neg:
     pop de       
     jp sub2                     ; use the SUBtract routine
     
-let:
 filter:
 map:
 scan:
@@ -1510,6 +1630,10 @@ init1:
     dw case
 
     call define
+    .pstr "const",0                       
+    dw const
+
+    call define
     .pstr "def",0                       
     dw def
 
@@ -1802,4 +1926,19 @@ exec:				            ; execute code at pointer
     dec bc                      ; dec to prepare for next routine
 exec2:
     jp (ix)       
+
+; -- addr
+; returns address of variable
+dovar:				            ; execute code at pointer
+    jp (ix)
+
+; -- value
+; returns address of variable
+doconst:				        ; execute code at pointer
+    pop hl
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    push de
+    jp (ix)
 
