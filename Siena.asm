@@ -916,9 +916,15 @@ arrayEnd3:
     pop hl                      ; hl = old BP, de = end of array
     pop ix                      ; pop SCP (discard)
     pop ix                      ; pop IP (discard)
-    ld sp,hl                    ; sp = old BP
-    ld iy,0                     ; iy = sp
-    add iy,sp
+    
+    ex de,hl
+    ld iyh,d
+    ld iyl,e
+    ex de,hl
+    
+    ; ld sp,hl                    ; sp = old BP
+    ; ld iy,0                     ; iy = sp
+    ; add iy,sp
     ld ix,next
     
     ld hl,(vHeapPtr)            ; hl = array[0], de = end of array
@@ -934,6 +940,9 @@ arrayEnd3:
     ld (hl),e                   ; array[-2] = size
     inc hl
     ld (hl),d
+    inc hl
+    add hl,de
+    ld (vHeapPtr),hl
     
     jp (ix)
 
@@ -1091,6 +1100,8 @@ addr:
     ; jp interpret
 addr1:    
     pop bc
+    ld de,3
+    add hl,de
     push hl
     jp (ix)
 

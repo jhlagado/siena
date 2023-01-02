@@ -17,26 +17,35 @@ base:   .set 37
     .org $4000
 testsStart:
 
-    test ":xyz 123 const ; xyz", 123
-    test ":xyz 123 let ; xyz get", 123
-    test "1 2 {$1 $2 +} call", 3
-    test ":xyz {$1 $2 +} def ; 1 2 xyz", 3
-    test ":xyz {1} def (:xyz addr 3+) call", 1
-    test ":xyz {$1 $2 +} def ; 1 2 (:xyz addr 3+) call", 3
+    ; test "bytes :xx [1 2 3] const ; xx . 16415 get", 2 
+
+    ; test "bytes 'ABC' get", $41 
+    ; test "bytes [1 2 3] get", 1 
+    ; test ":xyz 123 const ; xyz", 123
+    ; test ":x 1 const ; x", 1 
+    ; test ":x 'A' const x get", $41 
+    test ":x [1] const x get", 1 
+
 
     ; test "2 (1 2 +) *", 6
+    ; test ":xyz 123 const ; xyz", 123
+    ; test ":xyz 123 let ; xyz get", 123
+    ; test "1 2 {$1 $2 +} call", 3
+    ; test ":xyz {$1 $2 +} def ; 1 2 xyz get", 3
+    
+    ; test ":xyz {1} def (:xyz addr) call", 1
+    ; test ":xyz {$1 $2 +} def ; 1 2 (:xyz addr) call", 3
     ; test ":xyz {10} def :xyz addr exec", 10
     ; test ":xyz {10} def :xyz addr call", 10
 
     ; test "'hello' hash", $7f54
     ; test ":hello", $7f54
-    ; test ":hello 2 def", TRUE
-    ; test ":hello 2 def :hello addr", 2
-    ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
 
     ; test "bytes [1 2 3]", $1e02
     ; test "bytes [1 2 3] 1? get", 2
-    ; test "bytes :xx [1 2 3] def :xx addr", 2
+
+    ; test "bytes :xx [1 2 3] const ; xx 1? get", 2
+    ; test "bytes :xx [1 2 3] const ; xx 1? get", 2
 
     ; test "words [1 2 3]", $1e02
     ; test "bytes [`A` `B` `C`] 1 ? get", 'B'
