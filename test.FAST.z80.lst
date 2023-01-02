@@ -2374,192 +2374,362 @@
 1E00                BASE:     .SET   37   
 4000                          .ORG   $4000   
 4000                TESTSSTART:      
-4000                             ; test ":xyz 123 const ; xyz", 123
-4000                          ;*Macro unroll:  test ":xyz 123 let ; xyz get", 123
+4000                          ;*Macro unroll:  test ":xyz 123 const ; xyz", 123
 4000   31 00 1A               LD   SP,DSTACK   
 4003   CD 6D 09               CALL   init   
 4006   CD 9F 0B               CALL   exec   
-4009   3A 78 79 7A 20 31 32 33 20 6C 65 74 20 3B 20 78 79 7A 20 67 65 74 00 .CSTR   ":xyz 123 let ; xyz get"   
-4020                          ;*Macro unroll:  expect ":xyz 123 let ; xyz get",123
-4020   E1                     POP   HL   
-4021   E5                     PUSH   HL   
-4022   11 7B 00               LD   DE,123   
-4025   B7                     OR   A   
-4026   ED 52                  SBC   HL,DE   
-4028   7D                     LD   A,L   
-4029   B4                     OR   H   
-402A   28 61                  JR   Z,expectM_0_2377S43   
-402C   CD 4E 09               CALL   printStr   
-402F   43 6F 64 65 3A 20 3A 78 79 7A 20 31 32 33 20 6C 65 74 20 3B 20 78 79 7A 20 67 65 74 00 .CSTR   "Code: ",":xyz 123 let ; xyz get"   
-404C   CD 4E 09               CALL   printStr   
-404F   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
-405E   21 7B 00               LD   HL,123   
-4061   CD A2 08               CALL   prtdec   
-4064   CD 4E 09               CALL   printStr   
-4067   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
-4074   E1                     POP   hl   
-4075   E5                     PUSH   hl   
-4076   CD A2 08               CALL   prtdec   
-4079   E1                     POP   hl   
-407A   CD 4E 09               CALL   printStr   
-407D   20 28 23 00            .CSTR   " (#"   
-4081   CD EA 08               CALL   prthex   
-4084   CD 4E 09               CALL   printStr   
-4087   29 0D 0A 00            .CSTR   ")\r\n"   
-408B   76                     HALT      
-408C   00                     .CSTR      
-408D                EXPECTM_0_2377S43:      
-408D   E1                     POP   HL   
-408E                             ; test "1 2 {$1 $2 +} call", 3
-408E                             ; test ":xyz {1} let (:xyz addr) call", 1
-408E                             ; test ":xyz {$1 $2 +} let ; 1 2 (:xyz addr) call", 3
-408E                             ; test ":xyz {$1 $2 +} def ; 1 2 xyz", 3
-408E                             ; test "2 (1 2 +) *", 6
-408E                             ; test ":xyz {10} def :xyz addr exec", 10
-408E                             ; test ":xyz {10} def :xyz addr call", 10
-408E                             ; test "'hello' hash", $7f54
-408E                             ; test ":hello", $7f54
-408E                             ; test ":hello 2 def", TRUE
-408E                             ; test ":hello 2 def :hello addr", 2
-408E                             ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
-408E                             ; test "bytes [1 2 3]", $1e02
-408E                             ; test "bytes [1 2 3] 1? get", 2
-408E                             ; test "bytes :xx [1 2 3] def :xx addr", 2
-408E                             ; test "words [1 2 3]", $1e02
-408E                             ; test "bytes [`A` `B` `C`] 1 ? get", "B"
-408E                             ; test "bytes [`A` `B` `C`] 1 ? `Z` set 1 ? get", "Z"
-408E                             ; test "words [10 20 30] 1 ? get", 10
-408E                             ; test "words [10 20 30] 1 ? 50 set 1 ? get", 50
-408E                             ; test "{{{1} exec} exec} exec", 1
-408E                             ; test "5 {{{$1} exec} exec} call", 5
-408E                             ; test "5 {$1} call", 5
-408E                             ; test "5 {{$1} exec} call", 5
-408E                             ; test "2 1 {{$1} call} call", 2
-408E                             ; test "2 1 {$2} call", 1
-408E                             ; test "2 1 {$1} call", 2
-408E                             ; test "2 1 {$2} call", 1
-408E                             ; test "2 4 {$2} call", 4
-408E                             ; test "{{1} call} call", 1
-408E                             ; test "5 {-1 {$1} if} call", 5
-408E                             ; test "0 {} loop", 0
-408E                             ; test "1 {1-} loop", $1a00
-408E                             ; test "65 .c", 0
-408E                             ; test "1 2 <", TRUE
-408E                             ; test "2 2 <=", TRUE
-408E                             ; test "2 1 <", FALSE
-408E                             ; test "1 2 >", FALSE
-408E                             ; test "2 2 >=", TRUE
-408E                             ; test "2 1 >", TRUE
-408E                             ; test "10 sqrt", 3
-408E                             ; test "10 sqrt frac", 1
-408E                             ; test "7 3 /", 2
-408E                             ; test "7 3 / frac", 1
-408E                             ; test "1 2 +", 3
-408E                             ; test ":h {1} def :h addr call", 1
-408E                             ; test "1 2 +", 3
-408E                             ; test "4 1 2 +", 3
-408E                             ; test "1", 1
-408E                             ; test "2", 2
-408E                             ; test "``", 0
-408E                             ; test "`a`", $61
-408E                             ; test "`\\``", $60
-408E                             ; test "`b` 'cba' in", -1
-408E                             ; test "`x` 'cba' in", 0
-408E                             ; test "5 0 {1} if", 5
-408E                             ; test "0 {1} {2} ifte", 2
-408E                             ; test "5 -1 {1} if", 1
-408E                             ; test "-1 {1} {2} ifte", 1
-408E                             ; test "9 sw {1} {5} ca", 5
-408E                             ; test "0 sw {1} ca", 1
-408E                             ; test "1 sw {1} {2} {3} ca", 2
-408E                             ; test "5 -1 {2} if", 2
-408E                             ; test "5 0 {2} if", 5
-408E                             ; test "5 0 {0 {2} if} if", 5
-408E                             ; test "5 0 {-1 {2} if} if", 5
-408E                             ; test "5 -1 {2} if", 2
-408E                             ; test "5 -1 {-1 {2} if} if", 2
-408E                             ; test "{1} ex", 1
-408E                             ; test "'A' @", 65
-408E                             ; test "1", 1
-408E                             ; test "0", 0
-408E                             ; test "10", 10
-408E                             ; test "123", 123
-408E                             ; test "$10", $10
-408E                             ; test "$FF", $FF
-408E                             ; test "2 3 =", 0
-408E                             ; test "3 3 =", 1
-408E                             ; test "2 3 <", 1
-408E                             ; test "3 3 <", 0
-408E                             ; test "3 3 >", 0
-408E                             ; test "4 3 >", 1
-408E                             ; test "1 2 +", 3
-408E                             ; test "123 456 +", 123+456
-408E                             ; test "64 128 +", 64+128
-408E                             ; test "5 3 -", 2
-408E                             ; test "3 5 &", 1
-408E                             ; test "3 5 |", 7
-408E                             ; test "2 3 *", 6
-408E                             ; test "1 2 3 + *", 5
-408E                             ; ; test "1 2 3 ' +", 3
-408E                             ; ; test "1_ 2 +",1
-408E                             ; ; test "1_ 1 +",0
-408E                             ; ; call enter
-408E                             ; ;     .cstr "1 3",$22,"+"
-408E                             ; ; expect "1 3 DUP +", 6
-408E                             ; ; test "5 2/'", 2
-408E                             ; ; test "3 5$ -", 2
-408E                             ; ; test "5 2/$ '", 1
-408E                             ; ; test "2 3%++", 7
-408E                             ; ; test "1 2 3~''", 2
-408E                             ; ; test "1 2 3~+*", 8
-408E                             ; ; test "2a!a@",2
-408E                             ; ; test "3x! 1 x@+x! x@", 4
-408E                             ; ; test "3x! 1_ x@+x! x@", 2
-408E                             ; ; test "1{", 2
-408E                             ; ; test "1}", 0
-408E                             ; ; test "2}", 1
-408E                             ; ; test "10 11 12\\#3$ '$ '$ '", 4
-408E                             ; ; test "{2} \\^", 2
-408E                             ; ; test ":X1; X", 1
-408E                             ; ; test ":A100;A", 100
-408E                             ; ; test ":Aa!; 3A a@", 3
-408E                             ; ; test ":Aa!;:Ba@;4AB", 4
-408E                             ; ; test "[]$ '", 0
-408E                             ; ; test "[3]$ '", 1
-408E                             ; ; test "[3]'@", 3
-408E                             ; ; test "[1 2 3]'@", 1
-408E                             ; ; test "[1 2 3]'2+@", 2
-408E                             ; ; test "\\h@[1]''\\h@$-", 2
-408E                             ; ; test "\\h@[1 2 3]''\\h@$-", 6
-408E                             ; ; test "\\[]$ '", 0
-408E                             ; ; test "\\[3]'\\@", 3
-408E                             ; ; test "\\[3]$ '", 1
-408E                             ; ; test "\\[1 2 3]'\\@", 1
-408E                             ; ; test "\\[1 2 3]'1+\\@", 2
-408E                             ; ; test "\\h@\\[1 2 3]''\\h@$-", 3
-408E                             ; ; test "\\h@\\[1]''\\h@$-", 1
-408E                             ; ; test "\\`A`\\@",65
-408E                             ; ; test "0 0{1+}", 0
-408E                             ; ; test "0 1{1+}", 1
-408E                             ; ; test "0 2{1+}", 2
-408E                             ; ; test "0 1{0{1+}}", 0
-408E                             ; ; test "0 1{1{1+}}", 1
-408E                             ; ; test "0 2{1{1+}}", 2
-408E                             ; ; test "0 2{2{1+}}", 4
-408E                             ; ; test "0 1{\\i@+}", 0
-408E                             ; ; test "0 2{\\i@+}", 1
-408E                             ; ; test "0 3{\\i@+}", 3
-408E                             ; ; test "0 2{2{\\i@ \\i6+@ ++}}", 4
-408E                             ; ; test "0t! 10{1 t@+t!} t@",10
-408E                             ; ; test "0{100}{200}",200
-408E                             ; ; test "1{100}{200}",100
-408E                             ; ; test "0t! 10{\\i@ 4>\\~ \\i@ 1 t@+t!} t@",5
-408E                             ; ; test "0t! [1 2 3] $ a! { a@ \\i@ {+ @ t@+t! } t@", 6
-408E                             ; ; test ":X10;\\0X", 10
-408E                             ; ; test "2 \\1x! \\1x@", 2
-408E   CD 4E 09               CALL   printStr   
-4091   44 6F 6E 65 21 00      .CSTR   "Done!"   
-4097   76                     HALT      
+4009   3A 78 79 7A 20 31 32 33 20 63 6F 6E 73 74 20 3B 20 78 79 7A 00 .CSTR   ":xyz 123 const ; xyz"   
+401E                          ;*Macro unroll:  expect ":xyz 123 const ; xyz",123
+401E   E1                     POP   HL   
+401F   E5                     PUSH   HL   
+4020   11 7B 00               LD   DE,123   
+4023   B7                     OR   A   
+4024   ED 52                  SBC   HL,DE   
+4026   7D                     LD   A,L   
+4027   B4                     OR   H   
+4028   28 5F                  JR   Z,expectM_0_2376S43   
+402A   CD 4E 09               CALL   printStr   
+402D   43 6F 64 65 3A 20 3A 78 79 7A 20 31 32 33 20 63 6F 6E 73 74 20 3B 20 78 79 7A 00 .CSTR   "Code: ",":xyz 123 const ; xyz"   
+4048   CD 4E 09               CALL   printStr   
+404B   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+405A   21 7B 00               LD   HL,123   
+405D   CD A2 08               CALL   prtdec   
+4060   CD 4E 09               CALL   printStr   
+4063   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+4070   E1                     POP   hl   
+4071   E5                     PUSH   hl   
+4072   CD A2 08               CALL   prtdec   
+4075   E1                     POP   hl   
+4076   CD 4E 09               CALL   printStr   
+4079   20 28 23 00            .CSTR   " (#"   
+407D   CD EA 08               CALL   prthex   
+4080   CD 4E 09               CALL   printStr   
+4083   29 0D 0A 00            .CSTR   ")\r\n"   
+4087   76                     HALT      
+4088   00                     .CSTR      
+4089                EXPECTM_0_2376S43:      
+4089   E1                     POP   HL   
+408A                          ;*Macro unroll:  test ":xyz 123 let ; xyz get", 123
+408A   31 00 1A               LD   SP,DSTACK   
+408D   CD 6D 09               CALL   init   
+4090   CD 9F 0B               CALL   exec   
+4093   3A 78 79 7A 20 31 32 33 20 6C 65 74 20 3B 20 78 79 7A 20 67 65 74 00 .CSTR   ":xyz 123 let ; xyz get"   
+40AA                          ;*Macro unroll:  expect ":xyz 123 let ; xyz get",123
+40AA   E1                     POP   HL   
+40AB   E5                     PUSH   HL   
+40AC   11 7B 00               LD   DE,123   
+40AF   B7                     OR   A   
+40B0   ED 52                  SBC   HL,DE   
+40B2   7D                     LD   A,L   
+40B3   B4                     OR   H   
+40B4   28 61                  JR   Z,expectM_0_2377S43   
+40B6   CD 4E 09               CALL   printStr   
+40B9   43 6F 64 65 3A 20 3A 78 79 7A 20 31 32 33 20 6C 65 74 20 3B 20 78 79 7A 20 67 65 74 00 .CSTR   "Code: ",":xyz 123 let ; xyz get"   
+40D6   CD 4E 09               CALL   printStr   
+40D9   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+40E8   21 7B 00               LD   HL,123   
+40EB   CD A2 08               CALL   prtdec   
+40EE   CD 4E 09               CALL   printStr   
+40F1   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+40FE   E1                     POP   hl   
+40FF   E5                     PUSH   hl   
+4100   CD A2 08               CALL   prtdec   
+4103   E1                     POP   hl   
+4104   CD 4E 09               CALL   printStr   
+4107   20 28 23 00            .CSTR   " (#"   
+410B   CD EA 08               CALL   prthex   
+410E   CD 4E 09               CALL   printStr   
+4111   29 0D 0A 00            .CSTR   ")\r\n"   
+4115   76                     HALT      
+4116   00                     .CSTR      
+4117                EXPECTM_0_2377S43:      
+4117   E1                     POP   HL   
+4118                          ;*Macro unroll:  test "1 2 {$1 $2 +} call", 3
+4118   31 00 1A               LD   SP,DSTACK   
+411B   CD 6D 09               CALL   init   
+411E   CD 9F 0B               CALL   exec   
+4121   31 20 32 20 7B 24 31 20 24 32 20 2B 7D 20 63 61 6C 6C 00 .CSTR   "1 2 {$1 $2 +} call"   
+4134                          ;*Macro unroll:  expect "1 2 {$1 $2 +} call",3
+4134   E1                     POP   HL   
+4135   E5                     PUSH   HL   
+4136   11 03 00               LD   DE,3   
+4139   B7                     OR   A   
+413A   ED 52                  SBC   HL,DE   
+413C   7D                     LD   A,L   
+413D   B4                     OR   H   
+413E   28 5D                  JR   Z,expectM_0_2378S43   
+4140   CD 4E 09               CALL   printStr   
+4143   43 6F 64 65 3A 20 31 20 32 20 7B 24 31 20 24 32 20 2B 7D 20 63 61 6C 6C 00 .CSTR   "Code: ","1 2 {$1 $2 +} call"   
+415C   CD 4E 09               CALL   printStr   
+415F   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+416E   21 03 00               LD   HL,3   
+4171   CD A2 08               CALL   prtdec   
+4174   CD 4E 09               CALL   printStr   
+4177   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+4184   E1                     POP   hl   
+4185   E5                     PUSH   hl   
+4186   CD A2 08               CALL   prtdec   
+4189   E1                     POP   hl   
+418A   CD 4E 09               CALL   printStr   
+418D   20 28 23 00            .CSTR   " (#"   
+4191   CD EA 08               CALL   prthex   
+4194   CD 4E 09               CALL   printStr   
+4197   29 0D 0A 00            .CSTR   ")\r\n"   
+419B   76                     HALT      
+419C   00                     .CSTR      
+419D                EXPECTM_0_2378S43:      
+419D   E1                     POP   HL   
+419E                          ;*Macro unroll:  test ":xyz {$1 $2 +} def ; 1 2 xyz", 3
+419E   31 00 1A               LD   SP,DSTACK   
+41A1   CD 6D 09               CALL   init   
+41A4   CD 9F 0B               CALL   exec   
+41A7   3A 78 79 7A 20 7B 24 31 20 24 32 20 2B 7D 20 64 65 66 20 3B 20 31 20 32 20 78 79 7A 00 .CSTR   ":xyz {$1 $2 +} def ; 1 2 xyz"   
+41C4                          ;*Macro unroll:  expect ":xyz {$1 $2 +} def ; 1 2 xyz",3
+41C4   E1                     POP   HL   
+41C5   E5                     PUSH   HL   
+41C6   11 03 00               LD   DE,3   
+41C9   B7                     OR   A   
+41CA   ED 52                  SBC   HL,DE   
+41CC   7D                     LD   A,L   
+41CD   B4                     OR   H   
+41CE   28 67                  JR   Z,expectM_0_2379S43   
+41D0   CD 4E 09               CALL   printStr   
+41D3   43 6F 64 65 3A 20 3A 78 79 7A 20 7B 24 31 20 24 32 20 2B 7D 20 64 65 66 20 3B 20 31 20 32 20 78 79 7A 00 .CSTR   "Code: ",":xyz {$1 $2 +} def ; 1 2 xyz"   
+41F6   CD 4E 09               CALL   printStr   
+41F9   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+4208   21 03 00               LD   HL,3   
+420B   CD A2 08               CALL   prtdec   
+420E   CD 4E 09               CALL   printStr   
+4211   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+421E   E1                     POP   hl   
+421F   E5                     PUSH   hl   
+4220   CD A2 08               CALL   prtdec   
+4223   E1                     POP   hl   
+4224   CD 4E 09               CALL   printStr   
+4227   20 28 23 00            .CSTR   " (#"   
+422B   CD EA 08               CALL   prthex   
+422E   CD 4E 09               CALL   printStr   
+4231   29 0D 0A 00            .CSTR   ")\r\n"   
+4235   76                     HALT      
+4236   00                     .CSTR      
+4237                EXPECTM_0_2379S43:      
+4237   E1                     POP   HL   
+4238                          ;*Macro unroll:  test ":xyz {1} def (:xyz addr 3+) call", 1
+4238   31 00 1A               LD   SP,DSTACK   
+423B   CD 6D 09               CALL   init   
+423E   CD 9F 0B               CALL   exec   
+4241   3A 78 79 7A 20 7B 31 7D 20 64 65 66 20 28 3A 78 79 7A 20 61 64 64 72 20 33 2B 29 20 63 61 6C 6C 00 .CSTR   ":xyz {1} def (:xyz addr 3+) call"   
+4262                          ;*Macro unroll:  expect ":xyz {1} def (:xyz addr 3+) call",1
+4262   E1                     POP   HL   
+4263   E5                     PUSH   HL   
+4264   11 01 00               LD   DE,1   
+4267   B7                     OR   A   
+4268   ED 52                  SBC   HL,DE   
+426A   7D                     LD   A,L   
+426B   B4                     OR   H   
+426C   28 6B                  JR   Z,expectM_0_2380S43   
+426E   CD 4E 09               CALL   printStr   
+4271   43 6F 64 65 3A 20 3A 78 79 7A 20 7B 31 7D 20 64 65 66 20 28 3A 78 79 7A 20 61 64 64 72 20 33 2B 29 20 63 61 6C 6C 00 .CSTR   "Code: ",":xyz {1} def (:xyz addr 3+) call"   
+4298   CD 4E 09               CALL   printStr   
+429B   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+42AA   21 01 00               LD   HL,1   
+42AD   CD A2 08               CALL   prtdec   
+42B0   CD 4E 09               CALL   printStr   
+42B3   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+42C0   E1                     POP   hl   
+42C1   E5                     PUSH   hl   
+42C2   CD A2 08               CALL   prtdec   
+42C5   E1                     POP   hl   
+42C6   CD 4E 09               CALL   printStr   
+42C9   20 28 23 00            .CSTR   " (#"   
+42CD   CD EA 08               CALL   prthex   
+42D0   CD 4E 09               CALL   printStr   
+42D3   29 0D 0A 00            .CSTR   ")\r\n"   
+42D7   76                     HALT      
+42D8   00                     .CSTR      
+42D9                EXPECTM_0_2380S43:      
+42D9   E1                     POP   HL   
+42DA                          ;*Macro unroll:  test ":xyz {$1 $2 +} def ; 1 2 (:xyz addr 3+) call", 3
+42DA   31 00 1A               LD   SP,DSTACK   
+42DD   CD 6D 09               CALL   init   
+42E0   CD 9F 0B               CALL   exec   
+42E3   3A 78 79 7A 20 7B 24 31 20 24 32 20 2B 7D 20 64 65 66 20 3B 20 31 20 32 20 28 3A 78 79 7A 20 61 64 64 72 20 33 2B 29 20 63 61 6C 6C 00 .CSTR   ":xyz {$1 $2 +} def ; 1 2 (:xyz addr 3+) call"   
+4310                          ;*Macro unroll:  expect ":xyz {$1 $2 +} def ; 1 2 (:xyz addr 3+) call",3
+4310   E1                     POP   HL   
+4311   E5                     PUSH   HL   
+4312   11 03 00               LD   DE,3   
+4315   B7                     OR   A   
+4316   ED 52                  SBC   HL,DE   
+4318   7D                     LD   A,L   
+4319   B4                     OR   H   
+431A   28 77                  JR   Z,expectM_0_2381S43   
+431C   CD 4E 09               CALL   printStr   
+431F   43 6F 64 65 3A 20 3A 78 79 7A 20 7B 24 31 20 24 32 20 2B 7D 20 64 65 66 20 3B 20 31 20 32 20 28 3A 78 79 7A 20 61 64 64 72 20 33 2B 29 20 63 61 6C 6C 00 .CSTR   "Code: ",":xyz {$1 $2 +} def ; 1 2 (:xyz addr 3+) call"   
+4352   CD 4E 09               CALL   printStr   
+4355   0D 0A 0D 0A 45 78 70 65 63 74 65 64 3A 20 00 .CSTR   "\r\n\r\nExpected: "   
+4364   21 03 00               LD   HL,3   
+4367   CD A2 08               CALL   prtdec   
+436A   CD 4E 09               CALL   printStr   
+436D   0D 0A 0D 0A 41 63 74 75 61 6C 3A 20 00 .CSTR   "\r\n\r\nActual: "   
+437A   E1                     POP   hl   
+437B   E5                     PUSH   hl   
+437C   CD A2 08               CALL   prtdec   
+437F   E1                     POP   hl   
+4380   CD 4E 09               CALL   printStr   
+4383   20 28 23 00            .CSTR   " (#"   
+4387   CD EA 08               CALL   prthex   
+438A   CD 4E 09               CALL   printStr   
+438D   29 0D 0A 00            .CSTR   ")\r\n"   
+4391   76                     HALT      
+4392   00                     .CSTR      
+4393                EXPECTM_0_2381S43:      
+4393   E1                     POP   HL   
+4394                             ; test "2 (1 2 +) *", 6
+4394                             ; test ":xyz {10} def :xyz addr exec", 10
+4394                             ; test ":xyz {10} def :xyz addr call", 10
+4394                             ; test "'hello' hash", $7f54
+4394                             ; test ":hello", $7f54
+4394                             ; test ":hello 2 def", TRUE
+4394                             ; test ":hello 2 def :hello addr", 2
+4394                             ; test ":hello 2 def :there 3 def :hello addr :there addr +", 5
+4394                             ; test "bytes [1 2 3]", $1e02
+4394                             ; test "bytes [1 2 3] 1? get", 2
+4394                             ; test "bytes :xx [1 2 3] def :xx addr", 2
+4394                             ; test "words [1 2 3]", $1e02
+4394                             ; test "bytes [`A` `B` `C`] 1 ? get", "B"
+4394                             ; test "bytes [`A` `B` `C`] 1 ? `Z` set 1 ? get", "Z"
+4394                             ; test "words [10 20 30] 1 ? get", 10
+4394                             ; test "words [10 20 30] 1 ? 50 set 1 ? get", 50
+4394                             ; test "{{{1} exec} exec} exec", 1
+4394                             ; test "5 {{{$1} exec} exec} call", 5
+4394                             ; test "5 {$1} call", 5
+4394                             ; test "5 {{$1} exec} call", 5
+4394                             ; test "2 1 {{$1} call} call", 2
+4394                             ; test "2 1 {$2} call", 1
+4394                             ; test "2 1 {$1} call", 2
+4394                             ; test "2 1 {$2} call", 1
+4394                             ; test "2 4 {$2} call", 4
+4394                             ; test "{{1} call} call", 1
+4394                             ; test "5 {-1 {$1} if} call", 5
+4394                             ; test "0 {} loop", 0
+4394                             ; test "1 {1-} loop", $1a00
+4394                             ; test "65 .c", 0
+4394                             ; test "1 2 <", TRUE
+4394                             ; test "2 2 <=", TRUE
+4394                             ; test "2 1 <", FALSE
+4394                             ; test "1 2 >", FALSE
+4394                             ; test "2 2 >=", TRUE
+4394                             ; test "2 1 >", TRUE
+4394                             ; test "10 sqrt", 3
+4394                             ; test "10 sqrt frac", 1
+4394                             ; test "7 3 /", 2
+4394                             ; test "7 3 / frac", 1
+4394                             ; test "1 2 +", 3
+4394                             ; test ":h {1} def :h addr call", 1
+4394                             ; test "1 2 +", 3
+4394                             ; test "4 1 2 +", 3
+4394                             ; test "1", 1
+4394                             ; test "2", 2
+4394                             ; test "``", 0
+4394                             ; test "`a`", $61
+4394                             ; test "`\\``", $60
+4394                             ; test "`b` 'cba' in", -1
+4394                             ; test "`x` 'cba' in", 0
+4394                             ; test "5 0 {1} if", 5
+4394                             ; test "0 {1} {2} ifte", 2
+4394                             ; test "5 -1 {1} if", 1
+4394                             ; test "-1 {1} {2} ifte", 1
+4394                             ; test "9 sw {1} {5} ca", 5
+4394                             ; test "0 sw {1} ca", 1
+4394                             ; test "1 sw {1} {2} {3} ca", 2
+4394                             ; test "5 -1 {2} if", 2
+4394                             ; test "5 0 {2} if", 5
+4394                             ; test "5 0 {0 {2} if} if", 5
+4394                             ; test "5 0 {-1 {2} if} if", 5
+4394                             ; test "5 -1 {2} if", 2
+4394                             ; test "5 -1 {-1 {2} if} if", 2
+4394                             ; test "{1} ex", 1
+4394                             ; test "'A' @", 65
+4394                             ; test "1", 1
+4394                             ; test "0", 0
+4394                             ; test "10", 10
+4394                             ; test "123", 123
+4394                             ; test "$10", $10
+4394                             ; test "$FF", $FF
+4394                             ; test "2 3 =", 0
+4394                             ; test "3 3 =", 1
+4394                             ; test "2 3 <", 1
+4394                             ; test "3 3 <", 0
+4394                             ; test "3 3 >", 0
+4394                             ; test "4 3 >", 1
+4394                             ; test "1 2 +", 3
+4394                             ; test "123 456 +", 123+456
+4394                             ; test "64 128 +", 64+128
+4394                             ; test "5 3 -", 2
+4394                             ; test "3 5 &", 1
+4394                             ; test "3 5 |", 7
+4394                             ; test "2 3 *", 6
+4394                             ; test "1 2 3 + *", 5
+4394                             ; ; test "1 2 3 ' +", 3
+4394                             ; ; test "1_ 2 +",1
+4394                             ; ; test "1_ 1 +",0
+4394                             ; ; call enter
+4394                             ; ;     .cstr "1 3",$22,"+"
+4394                             ; ; expect "1 3 DUP +", 6
+4394                             ; ; test "5 2/'", 2
+4394                             ; ; test "3 5$ -", 2
+4394                             ; ; test "5 2/$ '", 1
+4394                             ; ; test "2 3%++", 7
+4394                             ; ; test "1 2 3~''", 2
+4394                             ; ; test "1 2 3~+*", 8
+4394                             ; ; test "2a!a@",2
+4394                             ; ; test "3x! 1 x@+x! x@", 4
+4394                             ; ; test "3x! 1_ x@+x! x@", 2
+4394                             ; ; test "1{", 2
+4394                             ; ; test "1}", 0
+4394                             ; ; test "2}", 1
+4394                             ; ; test "10 11 12\\#3$ '$ '$ '", 4
+4394                             ; ; test "{2} \\^", 2
+4394                             ; ; test ":X1; X", 1
+4394                             ; ; test ":A100;A", 100
+4394                             ; ; test ":Aa!; 3A a@", 3
+4394                             ; ; test ":Aa!;:Ba@;4AB", 4
+4394                             ; ; test "[]$ '", 0
+4394                             ; ; test "[3]$ '", 1
+4394                             ; ; test "[3]'@", 3
+4394                             ; ; test "[1 2 3]'@", 1
+4394                             ; ; test "[1 2 3]'2+@", 2
+4394                             ; ; test "\\h@[1]''\\h@$-", 2
+4394                             ; ; test "\\h@[1 2 3]''\\h@$-", 6
+4394                             ; ; test "\\[]$ '", 0
+4394                             ; ; test "\\[3]'\\@", 3
+4394                             ; ; test "\\[3]$ '", 1
+4394                             ; ; test "\\[1 2 3]'\\@", 1
+4394                             ; ; test "\\[1 2 3]'1+\\@", 2
+4394                             ; ; test "\\h@\\[1 2 3]''\\h@$-", 3
+4394                             ; ; test "\\h@\\[1]''\\h@$-", 1
+4394                             ; ; test "\\`A`\\@",65
+4394                             ; ; test "0 0{1+}", 0
+4394                             ; ; test "0 1{1+}", 1
+4394                             ; ; test "0 2{1+}", 2
+4394                             ; ; test "0 1{0{1+}}", 0
+4394                             ; ; test "0 1{1{1+}}", 1
+4394                             ; ; test "0 2{1{1+}}", 2
+4394                             ; ; test "0 2{2{1+}}", 4
+4394                             ; ; test "0 1{\\i@+}", 0
+4394                             ; ; test "0 2{\\i@+}", 1
+4394                             ; ; test "0 3{\\i@+}", 3
+4394                             ; ; test "0 2{2{\\i@ \\i6+@ ++}}", 4
+4394                             ; ; test "0t! 10{1 t@+t!} t@",10
+4394                             ; ; test "0{100}{200}",200
+4394                             ; ; test "1{100}{200}",100
+4394                             ; ; test "0t! 10{\\i@ 4>\\~ \\i@ 1 t@+t!} t@",5
+4394                             ; ; test "0t! [1 2 3] $ a! { a@ \\i@ {+ @ t@+t! } t@", 6
+4394                             ; ; test ":X10;\\0X", 10
+4394                             ; ; test "2 \\1x! \\1x@", 2
+4394   CD 4E 09               CALL   printStr   
+4397   44 6F 6E 65 21 00      .CSTR   "Done!"   
+439D   76                     HALT      
 
 
 TEC_1:              0001 DEFINED AT LINE 1 IN constants.asm
@@ -3019,6 +3189,16 @@ PRTDEC:             08A2 DEFINED AT LINE 1437 IN Siena.asm
                     > USED AT LINE 239 IN Siena.asm
                     > USED AT LINE 18
                     > USED AT LINE 24
+                    > USED AT LINE 18
+                    > USED AT LINE 24
+                    > USED AT LINE 18
+                    > USED AT LINE 24
+                    > USED AT LINE 18
+                    > USED AT LINE 24
+                    > USED AT LINE 18
+                    > USED AT LINE 24
+                    > USED AT LINE 18
+                    > USED AT LINE 24
 PRTDEC0:            08B1 DEFINED AT LINE 1448 IN Siena.asm
                     > USED AT LINE 1439 IN Siena.asm
 PRTDEC1:            08D3 DEFINED AT LINE 1464 IN Siena.asm
@@ -3036,6 +3216,11 @@ PRTDEC4:            08E6 DEFINED AT LINE 1480 IN Siena.asm
 PRTHEX:             08EA DEFINED AT LINE 1484 IN Siena.asm
                     > USED AT LINE 224 IN Siena.asm
                     > USED AT LINE 319 IN Siena.asm
+                    > USED AT LINE 28
+                    > USED AT LINE 28
+                    > USED AT LINE 28
+                    > USED AT LINE 28
+                    > USED AT LINE 28
                     > USED AT LINE 28
 PRTHEX2:            08F5 DEFINED AT LINE 1492 IN Siena.asm
                     > USED AT LINE 1487 IN Siena.asm
@@ -3070,6 +3255,31 @@ PRINTSTR:           094E DEFINED AT LINE 1570 IN Siena.asm
                     > USED AT LINE 1561 IN Siena.asm
                     > USED AT LINE 1566 IN Siena.asm
                     > USED AT LINE 1741 IN Siena.asm
+                    > USED AT LINE 12
+                    > USED AT LINE 15
+                    > USED AT LINE 20
+                    > USED AT LINE 26
+                    > USED AT LINE 29
+                    > USED AT LINE 12
+                    > USED AT LINE 15
+                    > USED AT LINE 20
+                    > USED AT LINE 26
+                    > USED AT LINE 29
+                    > USED AT LINE 12
+                    > USED AT LINE 15
+                    > USED AT LINE 20
+                    > USED AT LINE 26
+                    > USED AT LINE 29
+                    > USED AT LINE 12
+                    > USED AT LINE 15
+                    > USED AT LINE 20
+                    > USED AT LINE 26
+                    > USED AT LINE 29
+                    > USED AT LINE 12
+                    > USED AT LINE 15
+                    > USED AT LINE 20
+                    > USED AT LINE 26
+                    > USED AT LINE 29
                     > USED AT LINE 12
                     > USED AT LINE 15
                     > USED AT LINE 20
@@ -3111,6 +3321,11 @@ DEFINE:             0955 DEFINED AT LINE 1577 IN Siena.asm
 INIT:               096D DEFINED AT LINE 1596 IN Siena.asm
                     > USED AT LINE 9
                     > USED AT LINE 1740 IN Siena.asm
+                    > USED AT LINE 40
+                    > USED AT LINE 40
+                    > USED AT LINE 40
+                    > USED AT LINE 40
+                    > USED AT LINE 40
                     > USED AT LINE 40
 INIT1:              0987 DEFINED AT LINE 1607 IN Siena.asm
                     > USED AT LINE 1610 IN Siena.asm
@@ -3156,6 +3371,11 @@ EXEC:               0B9F DEFINED AT LINE 1913 IN Siena.asm
                     > USED AT LINE 539 IN Siena.asm
                     > USED AT LINE 1642 IN Siena.asm
                     > USED AT LINE 41
+                    > USED AT LINE 41
+                    > USED AT LINE 41
+                    > USED AT LINE 41
+                    > USED AT LINE 41
+                    > USED AT LINE 41
 EXEC2:              0BB7 DEFINED AT LINE 1927 IN Siena.asm
                     > USED AT LINE 1917 IN Siena.asm
 DOVAR:              0BB9 DEFINED AT LINE 1932 IN Siena.asm
@@ -3170,6 +3390,11 @@ DSTACK:             1A00 DEFINED AT LINE 9 IN ram.asm
                     > USED AT LINE 8
                     > USED AT LINE 1598 IN Siena.asm
                     > USED AT LINE 1739 IN Siena.asm
+                    > USED AT LINE 39
+                    > USED AT LINE 39
+                    > USED AT LINE 39
+                    > USED AT LINE 39
+                    > USED AT LINE 39
                     > USED AT LINE 39
 STACK:              1A00 DEFINED AT LINE 10 IN ram.asm
                     > USED AT LINE 445 IN IOSerial.asm
@@ -3250,5 +3475,15 @@ HEAP:               1E00 DEFINED AT LINE 68 IN ram.asm
 BASE:               0025 DEFINED AT LINE 15
 TESTSSTART:         4000 DEFINED AT LINE 18
                     > USED AT LINE 10
-EXPECTM_0_2377S43:  408D DEFINED AT LINE 34
+EXPECTM_0_2376S43:  4089 DEFINED AT LINE 34
+                    > USED AT LINE 10
+EXPECTM_0_2377S43:  4117 DEFINED AT LINE 34
+                    > USED AT LINE 10
+EXPECTM_0_2378S43:  419D DEFINED AT LINE 34
+                    > USED AT LINE 10
+EXPECTM_0_2379S43:  4237 DEFINED AT LINE 34
+                    > USED AT LINE 10
+EXPECTM_0_2380S43:  42D9 DEFINED AT LINE 34
+                    > USED AT LINE 10
+EXPECTM_0_2381S43:  4393 DEFINED AT LINE 34
                     > USED AT LINE 10
