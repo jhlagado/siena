@@ -5,7 +5,7 @@
     
     .include "IOSerial.asm"
     
-    ld SP,DSTACK
+    ld SP,STACK
     call init
     jp testsStart
     
@@ -17,12 +17,19 @@ base:   .set 37
     .org $4000
 testsStart:
 
+    test "0 [{1}] switch", 1
+    ; test "1 [{1} {2} {3}] switch", 2
+    ; test "9 [{1} {5}] switch", 5
+
+    ; test ":add1 { $1 0? get $2 +} [1] closure 3 add1", 4 
+
     ; test "bytes 'ABC' get", $41 
     ; test "bytes [1 2 3] get", 1 
     ; test ":xyz 123 const ; xyz", 123
     ; test ":x 1 const ; x", 1 
     ; test ":x 'A' const x get", $41 
     ; test ":x [1] const x get", 1 
+    ; test ":x [1 2 3] const x 2? get", 3 
 
 
     ; test "2 (1 2 +) *", 6
@@ -31,8 +38,8 @@ testsStart:
     ; test "1 2 {$1 $2 +} call", 3
     ; test ":xyz {$1 $2 +} def ; 1 2 xyz get", 3
 
-    test ":xyz {1} def :xyz addr call", 1
-    test ":xyz {$1 $2 +} def ; 1 2 :xyz addr call", 3
+    ; test ":xyz {1} def :xyz addr call", 1
+    ; test ":xyz {$1 $2 +} def ; 1 2 :xyz addr call", 3
     ; test ":xyz {10} def :xyz addr exec", 10
     ; test ":xyz {10} def :xyz addr call", 10
 

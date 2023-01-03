@@ -14,7 +14,6 @@
 
                                 
 DSIZE       EQU     $80
-RSIZE       EQU     $80
 TIBSIZE     EQU     $100	        ; 256 bytes , along line!
 TRUE        EQU     -1		        ; C-style true
 FALSE       EQU     0
@@ -39,11 +38,11 @@ macros:
 ; Initial values for system vars		
 ; ***********************************************************************		
 isysVars:			            
-    DW 0                        ; a fractional part of calculation			
-    DW 1                        ; b width in bytes of array operations (default 1 byte) 
+    DW 0                        ; a vFrac fractional part of calculation			
+    DW 2                        ; b vDataWidth in bytes of array operations (default 1 byte) 
     DW 0                        ; c vTIBPtr an offset to the tib
     DW 0                        ; d 
-    DW 0                        ; e 
+    DW 0                        ; e vLastDef
     DW 0                        ; f 
     DW 0                        ; g 
     DW HEAP                     ; h vHeapPtr \h start of the free mem
@@ -706,9 +705,14 @@ set1:
 ;  jp (ix)    
 
     
+; ifte
+; condition then -- value
 if:
     ld de,0                      ; NUL pointer for else
     jr ifte1
+
+; ifte
+; condition then else -- value
 ifte: 
     pop de                      ; de = else
 ifte1:
@@ -734,6 +738,19 @@ ifte2:
     ld bc,hl                    ; IP = then
     dec bc
 ifte3:
+    jp (ix)    
+
+; switch
+; index array -- value
+switch: 
+    pop de                      ; de = array
+    pop hl                      ; hl = index  
+    add hl,hl                   ; indec *= 2 
+    add hl,de                   ; add array[0]
+    ld c,(hl)                   ; bc = case    
+    inc hl    
+    ld b,(hl)    
+    dec bc
     jp (ix)    
 
 ; c b --
@@ -784,10 +801,10 @@ loop3:
     ld sp,hl                    ; sp = old BP
     ld iy,0                     ; iy = sp
     add iy,sp
-    ld ix,next
+    ld ix,next                  ; needed?
     jp (ix)
 
-switch:
+case:
     pop hl                      ; get selector from stack
     push bc                     ; create stack frame, push IP (replace later)
     ld e,(iy+2)                 ; get SCP from parent stack frame
@@ -799,7 +816,7 @@ switch:
     push hl                     ; push selector as first arg of new frame
     jp (ix)
     
-case:
+select:
     ld h,(iy-1)                 ; hl = selector
     ld l,(iy-2)
     inc hl                      ; hl -= 1 index from second arg    
@@ -1606,7 +1623,7 @@ define:
 
 init:       
     ld ix,next
-    ld iy,DSTACK
+    ld iy,STACK
     ld hl,isysVars
     ld de,sysVars
     ld bc,8 * 2
@@ -1717,6 +1734,10 @@ init1:
     dw scan
 
     call define
+    .pstr "select",0                       
+    dw select
+
+    call define
     .pstr "set",0                       
     dw set
 
@@ -1747,7 +1768,7 @@ init1:
     ret
 
 start:
-    ld sp,DSTACK		        ; start of Siena
+    ld sp,STACK		        ; start of Siena
     call init		            ; setups
     call printStr		        ; prog count to stack, put code line 235 on stack then call print
     .cstr "Siena V0.0\r\n"
@@ -1855,10 +1876,10 @@ next1:
     jr z,exit
     ; cp ETX                      ; end of command line input text?
     ; jr nz,next                   
-;     ld hl,-DSTACK               ; etx, is SP valid? (too many pops?)
+;     ld hl,-STACK               ; etx, is SP valid? (too many pops?)
 ;     add hl,sp
 ;     jr nc,next2
-;     ld sp,DSTACK                ; yes, reset stack
+;     ld sp,STACK                ; yes, reset stack
 ; next2:
     jp interpret                ; no, other whitespace, macros?
 ; next3:
@@ -1880,6 +1901,8 @@ clear:
     ld e,iyl
     ex de,hl                    ; hl = BP, de = result
     ld sp,hl                    ; sp = BP
+    ld hl,0
+    ld (vDataWidth),hl
     jp (ix)
 
 exit:
