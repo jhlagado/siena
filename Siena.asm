@@ -621,7 +621,7 @@ arg:
     inc bc                      ; get next char
     ld a,(bc)
     sub "1"                     ; treat as a digit, 1 based index
-    and $07                     ; mask 
+    and $0F                     ; mask 
     add a,a                     ; double
     ld l,a                      ; hl = offset into args
     ld h,0
@@ -643,19 +643,18 @@ arg:
 prop:
     inc bc                      ; get next char
     ld a,(bc)
-    sub "0"                     ; treat as a digit, 1 based index
-    and $07                     ; mask 
+    sub "1"                     ; treat as a digit, 1 based index
+    and $0F                     ; mask 
     add a,a                     ; double
-    sub 2
     ld l,a                      ; hl = offset into args
     ld h,0
     ld e,(iy+6)                 ; de = closure array
     ld d,(iy+7)
     add hl,de                   ; find address of prop in array
     ld (vSetter),hl             ; store address in setter    
-    ld d,(hl)                   
-    dec hl
-    ld e,(hl)
+    ld e,(hl)                   
+    inc hl
+    ld d,(hl)
     push de                     ; push prop value
     jp (ix)
 

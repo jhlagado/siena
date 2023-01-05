@@ -19,9 +19,9 @@ testsStart:
 
     test ":x 1000 let x 10 set x", 10
 
-    ; test ":x [100] { @1 } closure x", 100
-    ; test ":x [100 200] { @2 } closure x", 200
-    ; test ":x [100 200] { @2 $1 + } closure 1 x", 201
+    test ":x [100] { @1 } closure x", 100
+    test ":x [100 200] { @2 } closure x", 200
+    test ":x [100 200] { @2 $1 + } closure 1 x", 201
 
     ; test "0 [{1}] switch", 1
     ; test "1 [{1} {2} {3}] switch", 2
