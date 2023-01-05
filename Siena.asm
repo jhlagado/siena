@@ -254,8 +254,7 @@ index_:
     add hl,hl                           ; if data width = 2 then double 
 index1:
     add hl,de                           ; add addr
-    push hl
-    jp (ix)       
+    jp get1       
 
 block_:
     jp block
@@ -616,6 +615,8 @@ blockend:
     push de                     ; push result    
     jp (ix)    
 
+; $1..9
+; returns value of arg
 arg:
     inc bc                      ; get next char
     ld a,(bc)
@@ -630,46 +631,54 @@ arg:
     or a
     sbc hl,de
     dec hl                      ; de = arg 
+    ld (vSetter),hl             ; store address in setter    
     ld d,(hl)                   
     dec hl
     ld e,(hl)
     push de                     ; push arg
     jp (ix)
 
+; @1..9
+; returns address of prop
 prop:
     inc bc                      ; get next char
     ld a,(bc)
     sub "0"                     ; treat as a digit, 1 based index
     and $07                     ; mask 
     add a,a                     ; double
+    sub 2
     ld l,a                      ; hl = offset into args
     ld h,0
     ld e,(iy+6)                 ; de = closure array
     ld d,(iy+7)
     add hl,de                   ; find address of prop in array
-    ld e,(hl)                   
-    inc hl
-    ld d,(hl)
-    push de                     ; push prop
+    ld (vSetter),hl             ; store address in setter    
+    ld d,(hl)                   
+    dec hl
+    ld e,(hl)
+    push de                     ; push prop value
     jp (ix)
 
 ; addr -- value
 get:                         
     pop hl    
+get1:
+    ld (vSetter),hl             ; store address in setter    
     ld d,0
     ld e,(hl)    
     ld a,(vDataWidth)
     dec a
-    jr z,get1
+    jr z,get2
     inc hl    
     ld d,(hl)    
-get1:
+get2:
     push de    
     jp (ix)       
 
-; addr value -- value0
+; value -- value0
 set:                         
-    pop hl     
+    pop hl                      ; discard last value
+    ld hl,(vSetter)     
     pop de     
     ld a,(hl)
     ld (hl),e
@@ -684,54 +693,7 @@ set:
 set1:	  
     push de                     ; return old value
     jp (ix)  
-                                ; 
-; in:
-;  pop hl                      ; hl = string    
-;  pop de                      ; de = char
-; in1:
-;  ld a,(hl)
-;  inc hl
-;  cp 0                        ; is end of string
-;  jr z,in2
-;  cp e
-;  jr nz,in1
-;  or a                        ; a is never 0, or a resets zero flag 
-; in2:
-;  ld hl,0                     ; hl = result
-;  jr z,in3
-;  dec hl                      ; if nz de = $ffff
-; in3:
-;  push hl                     ; push result    
-;  jp (ix)    
-    
-; newAdd2:
-;  push bc                     ; push IP
-;  ld e,(iy+2)                 ; get SCP from parent stack frame
-;  ld d,(iy+3)                 ; make this the old BP for this stack frame
-;  push de                     ; push SCP
-;  push iy                     ; push base pointer
-;  ld iy,(3+2)*2               ; base pointer = stack pointer - (stack frame vars) - 2 args
-;  add iy,sp                   ;
-    
-;  ld d,(iy-1)
-;  ld e,(iy-2)
-;  ld h,(iy-3)
-;  ld l,(iy-4)
 
-;  add hl,de                   ; hl = hl + de   
-;  ex de,hl                    ; de = result
-
-;  pop hl                      ; hl = old BP
-;  pop bc                      ; pop SCP (discard)
-;  pop bc                      ; bc = IP
-;  ld sp,hl                    ; sp = old BP
-;  ld iy,0
-;  add iy,sp
-    
-;  push de                     ; push result    
-;  jp (ix)    
-
-    
 ; ifte
 ; condition then -- value
 if:
@@ -1092,11 +1054,11 @@ let:
     ex (sp),hl                          
     ex de,hl                            
     ld hl,(vHeapPtr)                    ; hl = heap
-    ld (hl),$cd                         ; compile "call dovar"
+    ld (hl),$cd                         ; compile "call dolet"
     inc hl
-    ld (hl),lsb(dovar)
+    ld (hl),lsb(dolet)
     inc hl
-    ld (hl),msb(dovar)
+    ld (hl),msb(dolet)
     inc hl
     ld (hl),e
     inc hl
@@ -1114,37 +1076,6 @@ let:
     ; call error
     ; .cstr "Let Collision"
 let2:
-    pop bc
-    jp (ix)
-
-; symbol value -- 
-const:
-    ld hl,bc                            ; de = addr (sp) = IP (sp+2) = symbol
-    ex (sp),hl                          
-    ex de,hl                            
-    ld hl,(vHeapPtr)                    ; hl = heap
-    ld (hl),$cd                         ; compile "call doconst"
-    inc hl
-    ld (hl),lsb(doconst)
-    inc hl
-    ld (hl),msb(doconst)
-    inc hl
-    ld (hl),e
-    inc hl
-    ld (hl),d
-    inc hl
-    
-    ld de,(vHeapPtr)            ; de = start of definiition
-    ld (vHeapPtr),hl            ; update heap ptr to end of definition
-
-    pop hl                      ; de = addr, hl = IP
-    ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
-    ld bc,hl                    ; bc = symbol
-    call defineEntry
-    jr c,const2
-    ; call error
-    ; .cstr "Const Collision"
-const2:
     pop bc
     jp (ix)
 
@@ -1702,10 +1633,6 @@ init1:
     dw case
 
     call define
-    .pstr "const",0                       
-    dw const
-
-    call define
     .pstr "closure",0                       
     dw closure
 
@@ -2023,18 +1950,13 @@ doclosure:
     
 ; -- addr
 ; returns address of variable
-dovar:				            ; execute code at pointer
-    jp (ix)
-
-; -- value
-; returns address of variable
-doconst:				        ; execute code at pointer
+dolet:				            ; execute code at pointer
     pop hl
+    ld (vSetter),hl             ; store address in setter    
     ld e,(hl)
     inc hl
     ld d,(hl)
     push de
     jp (ix)
 
-    
     
