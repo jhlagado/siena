@@ -660,6 +660,7 @@ prop:
     jp (ix)
 
 ; addr -- value
+dolet:
 get:                         
     pop hl    
 get1:
@@ -675,19 +676,19 @@ get2:
     push de    
     jp (ix)       
 
-; value -- value0
+; newvalue -- oldvalue
 set:                         
-    pop hl                      ; discard last value
+    pop de                      ; new value
+    pop hl                      ; discard last accessed value
     ld hl,(vSetter)     
-    pop de     
-    ld a,(hl)
+    ld a,(hl)                   ; save lsb of old value
     ld (hl),e
-    ld e,a
+    ld e,a                      
     ld a,(vDataWidth)
     dec a
     jr z,set1
     inc hl    
-    ld a,(hl)
+    ld a,(hl)                   ; save msb of old value
     ld (hl),d
     ld d,a
 set1:	  
@@ -1948,15 +1949,15 @@ doclosure:
     push de
     jp call1
     
-; -- addr
-; returns address of variable
-dolet:				            ; execute code at pointer
-    pop hl
-    ld (vSetter),hl             ; store address in setter    
-    ld e,(hl)
-    inc hl
-    ld d,(hl)
-    push de
-    jp (ix)
+; ; -- addr
+; ; returns address of variable
+; dolet:				            ; execute code at pointer
+;     pop hl
+;     ld (vSetter),hl             ; store address in setter    
+;     ld e,(hl)
+;     inc hl
+;     ld d,(hl)
+;     push de
+;     jp (ix)
 
     
