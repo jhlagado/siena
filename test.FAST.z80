@@ -17,7 +17,9 @@ base:   .set 37
     .org $4000
 testsStart:
 
-    test "0 [{1}] switch", 1
+    ; test "[1 2 3] {} closure", 1
+
+    ; test "0 [{1}] switch", 1
     ; test "1 [{1} {2} {3}] switch", 2
     ; test "9 [{1} {5}] switch", 5
 

@@ -88,9 +88,9 @@ ctrlCodes:
     DB lsb(EMPTY)               ; ^^ 30 RS
     DB lsb(EMPTY)               ; ^_ 31 US
 
-opcodes:                        ; still available ! " % , @ \ { } 
+opcodes:                        ; still available ! " % , @   
     DB lsb(nop_)                ; SP  
-    DB lsb(nop_)                ; !  
+    DB lsb(not_)                ; !  
     DB lsb(nop_)                ; "
     DB lsb(hexnum_)             ; #
     DB lsb(arg_)                ; $  
@@ -149,7 +149,7 @@ opcodes:                        ; still available ! " % , @ \ { }
     DB lsb(ident_)              ; Y     
     DB lsb(ident_)              ; Z    
     DB lsb(array_)              ; [
-    DB lsb(nop_)                ; \
+    DB lsb(comment_)            ; \
     DB lsb(arrayEnd_)           ; ]
     DB lsb(xor_)                ; ^
     DB lsb(ident_)              ; _
@@ -182,7 +182,7 @@ opcodes:                        ; still available ! " % , @ \ { }
     DB lsb(ident_)              ; z  
     DB lsb(block_)              ; {
     DB lsb(or_)                 ; |  
-    DB lsb(blockEnd_)              ; }  
+    DB lsb(blockEnd_)           ; }  
     DB lsb(inv_)                ; ~    
     DB lsb(nop_)                ; DEL	
 
@@ -305,7 +305,7 @@ xor1:
 inv_:				            ; Bitwise INVert the top member of the stack
     ld de, $FFFF                ; by xoring with $FFFF
     jr xor1    
-    
+
 add_:                           ; add the top 2 members of the stack
     pop de        
     pop hl        
@@ -330,14 +330,21 @@ sub2:
     push hl        
     jp (ix)        
         
+not_:				            ; logical invert, any non zero value 
+    ld hl,0                     ; is considered true
+    jr eq1    
+
 eq_:    
     pop hl
+eq1:
     pop de
     jp equals
+
 gt_:
     pop de
     pop hl
     jr lt1
+
 lt_:
     pop hl
     pop de
@@ -978,14 +985,14 @@ def:
     ld hl,bc                            ; de = addr (sp) = IP (sp+2) = symbol
     ex (sp),hl                          
     ex de,hl                            
-    ld b,1                              ; b = nesting
-    ld hl,(vHeapPtr)                    ; hl = heap
+    ld hl,(vHeapPtr)                    ; hl = heap de = addr
     ld (hl),$cd                         ; compile "call exec"
     inc hl
     ld (hl),lsb(call)
     inc hl
     ld (hl),msb(call)
     inc hl
+    ld b,1                              ; b = nesting
 def1:
     ld a,(de)                           
     inc de
@@ -1024,8 +1031,8 @@ def4:
     xor a                       ; end with NUL ??? needed?
     ld (hl),a
 
-    ld de,(vHeapPtr)            ; de = start of defintion
-    ld (vHeapPtr),hl            ; update heap ptr to end of defintion
+    ld de,(vHeapPtr)            ; de = start of definition
+    ld (vHeapPtr),hl            ; update heap ptr to end of definition
 
     pop hl                      ; de = addr, hl = IP
     ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
@@ -1038,12 +1045,35 @@ def5:
     pop bc
     jp (ix)
 
+; symbol array block -- 
+closure:
+    pop de                              ; de = block
+    ld hl,bc                            ; hl = IP, de = block
+    ex (sp),hl                          ; hl = array, de = block, (sp) = IP, (sp+2) = symbol                         
+    ex de,hl                            ; de = array
+    push hl                             ; (sp) = block, (sp+2) = IP, (sp+2) = symbol
+    
+    ld hl,(vHeapPtr)                    ; hl = heap ptr
+    ld (hl),$cd                         ; compile "call doclosure"
+    inc hl
+    ld (hl),lsb(doclosure)
+    inc hl
+    ld (hl),msb(doclosure)
+    inc hl
+    ld (hl),e                           ; compile array
+    inc hl
+    ld (hl),d
+    inc hl
+
+    pop de                              ; de =  block, (sp) = IP, (sp+2) = symbol
+    ld b,1                              ; b = nesting
+    jr def1
+
 ; symbol value -- 
 let:
     ld hl,bc                            ; de = addr (sp) = IP (sp+2) = symbol
     ex (sp),hl                          
     ex de,hl                            
-    ld b,1                              ; b = nesting
     ld hl,(vHeapPtr)                    ; hl = heap
     ld (hl),$cd                         ; compile "call dovar"
     inc hl
@@ -1051,14 +1081,13 @@ let:
     inc hl
     ld (hl),msb(dovar)
     inc hl
-let1:
     ld (hl),e
     inc hl
     ld (hl),d
     dec hl
 
-    ld de,(vHeapPtr)            ; de = start of defintion
-    ld (vHeapPtr),hl            ; update heap ptr to end of defintion
+    ld de,(vHeapPtr)            ; de = start of definition
+    ld (vHeapPtr),hl            ; update heap ptr to end of definition
 
     pop hl                      ; de = addr, hl = IP
     ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
@@ -1076,7 +1105,6 @@ const:
     ld hl,bc                            ; de = addr (sp) = IP (sp+2) = symbol
     ex (sp),hl                          
     ex de,hl                            
-    ld b,1                              ; b = nesting
     ld hl,(vHeapPtr)                    ; hl = heap
     ld (hl),$cd                         ; compile "call doconst"
     inc hl
@@ -1084,14 +1112,13 @@ const:
     inc hl
     ld (hl),msb(doconst)
     inc hl
-const1:
     ld (hl),e
     inc hl
     ld (hl),d
     inc hl
     
-    ld de,(vHeapPtr)            ; de = start of defintion
-    ld (vHeapPtr),hl            ; update heap ptr to end of defintion
+    ld de,(vHeapPtr)            ; de = start of definiition
+    ld (vHeapPtr),hl            ; update heap ptr to end of definition
 
     pop hl                      ; de = addr, hl = IP
     ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
@@ -1925,23 +1952,6 @@ exit:
     ex de,hl
     jp (hl)
 
-; call with args
-; creates a scope
-call:				            ; execute code at pointer
-    pop hl                      ; hl = pointer to code
-    ld a,h                      ; skip if destination address is NUL
-    or l
-    jr z,call2
-    push bc                     ; push IP 
-    push iy                     ; push SCP (scope pointer)
-    push iy                     ; push BP
-    ld iy,0                     ; BP = SP
-    add iy,sp
-    ld bc,hl                    ; IP = pointer to code
-    dec bc                      ; dec to prepare for next routine
-call2:
-    jp (ix)       
-
 ; execute a block of code
 ; uses parent scope
 exec:				            ; execute code at pointer
@@ -1961,6 +1971,35 @@ exec:				            ; execute code at pointer
 exec2:
     jp (ix)       
 
+; call with args
+; creates a scope
+call:				            ; execute code at pointer
+    pop hl                      ; hl = pointer to code
+call1:
+    ld a,h                      ; skip if destination address is NUL
+    or l
+    jr z,call2
+    push bc                     ; push IP 
+    push iy                     ; push SCP (scope pointer)
+    push iy                     ; push BP
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    ld bc,hl                    ; IP = pointer to code
+    dec bc                      ; dec to prepare for next routine
+call2:
+    jp (ix)       
+
+; call with args
+; pushes array, creates a scope
+doclosure:
+    pop hl
+    ld e,(hl)                   ; load array and push
+    inc hl
+    ld d,(hl)
+    inc hl
+    push de
+    jp call1
+    
 ; -- addr
 ; returns address of variable
 dovar:				            ; execute code at pointer
@@ -1976,3 +2015,5 @@ doconst:				        ; execute code at pointer
     push de
     jp (ix)
 
+    
+    
