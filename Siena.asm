@@ -121,7 +121,7 @@ opcodes:                        ; still available ! " % , @
     DB lsb(eq_)                 ; =  
     DB lsb(gt_)                 ; >  
     DB lsb(index_)              ; ?    
-    DB lsb(nop_)                ; @  
+    DB lsb(prop_)               ; @  
     DB lsb(ident_)              ; A     
     DB lsb(ident_)              ; B     
     DB lsb(ident_)              ; C     
@@ -201,6 +201,9 @@ hexnum_:
 
 arg_:
     jp arg
+
+prop_:
+    jp prop
 
 string_:
     jp string
@@ -633,6 +636,23 @@ arg:
     push de                     ; push arg
     jp (ix)
 
+prop:
+    inc bc                      ; get next char
+    ld a,(bc)
+    sub "0"                     ; treat as a digit, 1 based index
+    and $07                     ; mask 
+    add a,a                     ; double
+    ld l,a                      ; hl = offset into args
+    ld h,0
+    ld e,(iy+6)                 ; de = closure array
+    ld d,(iy+7)
+    add hl,de                   ; find address of prop in array
+    ld e,(hl)                   
+    inc hl
+    ld d,(hl)
+    push de                     ; push prop
+    jp (ix)
+
 ; addr -- value
 get:                         
     pop hl    
@@ -1047,13 +1067,11 @@ def5:
 
 ; symbol array block -- 
 closure:
-    pop de                              ; de = block
-    ld hl,bc                            ; hl = IP, de = block
-    ex (sp),hl                          ; hl = array, de = block, (sp) = IP, (sp+2) = symbol                         
-    ex de,hl                            ; de = array
-    push hl                             ; (sp) = block, (sp+2) = IP, (sp+2) = symbol
-    
-    ld hl,(vHeapPtr)                    ; hl = heap ptr
+    pop hl                              ; hl = block
+    pop de                              ; de = array
+    push bc                             ; (sp) = block, (sp+2) = IP, (sp+2) = symbol                         
+    push hl
+    ld hl,(vHeapPtr)                    ; hl = heap ptr de = array
     ld (hl),$cd                         ; compile "call doclosure"
     inc hl
     ld (hl),lsb(doclosure)
@@ -1064,7 +1082,6 @@ closure:
     inc hl
     ld (hl),d
     inc hl
-
     pop de                              ; de =  block, (sp) = IP, (sp+2) = symbol
     ld b,1                              ; b = nesting
     jr def1
@@ -1687,6 +1704,10 @@ init1:
     call define
     .pstr "const",0                       
     dw const
+
+    call define
+    .pstr "closure",0                       
+    dw closure
 
     call define
     .pstr "def",0                       

@@ -17,7 +17,9 @@ base:   .set 37
     .org $4000
 testsStart:
 
-    ; test "[1 2 3] {} closure", 1
+    test ":x [100] { @0 } closure x", 100
+    test ":x [100 200] { @1 } closure x", 200
+    test ":x [100 200] { @1 $1 + } closure 1 x", 201
 
     ; test "0 [{1}] switch", 1
     ; test "1 [{1} {2} {3}] switch", 2
