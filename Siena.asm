@@ -116,7 +116,7 @@ opcodes:                        ; still available ! " % , @
     DB lsb(num_)                ; 8    
     DB lsb(num_)                ; 9    
     DB lsb(symbol_)             ; :    
-    DB lsb(clear_)              ; ;
+    DB lsb(nop_)                ; ;
     DB lsb(lt_)                 ; <
     DB lsb(eq_)                 ; =  
     DB lsb(gt_)                 ; >  
@@ -207,9 +207,6 @@ prop_:
 
 string_:
     jp string
-
-clear_:    
-    jp clear
 
 paren_:    
     jp paren
@@ -482,7 +479,7 @@ num3:
     jp (ix)       ; and process the next character
 
 hexnum:        ;
-	    ld hl,0	    		    ; Clear hl to accept the number
+	ld hl,0	    		    ; Clear hl to accept the number
 hexnum1:
     inc bc
     ld a,(bc)		  ; Get the character which is a numeral
@@ -540,80 +537,84 @@ char3:
     jp (ix)  
 
 paren:
-    ld ix,paren2
-    jr block
-paren2:
-    ld ix,next
-    jp exec    
+    jp (ix)
+;     ld ix,paren2
+;     jr block
+; paren2:
+;     ld ix,next
+;     jp exec    
 
 parenEnd:
-    pop hl                      ; hl = last result 
-    pop de
-    pop bc
-    pop bc
-    push hl
-    ld iyh,d
-    ld iyl,e
-    ld ix,next
     jp (ix)
+;     pop hl                      ; hl = last result 
+;     pop de
+;     pop bc
+;     pop bc
+;     push hl
+;     ld iyh,d
+;     ld iyl,e
+;     ld ix,next
+;     jp (ix)
 
 block:
-    inc bc
-    push bc                     ; return first opcode of block    
-    ld d,1                      ; nesting: count first parenthesis
-block1:                         ; Skip to end of definition    
-    ld a,(bc)                   ; Get the next character
-    inc bc                      ; Point to next character
-    cp " " + 1                  ; ignore whitespace 
-    jr c,block1
+    jp (ix)
+;     inc bc
+;     push bc                     ; return first opcode of block    
+;     ld d,1                      ; nesting: count first parenthesis
+; block1:                         ; Skip to end of definition    
+;     ld a,(bc)                   ; Get the next character
+;     inc bc                      ; Point to next character
+;     cp " " + 1                  ; ignore whitespace 
+;     jr c,block1
 
-    cp ")"
-    jr z,block4
-    cp "}"                       
-    jr z,block4
-    cp "]"
-    jr z,block4
+;     cp ")"
+;     jr z,block4
+;     cp "}"                       
+;     jr z,block4
+;     cp "]"
+;     jr z,block4
 
-    cp "("
-    jr z,block3
-    cp "{"
-    jr z,block3
-    cp "["
-    jr z,block3
+;     cp "("
+;     jr z,block3
+;     cp "{"
+;     jr z,block3
+;     cp "["
+;     jr z,block3
 
-    cp "'"
-    jr z,block3
-    cp "`"
-    jr nz,block1
-block2:
-    inc d
-    jr block1                   
-block3:
-    ld a,$80
-    xor d
-    ld b,a
-    jr block1                   
-block4:
-    dec d
-    jr nz, block1                 ; get the next element
+;     cp "'"
+;     jr z,block3
+;     cp "`"
+;     jr nz,block1
+; block2:
+;     inc d
+;     jr block1                   
+; block3:
+;     ld a,$80
+;     xor d
+;     ld b,a
+;     jr block1                   
+; block4:
+;     dec d
+;     jr nz, block1                 ; get the next element
 
-    dec bc                      ; balanced, exit
-    jp (ix)  
+;     dec bc                      ; balanced, exit
+;     jp (ix)  
 
 blockend:
-    pop hl                      ; hl = last result 
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
-    ld sp,hl                    ; sp = BP
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    ld iy,0                     ; iy = sp
-    add iy,sp
-    push de                     ; push result    
-    jp (ix)    
+    jp (ix)
+;     pop hl                      ; hl = last result 
+;     ld d,iyh                    ; de = BP
+;     ld e,iyl
+;     ex de,hl                    ; hl = BP, de = result
+;     ld sp,hl                    ; sp = BP
+;     pop hl                      ; hl = old BP
+;     pop bc                      ; pop SCP (discard)
+;     pop bc                      ; bc = IP
+;     ld sp,hl                    ; sp = old BP
+;     ld iy,0                     ; iy = sp
+;     add iy,sp
+;     push de                     ; push result    
+;     jp (ix)    
 
 ; $1..9
 ; returns value of arg
@@ -641,21 +642,21 @@ arg:
 ; @1..9
 ; returns address of prop
 prop:
-    inc bc                      ; get next char
-    ld a,(bc)
-    sub "1"                     ; treat as a digit, 1 based index
-    and $0F                     ; mask 
-    add a,a                     ; double
-    ld l,a                      ; hl = offset into args
-    ld h,0
-    ld e,(iy+6)                 ; de = closure array
-    ld d,(iy+7)
-    add hl,de                   ; find address of prop in array
-    ld (vSetter),hl             ; store address in setter    
-    ld e,(hl)                   
-    inc hl
-    ld d,(hl)
-    push de                     ; push prop value
+;     inc bc                      ; get next char
+;     ld a,(bc)
+;     sub "1"                     ; treat as a digit, 1 based index
+;     and $0F                     ; mask 
+;     add a,a                     ; double
+;     ld l,a                      ; hl = offset into args
+;     ld h,0
+;     ld e,(iy+6)                 ; de = closure array
+;     ld d,(iy+7)
+;     add hl,de                   ; find address of prop in array
+;     ld (vSetter),hl             ; store address in setter    
+;     ld e,(hl)                   
+;     inc hl
+;     ld d,(hl)
+;     push de                     ; push prop value
     jp (ix)
 
 ; addr -- value
@@ -697,37 +698,39 @@ set1:
 ; ifte
 ; condition then -- value
 if:
-    ld de,0                      ; NUL pointer for else
-    jr ifte1
+    jp (ix)
+    ; ld de,0                      ; NUL pointer for else
+    ; jr ifte1
 
 ; ifte
 ; condition then else -- value
 ifte: 
-    pop de                      ; de = else
-ifte1:
-    pop hl                      ; hl = then
-    ex (sp),hl                  ; hl = condition, (sp) = then
-    inc hl                      ; check for true
-    ld a,h
-    or l
-    pop hl                      ; hl = then
-    jr z,ifte2                   
-    ex de,hl                    ; condition = false, hl = else  
-ifte2:                           
-    ld a,h                      ; check if hl is NUL
-    or l
-    jr z,ifte3
-    push bc                     ; push IP
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
-    push iy                     ; push BP  
-    ld iy,0                     ; iy = sp
-    add iy,sp
-    ld bc,hl                    ; IP = then
-    dec bc
-ifte3:
-    jp (ix)    
+    jp (ix)
+;     pop de                      ; de = else
+; ifte1:
+;     pop hl                      ; hl = then
+;     ex (sp),hl                  ; hl = condition, (sp) = then
+;     inc hl                      ; check for true
+;     ld a,h
+;     or l
+;     pop hl                      ; hl = then
+;     jr z,ifte2                   
+;     ex de,hl                    ; condition = false, hl = else  
+; ifte2:                           
+;     ld a,h                      ; check if hl is NUL
+;     or l
+;     jr z,ifte3
+;     push bc                     ; push IP
+;     ld e,(iy+2)                 ; get SCP from parent stack frame
+;     ld d,(iy+3)                 ; make this the old BP for this stack frame
+;     push de                     ; push SCP
+;     push iy                     ; push BP  
+;     ld iy,0                     ; iy = sp
+;     add iy,sp
+;     ld bc,hl                    ; IP = then
+;     dec bc
+; ifte3:
+;     jp (ix)    
 
 ; switch
 ; index array -- value
@@ -745,101 +748,55 @@ switch:
 ; c b --
 ; loops until c = 0
 loop:                           
-    pop de                      ; de = block                    c
-    pop hl                      ; hl = condition    
-    push de
-    push bc                     ; push IP
-    ld bc,de                    ; bc = block
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
-    push iy                     ; push BP  
-    ld iy,0                     ; iy = sp
-    add iy,sp
-loop1:    
-    ld a,l                      ; bc = block, hl = condition = zero?
-    or h                        
-    jr z,loop3
-    ld de,loop2-1               ; IP return address
-    push de
-    ld e,(iy+2)                 ; push parent SCP
-    ld d,(iy+3)                  
-    push de                     ; 
-    push iy                     ; push BP  
-    ld iy,0                     ; iy = sp
-    add iy,sp
-    push hl                     ; push condition
-    dec bc
     jp (ix)                     
+;     pop de                      ; de = block                    c
+;     pop hl                      ; hl = condition    
+;     push de
+;     push bc                     ; push IP
+;     ld bc,de                    ; bc = block
+;     ld e,(iy+2)                 ; get SCP from parent stack frame
+;     ld d,(iy+3)                 ; make this the old BP for this stack frame
+;     push de                     ; push SCP
+;     push iy                     ; push BP  
+;     ld iy,0                     ; iy = sp
+;     add iy,sp
+; loop1:    
+;     ld a,l                      ; bc = block, hl = condition = zero?
+;     or h                        
+;     jr z,loop3
+;     ld de,loop2-1               ; IP return address
+;     push de
+;     ld e,(iy+2)                 ; push parent SCP
+;     ld d,(iy+3)                  
+;     push de                     ; 
+;     push iy                     ; push BP  
+;     ld iy,0                     ; iy = sp
+;     add iy,sp
+;     push hl                     ; push condition
+;     dec bc
+;     jp (ix)                     
 
-loop2:
-    db ESC                      ; escape from interpreter
-    ld c,(iy+6)                 ; bc = block
-    ld b,(iy+7)                  
-    pop hl                      ; hl = condition
-    jr loop1
+; loop2:
+;     db ESC                      ; escape from interpreter
+;     ld c,(iy+6)                 ; bc = block
+;     ld b,(iy+7)                  
+;     pop hl                      ; hl = condition
+;     jr loop1
     
-loop3:
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
-    ld sp,hl                    ; sp = BP
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    ld iy,0                     ; iy = sp
-    add iy,sp
-    ld ix,next                  ; needed?
-    jp (ix)
+; loop3:
+;     ld d,iyh                    ; de = BP
+;     ld e,iyl
+;     ex de,hl                    ; hl = BP, de = result
+;     ld sp,hl                    ; sp = BP
+;     pop hl                      ; hl = old BP
+;     pop bc                      ; pop SCP (discard)
+;     pop bc                      ; bc = IP
+;     ld sp,hl                    ; sp = old BP
+;     ld iy,0                     ; iy = sp
+;     add iy,sp
+;     ld ix,next                  ; needed?
+;     jp (ix)
 
-case:
-    pop hl                      ; get selector from stack
-    push bc                     ; create stack frame, push IP (replace later)
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
-    push iy                     ; push BP  
-    ld iy,0                     ; BP = SP
-    add iy,sp
-    push hl                     ; push selector as first arg of new frame
-    jp (ix)
-    
-select:
-    ld h,(iy-1)                 ; hl = selector
-    ld l,(iy-2)
-    inc hl                      ; hl -= 1 index from second arg    
-    add hl,hl                   ; hl *= 2 word offset
-    ld d,iyh                    ; hl = BP, de = offset
-    ld e,iyl
-    ex de,hl
-    or a                        ; hl = BP - offset
-    sbc hl,de
-    ld de,hl                    ; save arg ptr
-    dec hl                      ; hl += 2
-    dec hl
-    or a                        ; arg ptr - stack pointer
-    sbc hl,sp
-    jr nc,case0
-    pop de                      ; pop last arg
-    jr case1
-case0:
-    ex de,hl
-    dec hl                      ; de = arg 
-    ld d,(hl)                   
-    dec hl
-    ld e,(hl)
-case1:
-    ld a,d                      ; is arg == NUL ? then skip
-    or e
-    jr z,case2
-    ld (iy+4),c                 ; update return address in stack frame
-    ld (iy+5),b                  
-    ld bc,de                    ; IP = arg
-    dec bc
-case2:
-    jp (ix)    
-    
 words:
     ld hl,2
     jr bytes1
@@ -850,107 +807,109 @@ bytes1:
     jp (ix)
     
 array:
-    push bc                     ; create stack frame, push IP
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
-    push iy                     ; push BP  
-    ld iy,0                     ; BP = SP
-    add iy,sp
     jp (ix)
+;     push bc                     ; create stack frame, push IP
+;     ld e,(iy+2)                 ; get SCP from parent stack frame
+;     ld d,(iy+3)                 ; make this the old BP for this stack frame
+;     push de                     ; push SCP
+;     push iy                     ; push BP  
+;     ld iy,0                     ; BP = SP
+;     add iy,sp
+;     jp (ix)
 
 arrayEnd:
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ld ixh,d                    ; ix = BP
-    ld ixl,e
-
-    ld hl,de                    ; hl = de
-    or a 
-    sbc hl,sp                   ; hl = array count (items on stack)
-    srl h
-    rr l                        
-    
-    ex de,hl                    ; de = count
-    ld hl,(vHeapPtr)            ; hl = array[-2]
-    ld (hl),e
-    inc hl
-    ld (hl),d
-    inc hl                      ; hl = array[0], de = count
-
-    ld a,(vDataWidth)           ; vDataWidth=1? 
-    cp 1                        
-    jr nz, arrayEnd2
-
-arrayEnd1:                      ; byte
-    ld a,(ix-2)
-    ld (hl),a
-
-    inc hl
-    dec ix
-    dec ix
-
-    dec de
-    ld a,e
-    or d
-    jr nz,arrayEnd1
-    jr arrayEnd3
-
-arrayEnd2:                      ; word
-    ld a,(ix-2)
-    ld (hl),a
-    inc hl
-    ld a,(ix-1)
-    ld (hl),a
-    inc hl
-
-    dec ix
-    dec ix
-
-    dec de
-    ld a,e
-    or d
-    jr nz,arrayEnd2
-    
-arrayEnd3:
-
-    ld d,iyh                    ; de = BP, hl = end of array
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = end of array
-    ld sp,hl                    ; sp = BP
-
-    pop hl                      ; hl = old BP, de = end of array
-    pop ix                      ; pop SCP (discard)
-    pop ix                      ; pop IP (discard)
-    
-    ex de,hl
-    ld iyh,d
-    ld iyl,e
-    ex de,hl
-    
-    ; ld sp,hl                    ; sp = old BP
-    ; ld iy,0                     ; iy = sp
-    ; add iy,sp
-    ld ix,next
-    
-    ld hl,(vHeapPtr)            ; hl = array[0], de = end of array
-    inc hl
-    inc hl
-    push hl                     ; return array[0]
-    ex de,hl                    ; hl = end of array, de = array[0] 
-
-    or a
-    sbc hl,de                   ; hl = size = end of array - array[0] 
-    ex de,hl
-    ld hl,(vHeapPtr)            ; hl = array[-2]
-    ld (hl),e                   ; array[-2] = size
-    inc hl
-    ld (hl),d
-    inc hl
-    add hl,de
-    ld (vHeapPtr),hl
-    
     jp (ix)
+;     ld d,iyh                    ; de = BP
+;     ld e,iyl
+;     ld ixh,d                    ; ix = BP
+;     ld ixl,e
+
+;     ld hl,de                    ; hl = de
+;     or a 
+;     sbc hl,sp                   ; hl = array count (items on stack)
+;     srl h
+;     rr l                        
+    
+;     ex de,hl                    ; de = count
+;     ld hl,(vHeapPtr)            ; hl = array[-2]
+;     ld (hl),e
+;     inc hl
+;     ld (hl),d
+;     inc hl                      ; hl = array[0], de = count
+
+;     ld a,(vDataWidth)           ; vDataWidth=1? 
+;     cp 1                        
+;     jr nz, arrayEnd2
+
+; arrayEnd1:                      ; byte
+;     ld a,(ix-2)
+;     ld (hl),a
+
+;     inc hl
+;     dec ix
+;     dec ix
+
+;     dec de
+;     ld a,e
+;     or d
+;     jr nz,arrayEnd1
+;     jr arrayEnd3
+
+; arrayEnd2:                      ; word
+;     ld a,(ix-2)
+;     ld (hl),a
+;     inc hl
+;     ld a,(ix-1)
+;     ld (hl),a
+;     inc hl
+
+;     dec ix
+;     dec ix
+
+;     dec de
+;     ld a,e
+;     or d
+;     jr nz,arrayEnd2
+    
+; arrayEnd3:
+
+;     ld d,iyh                    ; de = BP, hl = end of array
+;     ld e,iyl
+;     ex de,hl                    ; hl = BP, de = end of array
+;     ld sp,hl                    ; sp = BP
+
+;     pop hl                      ; hl = old BP, de = end of array
+;     pop ix                      ; pop SCP (discard)
+;     pop ix                      ; pop IP (discard)
+    
+;     ex de,hl
+;     ld iyh,d
+;     ld iyl,e
+;     ex de,hl
+    
+;     ; ld sp,hl                    ; sp = old BP
+;     ; ld iy,0                     ; iy = sp
+;     ; add iy,sp
+;     ld ix,next
+    
+;     ld hl,(vHeapPtr)            ; hl = array[0], de = end of array
+;     inc hl
+;     inc hl
+;     push hl                     ; return array[0]
+;     ex de,hl                    ; hl = end of array, de = array[0] 
+
+;     or a
+;     sbc hl,de                   ; hl = size = end of array - array[0] 
+;     ex de,hl
+;     ld hl,(vHeapPtr)            ; hl = array[-2]
+;     ld (hl),e                   ; array[-2] = size
+;     inc hl
+;     ld (hl),d
+;     inc hl
+;     add hl,de
+;     ld (vHeapPtr),hl
+    
+;     jp (ix)
 
 ; str -- num
 hash:
@@ -962,18 +921,35 @@ hash:
     push hl
     jp (ix)
 
-; symbol addr -- 
+; symbol block arity -- 
 def:
-    ld hl,bc                            ; de = addr (sp) = IP (sp+2) = symbol
-    ex (sp),hl                          
-    ex de,hl                            
-    ld hl,(vHeapPtr)                    ; hl = heap de = addr
-    ld (hl),$cd                         ; compile "call exec"
+    ld hl,0                             ; array = 0
+    push hl                             ; falls through
+
+; symbol block arity array -- 
+closure:
+def0:
+    ld hl,(vHeapPtr)                    ; hl = heapptr 
+    ld (hl),$cd                         ; compile "call doclosure"
     inc hl
     ld (hl),lsb(call)
     inc hl
     ld (hl),msb(call)
     inc hl
+    pop de                              ; pop array
+    ld (hl),e                           ; compile array
+    inc hl
+    ld (hl),d
+    inc hl
+
+    pop de
+    ld (hl),e                           ; compile arity
+    inc hl
+    ld (hl),d
+    inc hl
+
+    pop de                              ; de = block
+    push bc                             ; (sp) = IP (sp+2) = symbol
     ld b,1                              ; b = nesting
 def1:
     ld a,(de)                           
@@ -1013,40 +989,19 @@ def4:
     xor a                       ; end with NUL ??? needed?
     ld (hl),a
 
-    ld de,(vHeapPtr)            ; de = start of definition
+    ld de,(vHeapPtr)            ; de = defstart
     ld (vHeapPtr),hl            ; update heap ptr to end of definition
+    pop hl                      ; de = defstart, hl = IP
 
-    pop hl                      ; de = addr, hl = IP
-    ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
+    ex (sp),hl                  ; hl = symbol, de = defstart, (sp) = IP
     ld bc,hl                    ; bc = symbol
     call defineEntry
     jr c,def5
     ; call error
     ; .cstr "Def Collision"
 def5:
-    pop bc
+    pop bc                      ; bc = IP
     jp (ix)
-
-; symbol array block -- 
-closure:
-    pop hl                              ; hl = block
-    pop de                              ; de = array
-    push bc                             ; (sp) = block, (sp+2) = IP, (sp+2) = symbol                         
-    push hl
-    ld hl,(vHeapPtr)                    ; hl = heap ptr de = array
-    ld (hl),$cd                         ; compile "call doclosure"
-    inc hl
-    ld (hl),lsb(doclosure)
-    inc hl
-    ld (hl),msb(doclosure)
-    inc hl
-    ld (hl),e                           ; compile array
-    inc hl
-    ld (hl),d
-    inc hl
-    pop de                              ; de =  block, (sp) = IP, (sp+2) = symbol
-    ld b,1                              ; b = nesting
-    jr def1
 
 ; symbol value -- 
 let:
@@ -1629,10 +1584,6 @@ init1:
     dw call
 
     call define
-    .pstr "case",0                       
-    dw case
-
-    call define
     .pstr "closure",0                       
     dw closure
 
@@ -1707,10 +1658,6 @@ init1:
     call define
     .pstr "scan",0                       
     dw scan
-
-    call define
-    .pstr "select",0                       
-    dw select
 
     call define
     .pstr "set",0                       
@@ -1834,8 +1781,6 @@ waitchar4:
 next:        
     inc bc                      ; Increment the IP
     ld a,(bc)                   ; Get the next character and dispatch
-    ; bit 7,a                   ; is 15-bit opcode ?
-    ; jr nz,next3
     cp " "                      ; whitespace?
     jr z,next                   ; space? ignore
     jr c,next1
@@ -1849,42 +1794,19 @@ next1:
     jr z,escape                   
     cp NUL                      ; end of input string?
     jr z,exit
-    ; cp ETX                      ; end of command line input text?
-    ; jr nz,next                   
-;     ld hl,-STACK               ; etx, is SP valid? (too many pops?)
-;     add hl,sp
-;     jr nc,next2
-;     ld sp,STACK                ; yes, reset stack
-; next2:
     jp interpret                ; no, other whitespace, macros?
-; next3:
-;     ld h,a                    ; build address                      
-;     inc bc
-;     ld a,(bc)
-;     ld l,a
-;     add hl,hl
-;     jp (hl)
-        
+
 escape:
     ld hl,bc                    ; address of code after escape opcode
     inc hl			            
     jp (hl)
   
-; clear stack args
-clear:
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
-    ld sp,hl                    ; sp = BP
-    ld hl,0
-    ld (vDataWidth),hl
-    jp (ix)
-
 exit:
     ld de,bc                    ; address of code after exit opcode
     inc de			            
     exx
     pop bc                      ; bc = last result 
+    pop hl                      ; pop array (discard)
     ld d,iyh                    ; de = BP
     ld e,iyl
     ex de,hl                    ; hl = BP 
@@ -1892,6 +1814,7 @@ exit:
     exx
     pop hl                      ; hl = old BP
     pop bc                      ; pop SCP (discard)
+    pop bc                      ; pop array (discard)
     pop bc                      ; bc = IP
     ld sp,hl                    ; sp = old BP
     exx
@@ -1908,6 +1831,8 @@ exec:				            ; execute code at pointer
     or l
     jr z,exec2
     push bc                     ; push IP 
+    ld de,0
+    push de                     ; array = 0
     ld e,(iy+2)                 ; get SCP from parent stack frame
     ld d,(iy+3)                 ; make this the old BP for this stack frame
     push de                     ; push SCP
@@ -1920,6 +1845,17 @@ exec2:
     jp (ix)       
 
 ; call with args
+; pushes array, creates a scope
+; doclosure:
+;     pop hl
+;     ld e,(hl)                   ; load array and push
+;     inc hl
+;     ld d,(hl)
+;     inc hl
+;     push de
+;     jp call1
+
+; call with args
 ; creates a scope
 call:				            ; execute code at pointer
     pop hl                      ; hl = pointer to code
@@ -1927,36 +1863,28 @@ call1:
     ld a,h                      ; skip if destination address is NUL
     or l
     jr z,call2
-    push bc                     ; push IP 
-    push iy                     ; push SCP (scope pointer)
-    push iy                     ; push BP
-    ld iy,0                     ; BP = SP
-    add iy,sp
-    ld bc,hl                    ; IP = pointer to code
-    dec bc                      ; dec to prepare for next routine
-call2:
-    jp (ix)       
 
-; call with args
-; pushes array, creates a scope
-doclosure:
-    pop hl
-    ld e,(hl)                   ; load array and push
+    push bc                     ; push IP 
+    ld e,(hl)                   ; de = array
     inc hl
     ld d,(hl)
     inc hl
-    push de
-    jp call1
-    
-; ; -- addr
-; ; returns address of variable
-; dolet:				            ; execute code at pointer
-;     pop hl
-;     ld (vSetter),hl             ; store address in setter    
-;     ld e,(hl)
-;     inc hl
-;     ld d,(hl)
-;     push de
-;     jp (ix)
+    push de                     ; push array
+    ld e,(hl)                   ; de = arity
+    inc hl
+    ld d,(hl)                   ; hl = block-1
 
+    ex de,hl                    ; hl = arity, de = block-1
+    add hl,hl                   ; hl = arity * 2 bytes
+    ld bc,4                     ; subtract 4 bytes (ip,array)
+    add hl,bc
+    add hl,sp                   ; hl = pointer to first arg
+    push hl                     ; push hl
     
+    push iy                     ; push BP
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    
+    ld bc,de                    ; IP = block-1, ready for NEXT
+call2:
+    jp (ix)       
