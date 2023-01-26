@@ -320,7 +320,15 @@ hdot_:                          ; print hexadecimal
 mul_:    
     jp mul 
     
-sub_:  		                    ; Subtract the value 2nd on stack from top of stack 
+sub_:  		                    ; negative sign or subtract
+    inc bc                      ; check if sign of a number
+    ld a,(bc)
+    dec bc
+    cp "0"
+    jr c,sub1
+    cp "9"+1
+    jp c,num_    
+sub1:                           ; Subtract the value 2nd on stack from top of stack 
     pop de    
     pop hl                      ; Entry point for INVert
 sub2:    
