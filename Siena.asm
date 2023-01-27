@@ -565,64 +565,62 @@ parenEnd:
 ;     jp (ix)
 
 block:
-    jp (ix)
-;     inc bc
-;     push bc                     ; return first opcode of block    
-;     ld d,1                      ; nesting: count first parenthesis
-; block1:                         ; Skip to end of definition    
-;     ld a,(bc)                   ; Get the next character
-;     inc bc                      ; Point to next character
-;     cp " " + 1                  ; ignore whitespace 
-;     jr c,block1
+    inc bc
+    push bc                     ; return first opcode of block    
+    ld d,1                      ; nesting: count first parenthesis
+block1:                         ; Skip to end of definition    
+    ld a,(bc)                   ; Get the next character
+    inc bc                      ; Point to next character
+    cp " " + 1                  ; ignore whitespace 
+    jr c,block1
 
-;     cp ")"
-;     jr z,block4
-;     cp "}"                       
-;     jr z,block4
-;     cp "]"
-;     jr z,block4
+    cp ")"
+    jr z,block4
+    cp "}"                       
+    jr z,block4
+    cp "]"
+    jr z,block4
 
-;     cp "("
-;     jr z,block3
-;     cp "{"
-;     jr z,block3
-;     cp "["
-;     jr z,block3
+    cp "("
+    jr z,block3
+    cp "{"
+    jr z,block3
+    cp "["
+    jr z,block3
 
-;     cp "'"
-;     jr z,block3
-;     cp "`"
-;     jr nz,block1
-; block2:
-;     inc d
-;     jr block1                   
-; block3:
-;     ld a,$80
-;     xor d
-;     ld b,a
-;     jr block1                   
-; block4:
-;     dec d
-;     jr nz, block1                 ; get the next element
-
-;     dec bc                      ; balanced, exit
-;     jp (ix)  
+    cp "'"
+    jr z,block3
+    cp "`"
+    jr nz,block1
+block2:
+    inc d
+    jr block1                   
+block3:
+    ld a,$80
+    xor d
+    ld b,a
+    jr block1                   
+block4:
+    dec d
+    jr nz, block1               ; get the next element
+    dec bc                      ; balanced, exit
+    jp (ix)  
 
 blockend:
-    jp (ix)
-;     pop hl                      ; hl = last result 
-;     ld d,iyh                    ; de = BP
-;     ld e,iyl
-;     ex de,hl                    ; hl = BP, de = result
-;     ld sp,hl                    ; sp = BP
-;     pop hl                      ; hl = old BP
-;     pop bc                      ; pop SCP (discard)
-;     pop bc                      ; bc = IP
-;     ld sp,hl                    ; sp = old BP
-;     ld iy,0                     ; iy = sp
-;     add iy,sp
-;     push de                     ; push result    
-;     jp (ix)    
+    pop hl                      ; hl = last result 
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = result
+    ld sp,hl                    ; sp = BP
+    pop hl                      ; hl = old BP
+    pop bc                      ; pop SCP (discard)
+    pop bc                      ; pop array (discard)
+    pop bc                      ; bc = IP
+    ld sp,hl                    ; sp = old BP
+    ld iy,0                     ; iy = sp
+    add iy,sp
+    push de                     ; push result    
+    jp (ix)    
 
 ; $1..9
 ; returns value of arg
@@ -640,11 +638,11 @@ arg:
     or a
     sbc hl,de
     dec hl                      ; de = arg 
-    ld (vSetter),hl             ; store address in setter    
     ld d,(hl)                   
     dec hl
     ld e,(hl)
     push de                     ; push arg
+    ld (vSetter),hl             ; store address in setter    
     jp (ix)
 
 ; @1..9
@@ -994,8 +992,8 @@ def3:
 def4:
     dec b
     jr nz, def1                 ; get the next element
-    xor a                       ; end with NUL ??? needed?
-    ld (hl),a
+    ; xor a                       ; end with NUL ??? needed?
+    ; ld (hl),a
 
     ld de,(vHeapPtr)            ; de = defstart
     ld (vHeapPtr),hl            ; update heap ptr to end of definition
@@ -1841,9 +1839,7 @@ exec:				            ; execute code at pointer
     push bc                     ; push IP 
     ld de,0
     push de                     ; array = 0
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
+    push iy                     ; push SCP
     push iy                     ; push BP
     ld iy,0                     ; BP = SP
     add iy,sp
@@ -1884,7 +1880,7 @@ call1:
 
     ex de,hl                    ; hl = arity, de = block-1
     add hl,hl                   ; hl = arity * 2 bytes
-    ld bc,4                     ; subtract 4 bytes (ip,array)
+    ld bc,4                     ; hl = arity * 2 - 4 bytes (ip,array)
     add hl,bc
     add hl,sp                   ; hl = pointer to first arg
     push hl                     ; push hl
