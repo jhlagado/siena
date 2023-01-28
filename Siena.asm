@@ -606,7 +606,7 @@ block4:
     dec bc                      ; balanced, exit
     jp (ix)  
 
-blockend:
+xxblockend:
     pop hl                      ; hl = last result 
     ld d,iyh                    ; de = BP
     ld e,iyl
@@ -622,6 +622,40 @@ blockend:
     push de                     ; push result    
     jp (ix)    
 
+blockend:
+    exx
+    ld e,(iy+0)                 ; de = oldBP
+    ld d,(iy+1)
+    ld c,(iy+6)                 ; bc = IP
+    ld b,(iy+7)
+    exx
+    ld hl,0                     ; hl = sp
+    add hl,sp
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ld bc,de                    ; bc = BP
+    ex de,hl                    ; hl = BP, de = sp
+    or a 
+    sbc hl,de                   ; hl = BP - sp = count
+    ld de,bc                    ; de = BP
+    ld bc,hl                    ; bc = count
+    ex de,hl                    ; hl = BP-1                    
+    dec hl
+    ld e,(iy+2)                 ; de = SCP-1 
+    ld d,(iy+3)
+    dec de
+    lddr
+    inc de                      ; sp = new sp
+    ex de,hl                     
+    ld sp,hl
+    exx 
+    push de                     ; oldBP
+    push bc                     ; IP
+    exx 
+    pop bc
+    pop IY
+    jp (ix)    
+        
 ; $1..9
 ; returns value of arg
 arg:
@@ -1849,17 +1883,6 @@ exec2:
     jp (ix)       
 
 ; call with args
-; pushes array, creates a scope
-; doclosure:
-;     pop hl
-;     ld e,(hl)                   ; load array and push
-;     inc hl
-;     ld d,(hl)
-;     inc hl
-;     push de
-;     jp call1
-
-; call with args
 ; creates a scope
 call:				            ; execute code at pointer
     pop hl                      ; hl = pointer to code
@@ -1891,4 +1914,5 @@ call1:
     
     ld bc,de                    ; IP = block-1, ready for NEXT
 call2:
-    jp (ix)       
+    jp (ix)      
+    
