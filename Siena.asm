@@ -24,6 +24,24 @@ ETX         EQU     3
 ESC         EQU     27
 
 ; **************************************************************************
+; stack frame
+;
+; arg0                              -- 0th arg
+; arg1
+;  :
+; argn                              -- nth arg
+; oldIP                             -- saved interpreter ptr
+; static                            -- static array
+; SCP                               -- scope base ptr           --> arg0
+; oldBP                             -- saved base ptr           <-- iy
+; res0                              -- 0th result
+; res1
+;  :
+; resn                              -- last result.             <-- sp
+;
+; **************************************************************************
+
+; **************************************************************************
 ; Page 0  Initialisation
 ; **************************************************************************		
 
@@ -666,21 +684,21 @@ arg:
 ; @1..9
 ; returns address of prop
 prop:
-;     inc bc                      ; get next char
-;     ld a,(bc)
-;     sub "1"                     ; treat as a digit, 1 based index
-;     and $0F                     ; mask 
-;     add a,a                     ; double
-;     ld l,a                      ; hl = offset into args
-;     ld h,0
-;     ld e,(iy+6)                 ; de = closure array
-;     ld d,(iy+7)
-;     add hl,de                   ; find address of prop in array
-;     ld (vSetter),hl             ; store address in setter    
-;     ld e,(hl)                   
-;     inc hl
-;     ld d,(hl)
-;     push de                     ; push prop value
+    inc bc                      ; get next char
+    ld a,(bc)
+    sub "1"                     ; treat as a digit, 1 based index
+    and $0F                     ; mask 
+    add a,a                     ; double
+    ld l,a                      ; hl = offset into args
+    ld h,0
+    ld e,(iy+6)                 ; de = closure array
+    ld d,(iy+7)
+    add hl,de                   ; find address of prop in array
+    ld (vSetter),hl             ; store address in setter    
+    ld e,(hl)                   
+    inc hl
+    ld d,(hl)
+    push de                     ; push prop value
     jp (ix)
 
 ; addr -- value
@@ -1795,8 +1813,8 @@ waitchar3:
     ld a,e                      ; if zero nesting append and ETX after \r
     or a
     jr nz,waitchar
-    ld (hl),ETX                 ; store end of text ETX in text buffer ??? NEEDED?
-    inc bc
+    ; ld (hl),ETX                 ; store end of text ETX in text buffer ??? NEEDED?
+    ; inc bc
 
 waitchar4:    
     ld (vTIBPtr),bc
