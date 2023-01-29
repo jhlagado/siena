@@ -3,11 +3,11 @@
     .include "constants.asm"
     .include "IOSerial.asm"
     
-    LD SP,DSTACK
+    LD SP,STACK
     CALL init
     JP testsStart
     
-    .include "SCAN.asm"
+    .include "Siena.asm"
     .include "ram.asm"
     .include "test.util.mac.asm"
     .include "test.tester.mac.asm"

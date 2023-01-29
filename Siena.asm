@@ -606,22 +606,6 @@ block4:
     dec bc                      ; balanced, exit
     jp (ix)  
 
-xxblockend:
-    pop hl                      ; hl = last result 
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = result
-    ld sp,hl                    ; sp = BP
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; pop array (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    ld iy,0                     ; iy = sp
-    add iy,sp
-    push de                     ; push result    
-    jp (ix)    
-
 blockend:
     exx
     ld e,(iy+0)                 ; de = oldBP
@@ -1103,8 +1087,8 @@ symbol0:                                 ; copy to PAD area
 symbol1:                                 ; 0-9 A-Z a-z _
     ld a,(bc)
     ld (de),a
-    or a
-    jr z,symbol2
+    cp " "+1
+    jr c,symbol2
     ld l,a
     ld a,(hl)
     cp lsb(ident_)
@@ -1132,8 +1116,10 @@ ident0:                                 ; copy to PAD area
 ident1:                                 ; 0-9 A-Z a-z _
     ld a,(bc)
     ld (de),a
-    or a
-    jr z,ident2
+    ; or a
+    ; jr z,ident2
+    cp " "+1
+    jr c,ident2
     ld l,a
     ld a,(hl)
     cp lsb(ident_)

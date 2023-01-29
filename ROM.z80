@@ -3,6 +3,8 @@
 .include "constants.asm"
 .include "IOSerial.asm"
 
+    ld SP,STACK
+    call init
     jp   start
 
 .include "Siena.asm"

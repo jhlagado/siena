@@ -1,4 +1,4 @@
-; .engine mycomputer
+.engine mycomputer
 
 .include "constants.asm"
 .include "IOSerial.asm"
@@ -12,13 +12,12 @@ buf1%%M:
 buf2%%M:
 .endm
 
-LD SP,DSTACK
+LD SP,STACK
 CALL init
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (GETCVEC),HL
 
-; testInput "3 2 1 \\#3"
-testInput {9}
+testInput ":x {3} 0 def"
 JP interpret
 
 testGetCharImpl:
@@ -30,5 +29,5 @@ testGetCharImpl:
         POP HL
         RET                 ;NZ flagged if character input
 
-.include "SCAN.asm"
+.include "Siena.asm"
 .include "ram.asm"
