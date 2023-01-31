@@ -600,11 +600,11 @@ block1:                         ; Skip to end of definition
     jr z,block4
 
     cp "("
-    jr z,block3
+    jr z,block2
     cp "{"
-    jr z,block3
+    jr z,block2
     cp "["
-    jr z,block3
+    jr z,block2
 
     cp "'"
     jr z,block3
@@ -617,10 +617,12 @@ block3:
     ld a,$80
     xor d
     ld b,a
-    jr block1                   
+    jr nz, block1
+    jr block5
 block4:
     dec d
     jr nz, block1               ; get the next element
+block5:
     dec bc                      ; balanced, exit
     jp (ix)  
 
@@ -631,21 +633,28 @@ blockend:
     ld c,(iy+6)                 ; bc = IP
     ld b,(iy+7)
     exx
-    ld hl,0                     ; hl = sp
-    add hl,sp
-    ld d,iyh                    ; de = BP
+    ld d,iyh                    ; hl = BP
     ld e,iyl
-    ld bc,de                    ; bc = BP
-    ex de,hl                    ; hl = BP, de = sp
-    or a 
-    sbc hl,de                   ; hl = BP - sp = count
-    ld de,bc                    ; de = BP
-    ld bc,hl                    ; bc = count
-    ex de,hl                    ; hl = BP-1                    
-    dec hl
-    ld e,(iy+2)                 ; de = SCP-1 
+    ex de,hl                                                              
+    ld e,(iy+2)                 ; de = BP, hl = arglist 
     ld d,(iy+3)
-    dec de
+    ex de,hl                                          
+    ld a,4                      ; a = (length + 4) * 2 = offset
+    add a,(hl)
+    add a,a
+    ld hl,de                    ; a = offset, hl = de = BP 
+    or a                        ; bc = BP - sp = count 
+    sbc hl,sp                   
+    ld bc,hl
+    ld hl,de                    ; a = offset, bc = count, hl = de = BP 
+    add a,l                     ; bc = count, de = BP + a = firstArg, hl = BP
+    ld l,a
+    ld a,0
+    adc a,h
+    ld h,a
+    ex de,hl
+    dec de                      ; de = firstArg-1
+    dec hl                      ; hl = BP-1
     lddr
     inc de                      ; sp = new sp
     ex de,hl                     
@@ -655,30 +664,50 @@ blockend:
     push bc                     ; IP
     exx 
     pop bc
-    pop IY
+    pop iy
     jp (ix)    
         
-; $1..9
+; index -- value
 ; returns value of arg
 arg:
     inc bc                      ; get next char
     ld a,(bc)
-    sub "1"                     ; treat as a digit, 1 based index
-    and $0F                     ; mask 
-    add a,a                     ; double
-    ld l,a                      ; hl = offset into args
-    ld h,0
-    ld e,(iy+2)                 ; de = SCP (scope ptr)
+    push bc                     ; save IP                         
+    ld e,(iy+2)                 ; hl = arglist 
     ld d,(iy+3)
-    ex de,hl                    ; hl = SCP - offset
-    or a
-    sbc hl,de
+    ex de,hl                    
+    ld b,(hl)                   ; b = length of arglist
+    inc hl
+    ld c,b                      ; offset = length * 2
+    sla c                       
+arg0:
+    cp (hl)
+    jr z,arg1
+    inc hl                      
+    dec c                       ; offset ++
+    djnz arg0
+    pop bc                      ; no match, restore IP
+    ld hl,0                     ; return 0
+    push hl
+    jp (ix)
+    
+arg1:    
+    ld a,c                      ; hl = (offset + 4) * 2
+    add a,4
+    ld l,a
+    ld h,0
+    add hl,hl
+    pop bc                      ; restore IP
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    
+    add hl,de                   ; hl = BP + (offset + 4) * 2
     dec hl                      ; de = arg 
+    ld (vSetter),hl             ; store address of arg in setter    
     ld d,(hl)                   
     dec hl
     ld e,(hl)
     push de                     ; push arg
-    ld (vSetter),hl             ; store address in setter    
     jp (ix)
 
 ; @1..9
@@ -718,23 +747,18 @@ get2:
     push de    
     jp (ix)       
 
-; newvalue -- oldvalue
+; newvalue -- 
 set:                         
     pop de                      ; new value
     pop hl                      ; discard last accessed value
     ld hl,(vSetter)     
-    ld a,(hl)                   ; save lsb of old value
     ld (hl),e
-    ld e,a                      
     ld a,(vDataWidth)
     dec a
     jr z,set1
     inc hl    
-    ld a,(hl)                   ; save msb of old value
     ld (hl),d
-    ld d,a
 set1:	  
-    push de                     ; return old value
     jp (ix)  
 
 ; ifte
@@ -963,87 +987,87 @@ hash:
     push hl
     jp (ix)
 
-; symbol block arity -- 
-def:
-    ld hl,0                             ; array = 0
-    push hl                             ; falls through
 
-; symbol block arity array -- 
-closure:
-def0:
+; arglist block -- ptr
+func:
     ld hl,(vHeapPtr)                    ; hl = heapptr 
     ld (hl),$cd                         ; compile "call doclosure"
     inc hl
-    ld (hl),lsb(call)
+    ld (hl),lsb(doCall)
     inc hl
-    ld (hl),msb(call)
+    ld (hl),msb(doCall)
     inc hl
-    pop de                              ; pop array
-    ld (hl),e                           ; compile array
+    
+    ld de,0                             ; todo: move this to after arglist?
+    ld (hl),e                           ; compile array = 0
     inc hl
     ld (hl),d
     inc hl
 
-    pop de
-    ld (hl),e                           ; compile arity
+    pop de                              ; hl = heapPtr, de = block
+    ex de,hl                            ; hl = heapPtr, de = arglist, (sp) = block
+    ex (sp),hl                          
+    ex de,hl
+    ld (hl),e                           ; compile arglist
     inc hl
     ld (hl),d
     inc hl
 
     pop de                              ; de = block
-    push bc                             ; (sp) = IP (sp+2) = symbol
+    push bc                             ; (sp) = IP 
     ld b,1                              ; b = nesting
-def1:
+func1:
     ld a,(de)                           
     inc de
     ld (hl),a
     inc hl
     
     cp ")"
-    jr z,def4
+    jr z,func4
     cp "}"                       
-    jr z,def4
+    jr z,func4
     cp "]"
-    jr z,def4
+    jr z,func4
 
     cp "("
-    jr z,def3
+    jr z,func2
     cp "{"
-    jr z,def3
+    jr z,func2
     cp "["
-    jr z,def3
+    jr z,func2
 
     cp "'"
-    jr z,def3
+    jr z,func3
     cp "`"
-    jr nz,def1
-def2:
+    jr nz,func1
+func2:
     inc b
-    jr def1                   
-def3:
+    jr func1                   
+func3:
     ld a,$80
     xor b
     ld b,a
-    jr def1                   
-def4:
+    jr nz,func1
+    jr func4a
+func4:
     dec b
-    jr nz, def1                 ; get the next element
-    ; xor a                       ; end with NUL ??? needed?
-    ; ld (hl),a
-
-    ld de,(vHeapPtr)            ; de = defstart
-    ld (vHeapPtr),hl            ; update heap ptr to end of definition
-    pop hl                      ; de = defstart, hl = IP
-
-    ex (sp),hl                  ; hl = symbol, de = defstart, (sp) = IP
-    ld bc,hl                    ; bc = symbol
-    call defineEntry
-    jr c,def5
-    ; call error
-    ; .cstr "Def Collision"
-def5:
-    pop bc                      ; bc = IP
+    jr nz, func1                        ; get the next element
+func4a:
+    pop bc                              ; de = defstart, hl = IP
+    ld de,(vHeapPtr)                    ; de = defstart
+    push de
+    ld (vHeapPtr),hl                    ; update heap ptr to end of definition
     jp (ix)
+
+; symbol func -- 
+def:
+    ld ix,def1
+    jr func
+def1:
+    ld ix,next
+    pop de                              ; hl = symbol de = addr (sp) = IP
+    ld hl,bc
+    jr let1
 
 ; symbol value -- 
 let:
@@ -1064,8 +1088,8 @@ let:
 
     ld de,(vHeapPtr)            ; de = start of definition
     ld (vHeapPtr),hl            ; update heap ptr to end of definition
-
     pop hl                      ; de = addr, hl = IP
+let1:
     ex (sp),hl                  ; hl = symbol de = addr (sp) = IP
     ld bc,hl                    ; bc = symbol
     call defineEntry
@@ -1627,9 +1651,9 @@ init1:
     .pstr "call",0                       
     dw call
 
-    call define
-    .pstr "closure",0                       
-    dw closure
+    ; call define
+    ; .pstr "closure",0                       
+    ; dw closure
 
     call define
     .pstr "def",0                       
@@ -1650,6 +1674,10 @@ init1:
     call define
     .pstr "frac",0                       
     dw frac
+
+    call define
+    .pstr "func",0                       
+    dw func
 
     call define
     .pstr "get",0                       
@@ -1888,35 +1916,29 @@ exec2:
 
 ; call with args
 ; creates a scope
-call:				            ; execute code at pointer
+call:
+doCall:				            ; execute code at pointer
     pop hl                      ; hl = pointer to code
-call1:
     ld a,h                      ; skip if destination address is NUL
     or l
-    jr z,call2
+    jr z,doCall2
 
     push bc                     ; push IP 
-    ld e,(hl)                   ; de = array
+    ld e,(hl)                   ; push static array
     inc hl
     ld d,(hl)
     inc hl
-    push de                     ; push array
-    ld e,(hl)                   ; de = arity
+    push de                     
+    ld e,(hl)                   ; push arglist
     inc hl
-    ld d,(hl)                   ; hl = block-1
-
-    ex de,hl                    ; hl = arity, de = block-1
-    add hl,hl                   ; hl = arity * 2 bytes
-    ld bc,4                     ; hl = arity * 2 - 4 bytes (ip,array)
-    add hl,bc
-    add hl,sp                   ; hl = pointer to first arg
-    push hl                     ; push hl
+    ld d,(hl)                    
+    push de                     ; push arglist, hl = block-1
     
     push iy                     ; push BP
     ld iy,0                     ; BP = SP
     add iy,sp
     
-    ld bc,de                    ; IP = block-1, ready for NEXT
-call2:
+    ld bc,hl                    ; IP = block-1, ready for NEXT
+doCall2:
     jp (ix)      
     
