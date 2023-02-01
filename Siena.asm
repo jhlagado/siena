@@ -873,109 +873,88 @@ bytes1:
     jp (ix)
     
 array:
+    push bc                     ; create stack frame, push IP
+    ld de,0                     ; push null for static array
+    push de
+    ld e,(iy+2)                 ; get SCP from parent stack frame
+    ld d,(iy+3)                 ; make this the old BP for this stack frame
+    push de                     ; push SCP
+    push iy                     ; push BP  
+    ld iy,0                     ; BP = SP
+    add iy,sp
     jp (ix)
-;     push bc                     ; create stack frame, push IP
-;     ld e,(iy+2)                 ; get SCP from parent stack frame
-;     ld d,(iy+3)                 ; make this the old BP for this stack frame
-;     push de                     ; push SCP
-;     push iy                     ; push BP  
-;     ld iy,0                     ; BP = SP
-;     add iy,sp
-;     jp (ix)
 
 arrayEnd:
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    push bc                     ; save IP
+    exx
+    pop bc                  
+    exx
+    ld hl,de                    ; hl = de = BP
+    or a 
+    sbc hl,sp                   ; hl = array count (items on stack)
+    srl h                       ; 
+    rr l                        
+    ld bc,hl                    ; bc = count
+    ld hl,(vHeapPtr)            ; hl = array[-2]
+    ld (hl),c                   ; write num items in length word
+    inc hl
+    ld (hl),b
+    inc hl                      ; hl = array[0], bc = count
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    ; hl = BP, de = array[0], bc = count
+    ld a,(vDataWidth)           ; vDataWidth=1? 
+    cp 1                        
+    jr nz, arrayEnd2
+
+arrayEnd1:                      ; byte
+    ld a,(iy-2)                 ; a = lsb of stack item
+    ld (hl),a                   ; write a to array item
+    inc hl                      ; move to next byte in array
+    dec iy                      ; move tho next word on stack
+    dec iy
+    dec bc                      ; dec items count
+    ld a,c                      ; if not zero loop
+    or b
+    jr nz,arrayEnd1
+    jr arrayEnd3
+
+arrayEnd2:                      ; word
+    ld a,(iy-2)                 ; a = lsb of stack item
+    ld (hl),a                   ; write lsb of array item
+    inc hl                      ; move to msb of array item
+    ld a,(iy-1)                 ; a = msb of stack item
+    ld (hl),a                   ; write msb of array item
+    inc hl                      ; move to next word in array
+    dec iy                      ; move to next word on stack
+    dec iy
+    dec bc                      ; dec items count
+    ld a,e                      ; if not zero loop
+    or d
+    jr nz,arrayEnd2
+    
+arrayEnd3:
+    ex de,hl                    ; de = end of array, hl = BP 
+    ld sp,hl                    ; sp = BP
+    pop hl                      ; de = end of array, hl = old BP
+    ex de,hl                    ; iy = de = old BP, hl = end of array
+    ld iyh,d
+    ld iyl,e
+    pop bc                      ; pop argslist (discard)
+    pop bc                      ; pop static array (discard)
+    pop bc                      ; pop IP (discard)
+    ld de,(vHeapPtr)            ; de = array[-2]
+    ld (vHeapPtr),hl            ; move heapPtr to end of array
+    exx                         ; restore IP
+    push bc                     
+    exx
+    pop bc                  
+    inc de                      ; de = array[0]
+    inc de
+    push de                     ; return array[0]
     jp (ix)
-;     ld d,iyh                    ; de = BP
-;     ld e,iyl
-;     ld ixh,d                    ; ix = BP
-;     ld ixl,e
-
-;     ld hl,de                    ; hl = de
-;     or a 
-;     sbc hl,sp                   ; hl = array count (items on stack)
-;     srl h
-;     rr l                        
-    
-;     ex de,hl                    ; de = count
-;     ld hl,(vHeapPtr)            ; hl = array[-2]
-;     ld (hl),e
-;     inc hl
-;     ld (hl),d
-;     inc hl                      ; hl = array[0], de = count
-
-;     ld a,(vDataWidth)           ; vDataWidth=1? 
-;     cp 1                        
-;     jr nz, arrayEnd2
-
-; arrayEnd1:                      ; byte
-;     ld a,(ix-2)
-;     ld (hl),a
-
-;     inc hl
-;     dec ix
-;     dec ix
-
-;     dec de
-;     ld a,e
-;     or d
-;     jr nz,arrayEnd1
-;     jr arrayEnd3
-
-; arrayEnd2:                      ; word
-;     ld a,(ix-2)
-;     ld (hl),a
-;     inc hl
-;     ld a,(ix-1)
-;     ld (hl),a
-;     inc hl
-
-;     dec ix
-;     dec ix
-
-;     dec de
-;     ld a,e
-;     or d
-;     jr nz,arrayEnd2
-    
-; arrayEnd3:
-
-;     ld d,iyh                    ; de = BP, hl = end of array
-;     ld e,iyl
-;     ex de,hl                    ; hl = BP, de = end of array
-;     ld sp,hl                    ; sp = BP
-
-;     pop hl                      ; hl = old BP, de = end of array
-;     pop ix                      ; pop SCP (discard)
-;     pop ix                      ; pop IP (discard)
-    
-;     ex de,hl
-;     ld iyh,d
-;     ld iyl,e
-;     ex de,hl
-    
-;     ; ld sp,hl                    ; sp = old BP
-;     ; ld iy,0                     ; iy = sp
-;     ; add iy,sp
-;     ld ix,next
-    
-;     ld hl,(vHeapPtr)            ; hl = array[0], de = end of array
-;     inc hl
-;     inc hl
-;     push hl                     ; return array[0]
-;     ex de,hl                    ; hl = end of array, de = array[0] 
-
-;     or a
-;     sbc hl,de                   ; hl = size = end of array - array[0] 
-;     ex de,hl
-;     ld hl,(vHeapPtr)            ; hl = array[-2]
-;     ld (hl),e                   ; array[-2] = size
-;     inc hl
-;     ld (hl),d
-;     inc hl
-;     add hl,de
-;     ld (vHeapPtr),hl
-    
-;     jp (ix)
 
 ; str -- num
 hash:
@@ -986,7 +965,6 @@ hash:
     pop bc
     push hl
     jp (ix)
-
 
 ; arglist block -- ptr
 func:
@@ -1841,8 +1819,6 @@ waitchar3:
     ld a,e                      ; if zero nesting append and ETX after \r
     or a
     jr nz,waitchar
-    ; ld (hl),ETX                 ; store end of text ETX in text buffer ??? NEEDED?
-    ; inc bc
 
 waitchar4:    
     ld (vTIBPtr),bc
@@ -1862,56 +1838,23 @@ next:
     ld h,msb(page4)             ; Load h with the 1st page address
     jp (hl)                     ; Jump to routine
 next1:
-    cp ESC                      ; escape from interpreter
+    cp ESC                      ; escape from interpreter, needed???
     jr z,escape                   
     cp NUL                      ; end of input string?
     jr z,exit
     jp interpret                ; no, other whitespace, macros?
 
 escape:
-    ld hl,bc                    ; address of code after escape opcode
-    inc hl			            
-    jp (hl)
-  
+    inc bc
 exit:
-    ld de,bc                    ; address of code after exit opcode
-    inc de			            
-    exx
-    pop bc                      ; bc = last result 
-    pop hl                      ; pop array (discard)
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP 
-    ld sp,hl                    ; sp = BP
-    exx
-    pop hl                      ; hl = old BP
-    pop bc                      ; pop SCP (discard)
-    pop bc                      ; pop array (discard)
-    pop bc                      ; bc = IP
-    ld sp,hl                    ; sp = old BP
-    exx
-    push bc                     ; push result    
-    exx
-    ex de,hl
+    ld hl,bc
     jp (hl)
 
 ; execute a block of code
 ; uses parent scope
 exec:				            ; execute code at pointer
-    pop hl                      ; hl = pointer to code
-    ld a,h                      ; skip if destination address is NUL
-    or l
-    jr z,exec2
-    push bc                     ; push IP 
-    ld de,0
-    push de                     ; array = 0
-    push iy                     ; push SCP
-    push iy                     ; push BP
-    ld iy,0                     ; BP = SP
-    add iy,sp
-    ld bc,hl                    ; IP = pointer to code
+    pop bc                      ; hl = pointer to code
     dec bc                      ; dec to prepare for next routine
-exec2:
     jp (ix)       
 
 ; call with args

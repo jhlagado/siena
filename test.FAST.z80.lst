@@ -1465,7 +1465,7 @@
 05B0   2A A6 18               LD   hl,(vHeapPtr)   ; hl = heapptr
 05B3   36 CD                  LD   (hl),$cd   ; compile "call doclosure"
 05B5   23                     INC   hl   
-05B6   36 B1                  LD   (hl),lsb(doCall)   
+05B6   36 85                  LD   (hl),lsb(doCall)   
 05B8   23                     INC   hl   
 05B9   36 0A                  LD   (hl),msb(doCall)   
 05BB   23                     INC   hl   
@@ -2069,7 +2069,7 @@
 08CD   99 05                  DW   bytes   
 08CF   CD 78 08               CALL   define   
 08D2   05 63 61 6C 6C 00      .PSTR   "call",0   
-08D8   B1 0A                  DW   call   
+08D8   85 0A                  DW   call   
 08DA                             ; call define
 08DA                             ; .pstr "closure",0
 08DA                             ; dw closure
@@ -2078,7 +2078,7 @@
 08E2   0C 06                  DW   def   
 08E4   CD 78 08               CALL   define   
 08E7   05 65 78 65 63 00      .PSTR   "exec",0   
-08ED   98 0A                  DW   exec   
+08ED   81 0A                  DW   exec   
 08EF   CD 78 08               CALL   define   
 08F2   06 66 61 6C 73 65 00   .PSTR   "false",0   
 08F9   00 00                  DW   false   
@@ -2223,8 +2223,6 @@
 0A57   7B                     LD   a,e   ; if zero nesting append and ETX after \r
 0A58   B7                     OR   a   
 0A59   20 CE                  JR   nz,waitchar   
-0A5B                             ; ld (hl),ETX                 ; store end of text ETX in text buffer ??? NEEDED?
-0A5B                             ; inc bc
 0A5B                WAITCHAR4:      
 0A5B   ED 43 9C 18            LD   (vTIBPtr),bc   
 0A5F   01 00 19               LD   bc,TIB   ; Instructions stored on heap at address HERE,
@@ -2242,78 +2240,50 @@
 0A6F   26 03                  LD   h,msb(page4)   ; Load h with the 1st page address
 0A71   E9                     JP   (hl)   ; Jump to routine
 0A72                NEXT1:       
-0A72   FE 1B                  CP   ESC   ; escape from interpreter
+0A72   FE 1B                  CP   ESC   ; escape from interpreter, needed???
 0A74   28 07                  JR   z,escape   
 0A76   FE 00                  CP   NUL   ; end of input string?
-0A78   28 07                  JR   z,exit   
+0A78   28 04                  JR   z,exit   
 0A7A   C3 0C 0A               JP   interpret   ; no, other whitespace, macros?
+0A7D                             ; escape:
+0A7D                             ;     ld hl,bc                    ; address of code after escape opcode
+0A7D                             ;     inc hl			
+0A7D                             ;     jp (hl)
 0A7D                ESCAPE:      
-0A7D   60 69                  LD   hl,bc   ; address of code after escape opcode
-0A7F   23                     INC   hl   
+0A7D   03                     INC   bc   
+0A7E                EXIT:        
+0A7E   60 69                  LD   hl,bc   
 0A80   E9                     JP   (hl)   
-0A81                EXIT:        
-0A81   50 59                  LD   de,bc   ; address of code after exit opcode
-0A83   13                     INC   de   
-0A84   D9                     EXX      
-0A85   C1                     POP   bc   ; bc = last result
-0A86   E1                     POP   hl   ; pop array (discard)
-0A87   FD 54                  LD   d,iyh   ; de = BP
-0A89   FD 5D                  LD   e,iyl   
-0A8B   EB                     EX   de,hl   ; hl = BP
-0A8C   F9                     LD   sp,hl   ; sp = BP
-0A8D   D9                     EXX      
-0A8E   E1                     POP   hl   ; hl = old BP
-0A8F   C1                     POP   bc   ; pop SCP (discard)
-0A90   C1                     POP   bc   ; pop array (discard)
-0A91   C1                     POP   bc   ; bc = IP
-0A92   F9                     LD   sp,hl   ; sp = old BP
-0A93   D9                     EXX      
-0A94   C5                     PUSH   bc   ; push result
-0A95   D9                     EXX      
-0A96   EB                     EX   de,hl   
-0A97   E9                     JP   (hl)   
-0A98                             ; execute a block of code
-0A98                             ; uses parent scope
-0A98                EXEC:        ; execute code at pointer
-0A98   E1                     POP   hl   ; hl = pointer to code
-0A99   7C                     LD   a,h   ; skip if destination address is NUL
-0A9A   B5                     OR   l   
-0A9B   28 12                  JR   z,exec2   
-0A9D   C5                     PUSH   bc   ; push IP
-0A9E   11 00 00               LD   de,0   
-0AA1   D5                     PUSH   de   ; array = 0
-0AA2   FD E5                  PUSH   iy   ; push SCP
-0AA4   FD E5                  PUSH   iy   ; push BP
-0AA6   FD 21 00 00            LD   iy,0   ; BP = SP
-0AAA   FD 39                  ADD   iy,sp   
-0AAC   44 4D                  LD   bc,hl   ; IP = pointer to code
-0AAE   0B                     DEC   bc   ; dec to prepare for next routine
-0AAF                EXEC2:       
-0AAF   DD E9                  JP   (ix)   
-0AB1                             ; call with args
-0AB1                             ; creates a scope
-0AB1                CALL:        
-0AB1                DOCALL:      ; execute code at pointer
-0AB1   E1                     POP   hl   ; hl = pointer to code
-0AB2   7C                     LD   a,h   ; skip if destination address is NUL
-0AB3   B5                     OR   l   
-0AB4   28 14                  JR   z,doCall2   
-0AB6   C5                     PUSH   bc   ; push IP
-0AB7   5E                     LD   e,(hl)   ; push static array
-0AB8   23                     INC   hl   
-0AB9   56                     LD   d,(hl)   
-0ABA   23                     INC   hl   
-0ABB   D5                     PUSH   de   
-0ABC   5E                     LD   e,(hl)   ; push arglist
-0ABD   23                     INC   hl   
-0ABE   56                     LD   d,(hl)   
-0ABF   D5                     PUSH   de   ; push arglist, hl = block-1
-0AC0   FD E5                  PUSH   iy   ; push BP
-0AC2   FD 21 00 00            LD   iy,0   ; BP = SP
-0AC6   FD 39                  ADD   iy,sp   
-0AC8   44 4D                  LD   bc,hl   ; IP = block-1, ready for NEXT
-0ACA                DOCALL2:      
-0ACA   DD E9                  JP   (ix)   
+0A81                             ; execute a block of code
+0A81                             ; uses parent scope
+0A81                EXEC:        ; execute code at pointer
+0A81   C1                     POP   bc   ; hl = pointer to code
+0A82   0B                     DEC   bc   ; dec to prepare for next routine
+0A83   DD E9                  JP   (ix)   
+0A85                             ; call with args
+0A85                             ; creates a scope
+0A85                CALL:        
+0A85                DOCALL:      ; execute code at pointer
+0A85   E1                     POP   hl   ; hl = pointer to code
+0A86   7C                     LD   a,h   ; skip if destination address is NUL
+0A87   B5                     OR   l   
+0A88   28 14                  JR   z,doCall2   
+0A8A   C5                     PUSH   bc   ; push IP
+0A8B   5E                     LD   e,(hl)   ; push static array
+0A8C   23                     INC   hl   
+0A8D   56                     LD   d,(hl)   
+0A8E   23                     INC   hl   
+0A8F   D5                     PUSH   de   
+0A90   5E                     LD   e,(hl)   ; push arglist
+0A91   23                     INC   hl   
+0A92   56                     LD   d,(hl)   
+0A93   D5                     PUSH   de   ; push arglist, hl = block-1
+0A94   FD E5                  PUSH   iy   ; push BP
+0A96   FD 21 00 00            LD   iy,0   ; BP = SP
+0A9A   FD 39                  ADD   iy,sp   
+0A9C   44 4D                  LD   bc,hl   ; IP = block-1, ready for NEXT
+0A9E                DOCALL2:      
+0A9E   DD E9                  JP   (ix)   
 1800                          .ORG   RAMSTART   
 1800                          DS   DSIZE   
 1880                STACK:       
@@ -2352,7 +2322,7 @@
 4000                          ;*Macro unroll:  test ":x '' {1} def x", 1
 4000   31 80 18               LD   SP,STACK   
 4003   CD 90 08               CALL   init   
-4006   CD 98 0A               CALL   exec   
+4006   CD 81 0A               CALL   exec   
 4009   3A 78 20 27 27 20 7B 31 7D 20 64 65 66 20 78 00 .CSTR   ":x '' {1} def x"   
 4019                          ;*Macro unroll:  expect ":x '' {1} def x",1
 4019   E1                     POP   HL   
@@ -2362,7 +2332,7 @@
 401F   ED 52                  SBC   HL,DE   
 4021   7D                     LD   A,L   
 4022   B4                     OR   H   
-4023   28 5A                  JR   Z,expectM_0_2351S43   
+4023   28 5A                  JR   Z,expectM_0_2321S43   
 4025   CD 71 08               CALL   printStr   
 4028   43 6F 64 65 3A 20 3A 78 20 27 27 20 7B 31 7D 20 64 65 66 20 78 00 .CSTR   "Code: ",":x '' {1} def x"   
 403E   CD 71 08               CALL   printStr   
@@ -2382,7 +2352,7 @@
 4079   29 0D 0A 00            .CSTR   ")\r\n"   
 407D   76                     HALT      
 407E   00                     .CSTR      
-407F                EXPECTM_0_2351S43:      
+407F                EXPECTM_0_2321S43:      
 407F   E1                     POP   HL   
 4080                             ; test ":x 'a' {$a} def 2 x", 2
 4080                             ; test ":x 'a' {$a 3 set $1} def 2 x", 3
@@ -2556,7 +2526,7 @@ PORT5:              0005 DEFINED AT LINE 81 IN IOSerial.asm
 PORT6:              0006 DEFINED AT LINE 82 IN IOSerial.asm
 PORT7:              0007 DEFINED AT LINE 83 IN IOSerial.asm
 ESC:                001B DEFINED AT LINE 24 IN Siena.asm
-                    > USED AT LINE 1865 IN Siena.asm
+                    > USED AT LINE 1863 IN Siena.asm
 CR:                 000D DEFINED AT LINE 97 IN IOSerial.asm
 LF:                 000A DEFINED AT LINE 98 IN IOSerial.asm
 RSTVEC:             0000 DEFINED AT LINE 102 IN IOSerial.asm
@@ -2606,7 +2576,7 @@ UNUSED:             00FF DEFINED AT LINE 21 IN Siena.asm
                     > USED AT LINE 1376 IN Siena.asm
                     > USED AT LINE 1630 IN Siena.asm
 NUL:                0000 DEFINED AT LINE 22 IN Siena.asm
-                    > USED AT LINE 1867 IN Siena.asm
+                    > USED AT LINE 1865 IN Siena.asm
 ETX:                0003 DEFINED AT LINE 23 IN Siena.asm
 MACROS:             0180 DEFINED AT LINE 53 IN Siena.asm
 ISYSVARS:           0180 DEFINED AT LINE 58 IN Siena.asm
@@ -3023,7 +2993,7 @@ INIT1:              08AA DEFINED AT LINE 1633 IN Siena.asm
                     > USED AT LINE 1636 IN Siena.asm
 START:              09F6 DEFINED AT LINE 1764 IN Siena.asm
 INTERPRET:          0A0C DEFINED AT LINE 1770 IN Siena.asm
-                    > USED AT LINE 1869 IN Siena.asm
+                    > USED AT LINE 1867 IN Siena.asm
 INTERPRET2:         0A16 DEFINED AT LINE 1776 IN Siena.asm
                     > USED AT LINE 1820 IN Siena.asm
 INTERPRET3:         0A1E DEFINED AT LINE 1783 IN Siena.asm
@@ -3038,28 +3008,26 @@ WAITCHAR1:          0A3A DEFINED AT LINE 1822 IN Siena.asm
                     > USED AT LINE 1798 IN Siena.asm
 WAITCHAR3:          0A48 DEFINED AT LINE 1831 IN Siena.asm
                     > USED AT LINE 1803 IN Siena.asm
-WAITCHAR4:          0A5B DEFINED AT LINE 1847 IN Siena.asm
+WAITCHAR4:          0A5B DEFINED AT LINE 1845 IN Siena.asm
                     > USED AT LINE 1801 IN Siena.asm
-NEXT:               0A63 DEFINED AT LINE 1853 IN Siena.asm
+NEXT:               0A63 DEFINED AT LINE 1851 IN Siena.asm
                     > USED AT LINE 1067 IN Siena.asm
                     > USED AT LINE 1623 IN Siena.asm
-                    > USED AT LINE 1857 IN Siena.asm
-NEXT1:              0A72 DEFINED AT LINE 1864 IN Siena.asm
-                    > USED AT LINE 1858 IN Siena.asm
-ESCAPE:             0A7D DEFINED AT LINE 1871 IN Siena.asm
+                    > USED AT LINE 1855 IN Siena.asm
+NEXT1:              0A72 DEFINED AT LINE 1862 IN Siena.asm
+                    > USED AT LINE 1856 IN Siena.asm
+ESCAPE:             0A7D DEFINED AT LINE 1874 IN Siena.asm
+                    > USED AT LINE 1864 IN Siena.asm
+EXIT:               0A7E DEFINED AT LINE 1876 IN Siena.asm
                     > USED AT LINE 1866 IN Siena.asm
-EXIT:               0A81 DEFINED AT LINE 1876 IN Siena.asm
-                    > USED AT LINE 1868 IN Siena.asm
-EXEC:               0A98 DEFINED AT LINE 1900 IN Siena.asm
+EXEC:               0A81 DEFINED AT LINE 1882 IN Siena.asm
                     > USED AT LINE 1664 IN Siena.asm
                     > USED AT LINE 41
-EXEC2:              0AAF DEFINED AT LINE 1914 IN Siena.asm
-                    > USED AT LINE 1904 IN Siena.asm
-CALL:               0AB1 DEFINED AT LINE 1919 IN Siena.asm
+CALL:               0A85 DEFINED AT LINE 1889 IN Siena.asm
                     > USED AT LINE 1652 IN Siena.asm
-DOCALL:             0AB1 DEFINED AT LINE 1920 IN Siena.asm
-DOCALL2:            0ACA DEFINED AT LINE 1942 IN Siena.asm
-                    > USED AT LINE 1924 IN Siena.asm
+DOCALL:             0A85 DEFINED AT LINE 1890 IN Siena.asm
+DOCALL2:            0A9E DEFINED AT LINE 1912 IN Siena.asm
+                    > USED AT LINE 1894 IN Siena.asm
 STACK:              1880 DEFINED AT LINE 4 IN ram.asm
                     > USED AT LINE 445 IN IOSerial.asm
                     > USED AT LINE 8
@@ -3111,7 +3079,7 @@ VDATAWIDTH:         189A DEFINED AT LINE 22 IN ram.asm
                     > USED AT LINE 872 IN Siena.asm
 VTIBPTR:            189C DEFINED AT LINE 23 IN ram.asm
                     > USED AT LINE 1774 IN Siena.asm
-                    > USED AT LINE 1848 IN Siena.asm
+                    > USED AT LINE 1846 IN Siena.asm
 VSETTER:            189E DEFINED AT LINE 24 IN ram.asm
                     > USED AT LINE 706 IN Siena.asm
                     > USED AT LINE 726 IN Siena.asm
@@ -3131,7 +3099,7 @@ TIB:                1900 DEFINED AT LINE 31 IN ram.asm
                     > USED AT LINE 1780 IN Siena.asm
                     > USED AT LINE 1823 IN Siena.asm
                     > USED AT LINE 1832 IN Siena.asm
-                    > USED AT LINE 1849 IN Siena.asm
+                    > USED AT LINE 1847 IN Siena.asm
 PAD:                1A00 DEFINED AT LINE 34 IN ram.asm
                     > USED AT LINE 1123 IN Siena.asm
                     > USED AT LINE 1145 IN Siena.asm
@@ -3144,5 +3112,5 @@ HEAP:               1D00 DEFINED AT LINE 42 IN ram.asm
                     > USED AT LINE 66 IN Siena.asm
 TESTSSTART:         4000 DEFINED AT LINE 16
                     > USED AT LINE 10
-EXPECTM_0_2351S43:  407F DEFINED AT LINE 34
+EXPECTM_0_2321S43:  407F DEFINED AT LINE 34
                     > USED AT LINE 10
