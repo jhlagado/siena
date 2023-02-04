@@ -21,7 +21,7 @@ sysVars:
 vFrac:      ds 2                ; 
 vDataWidth: ds 2                ; 
 vTIBPtr:    ds 2                ; 
-VSetter     ds 2                ; 
+vPointer    ds 2                ; 
 vLastDef:   ds 2                ; 
             ds 2                ; 
             ds 2                ; 

@@ -260,16 +260,8 @@ dot4:
     jp (ix)
 
 ; addr index -- addr2
-index_:                         
-    pop hl                              ; hl = index  
-    pop de                              ; de = addr
-    ld a,(vDataWidth)
-    dec a
-    jr z,index1
-    add hl,hl                           ; if data width = 2 then double 
-index1:
-    add hl,de                           ; add addr
-    jp get1       
+index_:        
+    jp index 
 
 block_:
     jp block
@@ -524,24 +516,39 @@ hexnum2:
     add a,l       ; add into bottom of hl
     ld  l,a       ; 
     jr  hexnum1
-                                ; 
+
+; string
+; -- ptr                        ; points to start of string chars, 
+                                ; length is stored at start - 2 bytes 
 string:     
-    ld de,(vHeapPtr)            ; DE = heap ptr
-    push de                     ; save start of string 
+    ld hl,(vHeapPtr)            ; DE = heap ptr
+    inc hl                      ; skip length field to start
+    inc hl
+    push hl                     ; save start of string 
     inc bc                      ; point to next char
     jr string2
 string1:
-    ld (de),a
-    inc de                      ; increase count
+    ld (hl),a
+    inc hl                      ; increase count
     inc bc                      ; point to next char
 string2:
     ld a,(bc)
     cp "'"                      ; ' is the string terminator
     jr nz,string1
     xor a                       ; write NUL to terminate string
-    ld (de),a
-    inc de
-    ld (vHeapPtr),de            ; bump heap ptr to after definiton
+    ld (hl),a                   ; hl = end of string
+    inc hl
+    ld (vHeapPtr),hl            ; bump heap ptr to after end of string
+    dec hl                      ; hl = end of string without terminator
+    pop de                      ; de = start of string
+    push de                     ; return start of string    
+    or a                        ; hl = length bytes, de = start of string
+    sbc hl,de
+    ex de,hl
+    dec hl                      ; write length bytes to length field at start - 2                                      
+    ld (hl),d
+    dec hl
+    ld (hl),e
     jp (ix)  
 
 char:
@@ -636,12 +643,14 @@ blockend:
     ld d,iyh                    ; hl = BP
     ld e,iyl
     ex de,hl                                                              
-    ld e,(iy+2)                 ; de = BP, hl = arglist 
+    ld e,(iy+2)                 ; de = BP, hl = arglist (numargs = arglist[-2])
     ld d,(iy+3)
     ex de,hl                                          
-    ld a,4                      ; a = (length + 4) * 2 = offset
-    add a,(hl)
-    add a,a
+    ld a,4                      ; a = 4
+    dec hl                      ; hl = ptr to numargs
+    dec hl
+    add a,(hl)                  ; a += numargs
+    add a,a                     ; a *= 2        
     ld hl,de                    ; a = offset, hl = de = BP 
     or a                        ; bc = BP - sp = count 
     sbc hl,sp                   
@@ -673,12 +682,15 @@ arg:
     inc bc                      ; get next char
     ld a,(bc)
     push bc                     ; save IP                         
-    ld e,(iy+2)                 ; hl = arglist 
+    ld e,(iy+2)                 ; hl = arglist, numargs = arglist[-2] 
     ld d,(iy+3)
     ex de,hl                    
-    ld b,(hl)                   ; b = length of arglist
+    dec hl
+    dec hl
+    ld b,(hl)                   ; b = numargs
+    inc hl                      ; hl = arglist
     inc hl
-    ld c,b                      ; offset = length * 2
+    ld c,b                      ; offset = numargs * 2
     sla c                       
 arg0:
     cp (hl)
@@ -703,7 +715,7 @@ arg1:
     ex de,hl                    
     add hl,de                   ; hl = BP + (offset + 4) * 2
     dec hl                      ; de = arg 
-    ld (vSetter),hl             ; store address of arg in setter    
+    ld (vPointer),hl             ; store address of arg in setter    
     ld d,(hl)                   
     dec hl
     ld e,(hl)
@@ -723,7 +735,7 @@ prop:
     ld e,(iy+6)                 ; de = closure array
     ld d,(iy+7)
     add hl,de                   ; find address of prop in array
-    ld (vSetter),hl             ; store address in setter    
+    ld (vPointer),hl             ; store address in setter    
     ld e,(hl)                   
     inc hl
     ld d,(hl)
@@ -732,26 +744,41 @@ prop:
 
 ; addr -- value
 dolet:
-get:                         
     pop hl    
-get1:
-    ld (vSetter),hl             ; store address in setter    
-    ld d,0
+    ld (vPointer),hl                    ; store address in setter    
+dolet2:
     ld e,(hl)    
-    ld a,(vDataWidth)
-    dec a
-    jr z,get2
     inc hl    
     ld d,(hl)    
-get2:
+dolet3:
     push de    
     jp (ix)       
 
+index:
+    pop hl                              ; hl = index  
+    pop de                              ; de = addr
+    ld a,(vDataWidth)                   ; a = data width
+    dec a
+    jr z,index1
+    add hl,hl                           ; if data width = 2 then double 
+index1:
+    add hl,de                           ; add addr
+    ld (vPointer),hl                    ; store address in setter    
+    ld d,0
+    ld e,(hl)
+    or a                                ; check data width again                                
+    jr z,index2
+    inc hl
+    ld d,(hl)
+index2:
+    push de
+    jp (ix)
+
 ; newvalue -- 
 set:                         
-    pop de                      ; new value
-    pop hl                      ; discard last accessed value
-    ld hl,(vSetter)     
+    pop de                              ; new value
+    pop hl                              ; discard last accessed value
+    ld hl,(vPointer)     
     ld (hl),e
     ld a,(vDataWidth)
     dec a
@@ -873,12 +900,12 @@ bytes1:
     jp (ix)
     
 array:
-    push bc                     ; create stack frame, push IP
-    ld de,0                     ; push null for static array
-    push de
-    ld e,(iy+2)                 ; get SCP from parent stack frame
-    ld d,(iy+3)                 ; make this the old BP for this stack frame
-    push de                     ; push SCP
+    ld de,0                     ; create stack frame
+    push de                     ; push null for IP
+    push de                     ; push null for static array
+    ld e,(iy+2)                 ; get and save arglist from parent stack frame
+    ld d,(iy+3)                 ; 
+    push de                     ; 
     push iy                     ; push BP  
     ld iy,0                     ; BP = SP
     add iy,sp
@@ -902,9 +929,7 @@ arrayEnd:
     inc hl
     ld (hl),b
     inc hl                      ; hl = array[0], bc = count
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    ; hl = BP, de = array[0], bc = count
+                                ; de = BP, hl = array[0], bc = count
     ld a,(vDataWidth)           ; vDataWidth=1? 
     cp 1                        
     jr nz, arrayEnd2
@@ -931,8 +956,8 @@ arrayEnd2:                      ; word
     dec iy                      ; move to next word on stack
     dec iy
     dec bc                      ; dec items count
-    ld a,e                      ; if not zero loop
-    or d
+    ld a,c                      ; if not zero loop
+    or b
     jr nz,arrayEnd2
     
 arrayEnd3:
@@ -942,9 +967,9 @@ arrayEnd3:
     ex de,hl                    ; iy = de = old BP, hl = end of array
     ld iyh,d
     ld iyl,e
-    pop bc                      ; pop argslist (discard)
-    pop bc                      ; pop static array (discard)
-    pop bc                      ; pop IP (discard)
+    pop de                      ; pop arglist (discard)
+    pop de                      ; pop static array (discard)
+    pop de                      ; pop IP (discard)
     ld de,(vHeapPtr)            ; de = array[-2]
     ld (vHeapPtr),hl            ; move heapPtr to end of array
     exx                         ; restore IP
@@ -1078,7 +1103,7 @@ let2:
     pop bc
     jp (ix)
 
-; str -- addr
+; symbol -- ptr
 addr:
     pop hl                              ; hl = hash
     push bc
@@ -1091,8 +1116,9 @@ addr:
     ; jp interpret
 addr1:    
     pop bc
-    ld de,3
+    ld de,3                 ; return entry point + 3 to get address of let data
     add hl,de
+    ld (vPointer),hl
     push hl
     jp (ix)
 
@@ -1657,9 +1683,9 @@ init1:
     .pstr "func",0                       
     dw func
 
-    call define
-    .pstr "get",0                       
-    dw get
+    ; call define
+    ; .pstr "get",0                       
+    ; dw get
 
     call define
     .pstr "hash",0                       
