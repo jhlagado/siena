@@ -521,7 +521,7 @@ hexnum2:
 ; -- ptr                        ; points to start of string chars, 
                                 ; length is stored at start - 2 bytes 
 string:     
-    ld hl,(vHeapPtr)            ; DE = heap ptr
+    ld hl,(vHeapPtr)            ; hl = heap ptr
     inc hl                      ; skip length field to start
     inc hl
     push hl                     ; save start of string 
@@ -545,6 +545,50 @@ string2:
     or a                        ; hl = length bytes, de = start of string
     sbc hl,de
     ex de,hl
+    dec hl                      ; write length bytes to length field at start - 2                                      
+    ld (hl),d
+    dec hl
+    ld (hl),e
+    jp (ix)  
+
+arglist:
+    ld de,0                      ; d = count ret args, e = count args ()
+    ld hl,(vHeapPtr)            ; hl = heap ptr
+    inc hl                      ; skip length field to start
+    inc hl
+    push hl                     ; save start of arglist
+    inc bc                      ; point to next char
+arglist3z:
+    ld a,(bc)
+    cp ")"                      ; ) is the arglist terminator
+    jr z,arglist4
+    cp " " + 1
+    jr c,arglist3x
+    cp ":"
+    jr z,arglist3y
+    inc d                       ; non zero value ret count acts as flag
+    jr nz,arglist3x
+arglist3y:
+    ld (hl),a
+    inc hl                      
+    inc e                       ; increase arg count
+    xor a
+    or d
+    jr nz,arglist3x
+    inc d                       ; if d > 0 increase ret arg count
+arglist3x:
+    inc bc                      ; point to next char
+    jr arglist3z
+arglist4:
+    xor a
+    or d
+    jr arglist5
+    dec d                       ; remove initial inc
+arglist5:
+    inc hl
+    ld (vHeapPtr),hl            ; bump heap ptr to after end of string
+    pop hl                      ; hl = start of arglist
+    push hl                     ; return start of string    
     dec hl                      ; write length bytes to length field at start - 2                                      
     ld (hl),d
     dec hl
