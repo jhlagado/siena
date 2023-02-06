@@ -115,8 +115,8 @@ opcodes:                        ; still available ! " % , @
     DB lsb(nop_)                ; %  
     DB lsb(and_)                ; &
     DB lsb(string_)             ; '
-    DB lsb(paren_)              ; (    
-    DB lsb(parenEnd_)           ; )
+    DB lsb(arglist_)            ; (    
+    DB lsb(nop_)                ; )
     DB lsb(mul_)                ; *  
     DB lsb(add_)                ; +
     DB lsb(nop_)                ; ,  
@@ -226,11 +226,8 @@ prop_:
 string_:
     jp string
 
-paren_:    
-    jp paren
-
-parenEnd_:
-    jp parenEnd
+arglist_:    
+    jp arglist
 
 dot_:  
     pop hl
@@ -558,31 +555,29 @@ arglist:
     inc hl
     push hl                     ; save start of arglist
     inc bc                      ; point to next char
-arglist3z:
+arglist1:
     ld a,(bc)
     cp ")"                      ; ) is the arglist terminator
     jr z,arglist4
-    cp " " + 1
-    jr c,arglist3x
     cp ":"
-    jr z,arglist3y
+    jr nz,arglist2
     inc d                       ; non zero value ret count acts as flag
-    jr nz,arglist3x
-arglist3y:
+    jr nz,arglist3
+arglist2:
     ld (hl),a
     inc hl                      
     inc e                       ; increase arg count
     xor a
     or d
-    jr nz,arglist3x
+    jr z,arglist3
     inc d                       ; if d > 0 increase ret arg count
-arglist3x:
+arglist3:
     inc bc                      ; point to next char
-    jr arglist3z
+    jr arglist1
 arglist4:
     xor a
     or d
-    jr arglist5
+    jr z,arglist5
     dec d                       ; remove initial inc
 arglist5:
     inc hl
@@ -612,26 +607,6 @@ char2:
 char3:
     push hl
     jp (ix)  
-
-paren:
-    jp (ix)
-;     ld ix,paren2
-;     jr block
-; paren2:
-;     ld ix,next
-;     jp exec    
-
-parenEnd:
-    jp (ix)
-;     pop hl                      ; hl = last result 
-;     pop de
-;     pop bc
-;     pop bc
-;     push hl
-;     ld iyh,d
-;     ld iyl,e
-;     ld ix,next
-;     jp (ix)
 
 block:
     inc bc
