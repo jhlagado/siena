@@ -31,7 +31,7 @@ testsStart:
     test "(a:b) -1 ?", $0102
     test "(:b) -1 ?", $0101
     
-    ; test ":x () {1} def x", 1
+    test ":x () {1} def x", 1
     ; test ":x (a:b) {$a 1 + $b set} def x", 1
 
     ; test "1", 1

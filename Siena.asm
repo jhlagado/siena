@@ -548,6 +548,8 @@ string2:
     ld (hl),e
     jp (ix)  
 
+;arglist - parses input (ab:c)
+
 arglist:
     ld de,0                      ; d = count ret args, e = count args ()
     ld hl,(vHeapPtr)            ; hl = heap ptr
@@ -635,7 +637,8 @@ block1:                         ; Skip to end of definition
     cp "'"
     jr z,block3
     cp "`"
-    jr nz,block1
+    jr z,block3
+    jr block1
 block2:
     inc d
     jr block1                   
@@ -695,52 +698,6 @@ blockend:
     pop iy
     jp (ix)    
         
-; index -- value
-; returns value of arg
-arg:
-    inc bc                      ; get next char
-    ld a,(bc)
-    push bc                     ; save IP                         
-    ld e,(iy+2)                 ; hl = arglist, numargs = arglist[-2] 
-    ld d,(iy+3)
-    ex de,hl                    
-    dec hl
-    dec hl
-    ld b,(hl)                   ; b = numargs
-    inc hl                      ; hl = arglist
-    inc hl
-    ld c,b                      ; offset = numargs * 2
-    sla c                       
-arg0:
-    cp (hl)
-    jr z,arg1
-    inc hl                      
-    dec c                       ; offset ++
-    djnz arg0
-    pop bc                      ; no match, restore IP
-    ld hl,0                     ; return 0
-    push hl
-    jp (ix)
-    
-arg1:    
-    ld a,c                      ; hl = (offset + 4) * 2
-    add a,4
-    ld l,a
-    ld h,0
-    add hl,hl
-    pop bc                      ; restore IP
-    ld d,iyh                    ; de = BP
-    ld e,iyl
-    ex de,hl                    
-    add hl,de                   ; hl = BP + (offset + 4) * 2
-    dec hl                      ; de = arg 
-    ld (vPointer),hl             ; store address of arg in setter    
-    ld d,(hl)                   
-    dec hl
-    ld e,(hl)
-    push de                     ; push arg
-    jp (ix)
-
 ; @1..9
 ; returns address of prop
 prop:
@@ -1008,77 +965,6 @@ hash:
     call hashStr
     pop bc
     push hl
-    jp (ix)
-
-; arglist block -- ptr
-func:
-    ld hl,(vHeapPtr)                    ; hl = heapptr 
-    ld (hl),$cd                         ; compile "call doclosure"
-    inc hl
-    ld (hl),lsb(doCall)
-    inc hl
-    ld (hl),msb(doCall)
-    inc hl
-    
-    ld de,0                             ; todo: move this to after arglist?
-    ld (hl),e                           ; compile array = 0
-    inc hl
-    ld (hl),d
-    inc hl
-
-    pop de                              ; hl = heapPtr, de = block
-    ex de,hl                            ; hl = heapPtr, de = arglist, (sp) = block
-    ex (sp),hl                          
-    ex de,hl
-    ld (hl),e                           ; compile arglist
-    inc hl
-    ld (hl),d
-    inc hl
-
-    pop de                              ; de = block
-    push bc                             ; (sp) = IP 
-    ld b,1                              ; b = nesting
-func1:
-    ld a,(de)                           
-    inc de
-    ld (hl),a
-    inc hl
-    
-    cp ")"
-    jr z,func4
-    cp "}"                       
-    jr z,func4
-    cp "]"
-    jr z,func4
-
-    cp "("
-    jr z,func2
-    cp "{"
-    jr z,func2
-    cp "["
-    jr z,func2
-
-    cp "'"
-    jr z,func3
-    cp "`"
-    jr nz,func1
-func2:
-    inc b
-    jr func1                   
-func3:
-    ld a,$80
-    xor b
-    ld b,a
-    jr nz,func1
-    jr func4a
-func4:
-    dec b
-    jr nz, func1                        ; get the next element
-func4a:
-    pop bc                              ; de = defstart, hl = IP
-    ld de,(vHeapPtr)                    ; de = defstart
-    push de
-    ld (vHeapPtr),hl                    ; update heap ptr to end of definition
     jp (ix)
 
 ; symbol func -- 
@@ -1884,16 +1770,22 @@ next:
     jp (hl)                     ; Jump to routine
 next1:
     cp ESC                      ; escape from interpreter, needed???
-    jr z,escape                   
+    jr z,escape_                   
     cp NUL                      ; end of input string?
-    jr z,exit
+    jr z,exit_
+    cp ETX                      ; return from function ?
+    jr z,return_
     jp interpret                ; no, other whitespace, macros?
 
-escape:
+escape_:
     inc bc
-exit:
+
+exit_:
     ld hl,bc
     jp (hl)
+
+return_:
+    jp return    
 
 ; execute a block of code
 ; uses parent scope
@@ -1910,23 +1802,190 @@ doCall:				            ; execute code at pointer
     ld a,h                      ; skip if destination address is NUL
     or l
     jr z,doCall2
-
-    push bc                     ; push IP 
-    ld e,(hl)                   ; push static array
+    ld e,(hl)                   ; de = code*, hl = arglist*
     inc hl
     ld d,(hl)
-    inc hl
-    push de                     
-    ld e,(hl)                   ; push arglist
-    inc hl
-    ld d,(hl)                    
-    push de                     ; push arglist, hl = block-1
-    
+    push hl                     ; hl' = block* - 1
+    exx
+    pop hl
+    exx
+    ex de,hl
+    inc hl                      ; reserve space for return args
+    ld a,(hl)                   ; a = num return args 
+    add a,a                     ; double (bytes)
+    neg                         ; a = -bytes
+    dec hl                      ; hl = arglist*
+    ld d,a                      ; de = -bytes
+    ld e,$ff
+    ex de,hl                    ; de = arglist*, hl = -bytes
+    add hl,sp                   ; sp -= bytes
+    ld sp,hl                    
+    push bc                     ; push IP 
+    push de                     ; push arglist*
     push iy                     ; push BP
     ld iy,0                     ; BP = SP
     add iy,sp
-    
-    ld bc,hl                    ; IP = block-1, ready for NEXT
+    exx
+    push hl
+    exx
+    pop bc                      ; IP = block-1, ready for NEXT
 doCall2:
     jp (ix)      
     
+return:
+    exx
+    ld e,(iy+0)                 ; de = oldBP
+    ld d,(iy+1)
+    ld c,(iy+4)                 ; bc = IP
+    ld b,(iy+5)
+    exx
+    ld d,iyh                    ; hl = BP
+    ld e,iyl
+    ex de,hl                                                              
+    ld e,(iy+2)                 ; de = BP, hl = arglist (numargs = arglist[-2])
+    ld d,(iy+3)
+    ex de,hl                                          
+    ld a,4                      ; a = 4
+    dec hl                      ; hl = ptr to numargs
+    dec hl
+    add a,(hl)                  ; a += numargs
+    add a,a                     ; a *= 2        
+    ld hl,de                    ; a = offset, hl = de = BP 
+    or a                        ; bc = BP - sp = count 
+    sbc hl,sp                   
+    ld bc,hl
+    ld hl,de                    ; a = offset, bc = count, hl = de = BP 
+    add a,l                     ; bc = count, de = BP + a = firstArg, hl = BP
+    ld l,a
+    ld a,0
+    adc a,h
+    ld h,a
+    ex de,hl
+    dec de                      ; de = firstArg-1
+    dec hl                      ; hl = BP-1
+    lddr
+    inc de                      ; sp = new sp
+    ex de,hl                     
+    ld sp,hl
+    exx 
+    push de                     ; oldBP
+    push bc                     ; IP
+    exx 
+    pop bc
+    pop iy
+    jp (ix)    
+        
+; arglist* block* -- ptr
+func:
+    ld hl,(vHeapPtr)                    ; hl = heapptr 
+    ld (hl),$cd                         ; compile "call doclosure"
+    inc hl
+    ld (hl),lsb(doCall)
+    inc hl
+    ld (hl),msb(doCall)
+    inc hl
+    
+    pop de                              ; hl = heapPtr, de = block
+    ex de,hl                            ; hl = heapPtr, de = arglist*, (sp) = block*
+    ex (sp),hl                          
+    ex de,hl
+    ld (hl),e                           ; compile arglist*
+    inc hl
+    ld (hl),d
+    inc hl
+
+    pop de                              ; de = block*
+    push bc                             ; (sp) = IP 
+    ld b,1                              ; b = nesting
+func1:
+    ld a,(de)                           
+    inc de
+    ld (hl),a
+    inc hl
+    
+    cp ")"
+    jr z,func4
+    cp "}"                       
+    jr z,func4
+    cp "]"
+    jr z,func4
+
+    cp "("
+    jr z,func2
+    cp "{"
+    jr z,func2
+    cp "["
+    jr z,func2
+
+    cp "'"
+    jr z,func3
+    cp "`"
+    jr z,func3
+    jr func1
+func2:
+    inc b
+    jr func1                   
+func3:
+    ld a,$80
+    xor b
+    ld b,a
+    jr nz,func1
+    jr func4a
+func4:
+    dec b
+    jr nz, func1                        ; get the next element
+func4a:
+    ld a,ETX                            ; compile ETX which means return from function (use ";" ?)
+    ld (hl),a
+    inc hl
+    pop bc                              ; de = defstart, hl = IP
+    ld de,(vHeapPtr)                    ; de = defstart
+    push de
+    ld (vHeapPtr),hl                    ; update heap ptr to end of definition
+    jp (ix)
+
+; index -- value
+; returns value of arg
+arg:
+    inc bc                      ; get next char
+    ld a,(bc)
+    push bc                     ; save IP                         
+    ld e,(iy+2)                 ; hl = arglist, numargs = arglist[-2] 
+    ld d,(iy+3)
+    ex de,hl                    
+    dec hl
+    dec hl
+    ld b,(hl)                   ; b = numargs
+    inc hl                      ; hl = arglist
+    inc hl
+    ld c,b                      ; offset = numargs * 2
+    sla c                       
+arg0:
+    cp (hl)
+    jr z,arg1
+    inc hl                      
+    dec c                       ; offset ++
+    djnz arg0
+    pop bc                      ; no match, restore IP
+    ld hl,0                     ; return 0
+    push hl
+    jp (ix)
+arg1:    
+    ld a,c                      ; hl = (offset + 4) * 2
+    add a,4
+    ld l,a
+    ld h,0
+    add hl,hl
+    pop bc                      ; restore IP
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ex de,hl                    
+    add hl,de                   ; hl = BP + (offset + 4) * 2
+    dec hl                      ; de = arg 
+    ld (vPointer),hl             ; store address of arg in setter    
+    ld d,(hl)                   
+    dec hl
+    ld e,(hl)
+    push de                     ; push arg
+    jp (ix)
+
