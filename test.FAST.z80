@@ -17,11 +17,11 @@ testsStart:
 
     ; test ":x 20 let x 100 set x", 100    
 
-    ; test "[10 20 30] 1?", 20
-    ; test ":x [10 20 30] let x 1? 50 set x 1?", 50
+    test "[10 20 30] 1?", 20
+    test ":x [10 20 30] let x 1? 50 set x 1?", 50
 
-    ; test "bytes [1 2 3] 1?", 2
-    ; test "bytes :x [1 2 3] let x 1?", 2
+    test "bytes [1 2 3] 1?", 2
+    test "bytes :x [1 2 3] let x 1?", 2
 
     ; test "bytes [`A` `B` `C`] 1?", 66
 
