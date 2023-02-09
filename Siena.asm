@@ -667,25 +667,28 @@ blockend:
     ex de,hl                                                              
     ld e,(iy+2)                 ; de = BP, hl = arglist (numargs = arglist[-2])
     ld d,(iy+3)
-    ex de,hl                                          
-    ld a,4                      ; a = 4
-    dec hl                      ; hl = ptr to numargs
-    dec hl
-    add a,(hl)                  ; a += numargs
-    add a,a                     ; a *= 2        
-    ld hl,de                    ; a = offset, hl = de = BP 
-    or a                        ; bc = BP - sp = count 
-    sbc hl,sp                   
-    ld bc,hl
-    ld hl,de                    ; a = offset, bc = count, hl = de = BP 
-    add a,l                     ; bc = count, de = BP + a = firstArg, hl = BP
-    ld l,a
-    ld a,0
-    adc a,h
-    ld h,a
-    ex de,hl
-    dec de                      ; de = firstArg-1
-    dec hl                      ; hl = BP-1
+    dec hl                      ; b = num ret args
+    ld b,(hl)                   
+    sla b                       ; b *= 2
+    dec hl              
+    add c,(hl)                  ; c = num args
+    sla c                       ; c *= 2
+    ld a,3                      ; a = header in words
+    add a,a                     ; a *= 2 header in bytes        
+    add a,c                     ; a = offset to firstArg
+    ld l,a                      ; hl = offset to firstArg
+    ld h,0
+    add hl,de                   ; hl = firstArg
+    ld a,c                      ; bc = count bytes
+    sub b
+    ld c,a
+    ld b,0
+    ex de,hl                    ; de = first arg
+    ld hl,0
+    or a
+    sbc hl,bc                   ; hl = first ret arg
+    dec hl                      ; hl = first ret arg - 1
+    dec de                      ; de = first arg - 1
     lddr
     inc de                      ; sp = new sp
     ex de,hl                     
@@ -1789,6 +1792,25 @@ return_:
 
 ; execute a block of code
 ; uses parent scope
+exec:				            ; execute code at pointer
+    pop hl                      ; hl = code*
+    ld a,h                      ; skip if destination address is NUL
+    or l
+    jr z,exec2
+    push bc                     ; push IP 
+    ld de,nullArgList
+    push de                     ; push arglist*
+    push iy                     ; push BP
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    ld bc,hl                    ; IP = pointer to code
+    dec bc                      ; dec to prepare for next routine
+exec2:
+    jp (ix)       
+
+nullArgList:
+    db 0, 0, 0
+
 exec:				            ; execute code at pointer
     pop bc                      ; hl = pointer to code
     dec bc                      ; dec to prepare for next routine
