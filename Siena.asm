@@ -667,12 +667,18 @@ blockend:
     ex de,hl                                                              
     ld e,(iy+2)                 ; de = BP, hl = arglist (numargs = arglist[-2])
     ld d,(iy+3)
+    ex de,hl                                                              
+    ld bc,0                     ; bc = 0 b = 0 ret args c = 0 args
+    ld a,l
+    or h
+    jr z,blockend1
     dec hl                      ; b = num ret args
     ld b,(hl)                   
     sla b                       ; b *= 2
     dec hl              
     add c,(hl)                  ; c = num args
     sla c                       ; c *= 2
+blockend1:
     ld a,3                      ; a = header in words
     add a,a                     ; a *= 2 header in bytes        
     add a,c                     ; a = offset to firstArg
@@ -1798,24 +1804,16 @@ exec:				            ; execute code at pointer
     or l
     jr z,exec2
     push bc                     ; push IP 
-    ld de,nullArgList
-    push de                     ; push arglist*
+    ld de,0
+    push de                     ; push null arglist*
     push iy                     ; push BP
     ld iy,0                     ; BP = SP
     add iy,sp
     ld bc,hl                    ; IP = pointer to code
     dec bc                      ; dec to prepare for next routine
 exec2:
-    jp (ix)       
-
-nullArgList:
-    db 0, 0, 0
-
-exec:				            ; execute code at pointer
-    pop bc                      ; hl = pointer to code
-    dec bc                      ; dec to prepare for next routine
-    jp (ix)       
-
+    jp (ix) 
+    
 ; call with args
 ; creates a scope
 call:
