@@ -665,47 +665,61 @@ blockend:
     ld d,iyh                    ; hl = BP
     ld e,iyl
     ex de,hl                                                              
-    ld e,(iy+2)                 ; de = BP, hl = arglist (numargs = arglist[-2])
+    ld e,(iy+2)                 ; de = BP, hl = arglist* 
     ld d,(iy+3)
     ex de,hl                                                              
-    ld bc,0                     ; bc = 0 b = 0 ret args c = 0 args
-    ld a,l
+    ld a,l                      ; arglist* == null skip
     or h
-    jr z,blockend1
-    dec hl                      ; b = num ret args
+    jr z,blockend3
+    dec hl                      ; b = (num ret args) * 2
     ld b,(hl)                   
-    sla b                       ; b *= 2
+    sla b                        
     dec hl              
-    add c,(hl)                  ; c = num args
-    sla c                       ; c *= 2
-blockend1:
-    ld a,3                      ; a = header in words
-    add a,a                     ; a *= 2 header in bytes        
+    ld c,(hl)                   ; c = (num args) * 2
+    sla c                        
+    ld a,6                      ; a = header size in bytes
     add a,c                     ; a = offset to firstArg
-    ld l,a                      ; hl = offset to firstArg
+    ld l,a                      ; de = bp, hl = offset to firstArg
     ld h,0
-    add hl,de                   ; hl = firstArg
-    ld a,c                      ; bc = count bytes
+    add hl,de                   ; hl = first arg
+    ld de,hl                    ; de = hl = first arg
+    ld a,c                      ; a = c - b = count bytes
     sub b
-    ld c,a
+    jr z,blockend5              ; if a == 0 skip 
+    ld c,a                      ; bc = a
     ld b,0
-    ex de,hl                    ; de = first arg
-    ld hl,0
     or a
     sbc hl,bc                   ; hl = first ret arg
-    dec hl                      ; hl = first ret arg - 1
-    dec de                      ; de = first arg - 1
+    jr blockend4
+blockend3:
+    ld hl,de                    ; hl = de = BP 
+    or a                        ; bc = count 
+    sbc hl,sp                   
+    ld bc,hl
+    ld hl,de                    ; hl = de = BP 
+    jr z,blockend5              ; if count = 0 skip
+    ld a,6                      ; a = stack frame vars
+    add e,a                     ; de += a
+    ld a,e
+    ld a,0
+    add a,d
+    ld d,a
+blockend4:
+    dec de                      ; de = firstArg-1
+    dec hl                      ; hl = BP-1
     lddr
-    inc de                      ; sp = new sp
-    ex de,hl                     
-    ld sp,hl
-    exx 
-    push de                     ; oldBP
-    push bc                     ; IP
+    inc de                      ; hl = new tos
+    ex de,hl                    
+blockend5:
+    ld sp,hl                    ; sp = new tos
+    exx                         ; bc = IP, iy = oldBP
+    push de                     
+    push bc                     
     exx 
     pop bc
     pop iy
     jp (ix)    
+
         
 ; @1..9
 ; returns address of prop
@@ -1782,19 +1796,49 @@ next1:
     jr z,escape_                   
     cp NUL                      ; end of input string?
     jr z,exit_
-    cp ETX                      ; return from function ?
-    jr z,return_
+    ; cp ETX                    ; return from function ?
+    ; jr z,return_
     jp interpret                ; no, other whitespace, macros?
 
 escape_:
-    inc bc
+    inc bc                      ; falls through
 
 exit_:
-    ld hl,bc
-    jp (hl)
+    push bc
+    exx
+    pop bc                      ; bc = IP 
+    ld e,(iy+0)                 ; de = oldBP
+    ld d,(iy+1)
+    exx
+    ld d,iyh                    ; de = BP
+    ld e,iyl
+    ld hl,de                    ; hl = de = BP 
+    or a                        ; bc = BP - sp = count 
+    sbc hl,sp                   
+    ld bc,hl
+    ld hl,de                    ; hl = de = BP 
+    jr z,exit1                  ; if count = 0 skip
+    ld a,6                      ; a = stack frame vars
+    add e,a                     ; de += a
+    ld a,e
+    ld a,0
+    add a,d
+    ld d,a
+    dec de                      ; de = firstArg-1
+    dec hl                      ; hl = BP-1
+    lddr
+    inc de                      ; sp = new sp
+exit1:
+    ex de,hl                     
+    ld sp,hl
+    exx 
+    push de                     ; oldBP
+    push bc                     ; IP
+    exx 
+    pop bc
+    pop iy
+    jp (ix)    
 
-return_:
-    jp return    
 
 ; execute a block of code
 ; uses parent scope
