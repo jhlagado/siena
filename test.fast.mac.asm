@@ -38,7 +38,7 @@ expect%%M:
 .macro test,code1,val1
     ld SP,STACK
     call init
-    call exec
+    call execStr
     .cstr code1
     expect code1,val1
 .endm

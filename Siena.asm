@@ -809,28 +809,29 @@ set:
 set1:	  
     jp (ix)  
 
-; ifte
+; if
 ; condition then -- value
 if:
-    jp (ix)
-    ; ld de,0                      ; NUL pointer for else
-    ; jr ifte1
+    ld de,0                      ; NUL pointer for else
+    jr ifte1
 
 ; ifte
 ; condition then else -- value
 ifte: 
-    jp (ix)
-;     pop de                      ; de = else
-; ifte1:
-;     pop hl                      ; hl = then
-;     ex (sp),hl                  ; hl = condition, (sp) = then
-;     inc hl                      ; check for true
-;     ld a,h
-;     or l
-;     pop hl                      ; hl = then
-;     jr z,ifte2                   
-;     ex de,hl                    ; condition = false, hl = else  
-; ifte2:                           
+    pop de                      ; de = else
+ifte1:
+    pop hl                      ; hl = then
+    ex (sp),hl                  ; hl = condition, (sp) = then
+    inc hl                      ; check for true
+    ld a,h
+    or l
+    pop hl                      ; hl = then
+    jr z,ifte2                   
+    ex de,hl                    ; condition = false, hl = else  
+ifte2:                           
+    push hl
+    jp exec
+
 ;     ld a,h                      ; check if hl is NUL
 ;     or l
 ;     jr z,ifte3
@@ -1549,12 +1550,21 @@ crlf:
     .cstr "\r\n"
     ret
 
+; prints a null teminated string
+; the string should be immedaitely following the call
 printStr:        
     ex (sp),hl		            ; swap			
     call prtstr		
     inc hl			            ; inc past NUL
     ex (sp),hl		            ; put it back	
     ret
+
+; executes a null teminated string (null executes exit_)
+; the string should be immedaitely following the call
+execStr:
+    pop bc                      ; bc = code*
+    dec bc                      ; dec to prepare for next routine
+    jp (ix) 
 
 define:
     pop hl
@@ -1831,23 +1841,17 @@ exit_:
     ld hl,bc
     jp (hl)
 
-; needs a different thing to execute a block of code than an a command like
-; executes a null teminated string (which executes exit_)
-exec:
-    pop bc                      ; bc = code*
-    dec bc                      ; dec to prepare for next routine
-    jp (ix) 
-    
 ; execute a block of code which ends with }
 ; uses parent scope
-blockExec:				       
+exec:				       
     pop hl                      ; hl = code*
     ld a,h                      ; skip if destination address is NUL
     or l
     jr z,exec2
     push bc                     ; push IP 
-    ld de,0
-    push de                     ; push null arglist*
+    ld e,(iy+4)                 ; de = scope arglist*
+    ld d,(iy+5)                 
+    push de                     ; push scope arglist*
     ld e,(iy+2)                 ; de = ScopeBP from parent stack frame
     ld d,(iy+3)                 
     push de                     ; push ScopeBP
@@ -1858,10 +1862,14 @@ blockExec:
     dec bc                      ; dec to prepare for next routine
 exec2:
     jp (ix) 
-    
+
+; arg1 .. argn func -- ?
+call:
+    pop hl
+    jp (hl)
+        
 ; call with args
 ; creates a scope
-call:
 doCall:				            ; execute code at pointer
     pop hl                      ; hl = pointer to code
     ld a,h                      ; skip if destination address is NUL
@@ -1902,50 +1910,7 @@ doCall1c:
     pop bc                      ; IP = block-1, ready for NEXT
 doCall2:
     jp (ix)      
-    
-; return:
-    ; exx
-    ; ld e,(iy+0)                 ; de = oldBP
-    ; ld d,(iy+1)
-    ; ld c,(iy+4)                 ; bc = IP
-    ; ld b,(iy+5)
-    ; exx
-    ; ld d,iyh                    ; hl = BP
-    ; ld e,iyl
-    ; ex de,hl                                                              
-    ; ld e,(iy+2)                 ; de = BP, hl = arglist (numargs = arglist[-2])
-    ; ld d,(iy+3)
-    ; ex de,hl                                          
-    ; ld a,4                      ; a = 4
-    ; dec hl                      ; hl = ptr to numargs
-    ; dec hl
-    ; add a,(hl)                  ; a += numargs
-    ; add a,a                     ; a *= 2        
-    ; ld hl,de                    ; a = offset, hl = de = BP 
-    ; or a                        ; bc = BP - sp = count 
-    ; sbc hl,sp                   
-    ; ld bc,hl
-    ; ld hl,de                    ; a = offset, bc = count, hl = de = BP 
-    ; add a,l                     ; bc = count, de = BP + a = args*, hl = BP
-    ; ld l,a
-    ; ld a,0
-    ; adc a,h
-    ; ld h,a
-    ; ex de,hl
-    ; dec de                      ; de = args*-1
-    ; dec hl                      ; hl = BP-1
-    ; lddr
-    ; inc de                      ; sp = new sp
-    ; ex de,hl                     
-    ; ld sp,hl
-    ; exx 
-    ; push de                     ; oldBP
-    ; push bc                     ; IP
-    ; exx 
-    ; pop bc
-    ; pop iy
-    ; jp (ix)    
-        
+
 ; arglist* block* -- ptr
 func:
     ld hl,(vHeapPtr)                    ; hl = heapptr 
