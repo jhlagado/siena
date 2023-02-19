@@ -664,37 +664,20 @@ blockend:
     ld c,(iy+6)                 ; bc = IP
     ld b,(iy+7)
     exx
-    ld d,iyh                    ; hl = BP
+    ld e,(iy+0)                 ; hl = oldBP
+    ld d,(iy+1)
+    ex de,hl                                                              
+    ld d,iyh                    ; de = oldBP, hl = BP
     ld e,iyl
     ex de,hl                                                              
-    ld e,(iy+4)                 ; de = BP, hl = arglist* 
-    ld d,(iy+5)
-    ex de,hl                                                              
-    ld bc,0                     ; bc = 0, b = num locals = 0, c = num args = 0 
-    ld a,l                      ; arglist* == null skip
-    or h
-    jr z,blockend2
-    dec hl                      ; b = (num locals) * 2
-    ld b,(hl)                   
-    sla b                        
-    dec hl              
-    ld c,(hl)                   ; c = (num args) * 2
-    sla c                        
-blockend2:
-    ld a,8                      ; a = header size in bytes
-    add a,c                     ; a = offset to firstArg
-    ld l,a                      ; de = bp, hl = offset to firstArg
-    ld h,0
-    add hl,de                   ; de = first arg, hl = bp, 
-    ex de,hl
-    push hl                     ; save bp
-    or a                        ; bc = count 
+    push hl                     ; save BP
+    dec hl                      ; hl += 2 to compensate for pushing BP 
+    dec hl
+    or a                        ; bc = BP - SP = count 
     sbc hl,sp                   
     ld bc,hl
-    dec bc                      ; bc -= 2 remove space used to save BP
-    dec bc
-    pop hl                      ; hl = bp
-    dec de                      ; de = firstArg-1
+    pop hl                      ; hl = BP
+    dec de                      ; de = args*-1
     dec hl                      ; hl = BP-1
     lddr
     inc de                      ; hl = new tos
@@ -707,6 +690,57 @@ blockend2:
     pop bc
     pop iy
     jp (ix)    
+
+; blockend:
+;     exx
+;     ld e,(iy+0)                 ; de = oldBP
+;     ld d,(iy+1)
+;     ld c,(iy+6)                 ; bc = IP
+;     ld b,(iy+7)
+;     exx
+;     ld d,iyh                    ; hl = BP
+;     ld e,iyl
+;     ex de,hl                                                              
+;     ld e,(iy+4)                 ; de = BP, hl = arglist* 
+;     ld d,(iy+5)
+;     ex de,hl                                                              
+;     ld bc,0                     ; bc = 0, b = num locals = 0, c = num args = 0 
+;     ld a,l                      ; arglist* == null skip
+;     or h
+;     jr z,blockend2
+;     dec hl                      ; b = (num locals) * 2
+;     ld b,(hl)                   
+;     sla b                        
+;     dec hl              
+;     ld c,(hl)                   ; c = (num args) * 2
+;     sla c                        
+; blockend2:
+;     ld a,8                      ; a = header size in bytes
+;     add a,c                     ; a = offset to args*
+;     ld l,a                      ; de = bp, hl = offset to args*
+;     ld h,0
+;     add hl,de                   ; de = args*, hl = bp, 
+;     ex de,hl
+;     push hl                     ; save bp
+;     or a                        ; bc = count 
+;     sbc hl,sp                   
+;     ld bc,hl
+;     dec bc                      ; bc -= 2 remove space used to save BP
+;     dec bc
+;     pop hl                      ; hl = bp
+;     dec de                      ; de = args*-1
+;     dec hl                      ; hl = BP-1
+;     lddr
+;     inc de                      ; hl = new tos
+;     ex de,hl                    
+;     ld sp,hl                    ; sp = new tos
+;     exx                         ; bc = IP, iy = oldBP
+;     push de                     
+;     push bc                     
+;     exx 
+;     pop bc
+;     pop iy
+;     jp (ix)    
 
         
 ; @1..9
@@ -763,8 +797,8 @@ index2:
 
 ; newvalue -- 
 set:                         
-    pop de                              ; new value
     pop hl                              ; discard last accessed value
+    pop de                              ; new value
     ld hl,(vPointer)     
     ld (hl),e
     ld a,(vDataWidth)
@@ -1841,26 +1875,23 @@ doCall:				            ; execute code at pointer
     pop hl
     exx
     ex de,hl
-                                ; reserve space for locals
-    ld a,l                      ; if arglist* == null, skip
+    ld a,l                      ; if arglist* == null skip, a = 0
     or h
-    ld a,0
     jr z,doCall1
     dec hl                      ; a = num locals
     ld a,(hl)                    
     inc hl                      ; hl = arglist*
-doCall1:
-    ex de,hl                    ; de = arglist*
-    add a,a                     ; double (bytes)
-    neg                         ; a = -bytes
-	ld l,a                      ; hl = -bytes
-	rlca		                
-	sbc a,a                     
-	ld h,a
-    add hl,sp                   ; sp -= bytes
-    ld sp,hl                    
+doCall1:                        ; reserve space for locals
+    or a
+    jr z,doCall1c
+    ld de,0
+doCall1a:
+    push de
+    dec a
+    jr nz,doCall1a
+doCall1c:
     push bc                     ; push IP 
-    push de                     ; push arglist*
+    push hl                     ; push arglist*
     push iy                     ; push ScopeBP
     push iy                     ; push BP
     ld iy,0                     ; BP = SP
@@ -1895,13 +1926,13 @@ doCall2:
     ; sbc hl,sp                   
     ; ld bc,hl
     ; ld hl,de                    ; a = offset, bc = count, hl = de = BP 
-    ; add a,l                     ; bc = count, de = BP + a = firstArg, hl = BP
+    ; add a,l                     ; bc = count, de = BP + a = args*, hl = BP
     ; ld l,a
     ; ld a,0
     ; adc a,h
     ; ld h,a
     ; ex de,hl
-    ; dec de                      ; de = firstArg-1
+    ; dec de                      ; de = args*-1
     ; dec hl                      ; hl = BP-1
     ; lddr
     ; inc de                      ; sp = new sp
@@ -1984,48 +2015,48 @@ func4a:
     ld (vHeapPtr),hl                    ; update heap ptr to end of definition
     jp (ix)
 
-; index -- value
+; $a .. $z
+; -- value
 ; returns value of arg
 arg:
-;     inc bc                      ; get next char
-;     ld a,(bc)
-;     push bc                     ; save IP                         
-;     ld e,(iy+2)                 ; hl = arglist, numargs = arglist[-2] 
-;     ld d,(iy+3)
-;     ex de,hl                    
-;     dec hl
-;     dec hl
-;     ld b,(hl)                   ; b = numargs
-;     inc hl                      ; hl = arglist
-;     inc hl
-;     ld c,b                      ; offset = numargs * 2
-;     sla c                       
-; arg0:
-;     cp (hl)
-;     jr z,arg1
-;     inc hl                      
-;     dec c                       ; offset ++
-;     djnz arg0
-;     pop bc                      ; no match, restore IP
-;     ld hl,0                     ; return 0
-;     push hl
-;     jp (ix)
-; arg1:    
-;     ld a,c                      ; hl = (offset + 4) * 2
-;     add a,4
-;     ld l,a
-;     ld h,0
-;     add hl,hl
-;     pop bc                      ; restore IP
-;     ld d,iyh                    ; de = BP
-;     ld e,iyl
-;     ex de,hl                    
-;     add hl,de                   ; hl = BP + (offset + 4) * 2
-;     dec hl                      ; de = arg 
-;     ld (vPointer),hl             ; store address of arg in setter    
-;     ld d,(hl)                   
-;     dec hl
-;     ld e,(hl)
-;     push de                     ; push arg
+    ld e,(iy+4)                 ; hl = arglist* 
+    ld d,(iy+5)
+    ex de,hl                    
+    ld a,l                      ; arglist* == null skip
+    or h
+    jr z,arg0a
+    dec hl                      ; e = num_args, hl = arglist*
+    dec hl
+    ld a,(hl)                    
+    or a
+    jr z,arg0a                   
+    ld e,a
+    inc hl
+    inc hl
+    inc bc                      ; a = next char = arg_name
+    ld a,(bc)
+    push bc                     ; save IP                         
+    ld b,e                      ; b = num_args
+    ld e,(iy+2)                 ; de = ScopeBP, hl = argslist*   
+    ld d,(iy+3)
+arg0:
+    dec de                      ; a = arg_name, de = next arg*
+    dec de
+    cp (hl)
+    jr z,arg1
+    inc hl                      ; hl = next arglist*            
+    djnz arg0
+    pop bc                      ; no match, restore IP
+arg0a:
+    ld de,0                     ; return 0
+    jr arg1a
+arg1:
+    pop bc                      ; restore IP
+    ex de,hl                    ; hl = arg*
+    ld (vPointer),hl            ; store arg* in setter    
+    ld e,(hl)
+    inc hl
+    ld d,(hl)                   ; de = arg
+arg1a:
+    push de                     ; push arg
     jp (ix)
-
