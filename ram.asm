@@ -18,13 +18,14 @@ GETCVEC:    ds 2                ;
 PUTCVEC:    ds 2                ;   
 
 sysVars:
+
 vFrac:      ds 2                ; 
 vDataWidth: ds 2                ; 
 vTIBPtr:    ds 2                ; 
 vPointer    ds 2                ; 
 vLastDef:   ds 2                ; 
-            ds 2                ; 
-            ds 2                ; 
+vHashStr:   ds 2                ; 
+vNext       ds 2                ; 
 vHeapPtr:   ds 2                ; 
 
 .align $100

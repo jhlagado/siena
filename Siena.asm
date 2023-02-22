@@ -19,9 +19,10 @@ TRUE        EQU     -1		        ; C-style true
 FALSE       EQU     0
 EMPTY       EQU     0		         
 UNUSED      EQU     $ff
-NUL         EQU     0
-ETX         EQU     3
-ESC         EQU     27
+NUL         EQU     0               ; exit code
+DC1         EQU     17              ; literal number
+DC2         EQU     18              ; enter code
+ESC         EQU     27              ; escape code
 
 ; **************************************************************************
 ; stack frame
@@ -30,14 +31,18 @@ ESC         EQU     27
 ; arg1
 ;  :
 ; argn                              -- nth arg
+; loc0                              -- 0th local
+; loc1
+;  :
+; locn                              -- last local             
+; IP                                -- saved interpreter ptr
+; arglist*                          -- arg list ptr
+; ScopeBP                           -- scope base ptr           
+; BP                                -- saved base ptr           <-- iy
 ; res0                              -- 0th result
 ; res1
 ;  :
 ; resn                              -- last result.             <-- sp
-; IP                             -- saved interpreter ptr
-; arglist*                          -- arg list ptr
-; ScopeBP                               -- scope base ptr           --> arg0
-; BP                             -- saved base ptr           <-- iy
 ;
 ; **************************************************************************
 
@@ -59,18 +64,15 @@ isysVars:
     DW 0                        ; a vFrac fractional part of calculation			
     DW 2                        ; b vDataWidth in bytes of array operations (default 1 byte) 
     DW 0                        ; c vTIBPtr an offset to the tib
-    DW 0                        ; d 
+    DW 0                        ; d vPointer
     DW 0                        ; e vLastDef
-    DW 0                        ; f 
-    DW 0                        ; g 
-    DW HEAP                     ; h vHeapPtr \h start of the free mem
+    DW 0                        ; f vHashStr
+    DW next                     ; g nNext
+    DW heap                     ; h vHeapPtr \h start of the free mem
 
     .align $100
 
 opcodesBase:
-
-
-
 
 ctrlCodes:
     DB lsb(EMPTY)               ; ^@  0 NUL  
@@ -106,7 +108,7 @@ ctrlCodes:
     DB lsb(EMPTY)               ; ^^ 30 RS
     DB lsb(EMPTY)               ; ^_ 31 US
 
-opcodes:                        ; still available ! " % , @   
+opcodes:                        ; still available " % , ; DEL 
     DB lsb(nop_)                ; SP  
     DB lsb(not_)                ; !  
     DB lsb(nop_)                ; "
@@ -493,7 +495,7 @@ num3:
     push hl       ; Put the number on the stack
     jp (ix)       ; and process the next character
 
-hexnum:        ;
+hexnum:        
 	ld hl,0	    		    ; Clear hl to accept the number
 hexnum1:
     inc bc
@@ -909,7 +911,7 @@ loop:
 ;     ld sp,hl                    ; sp = old BP
 ;     ld iy,0                     ; iy = sp
 ;     add iy,sp
-;     ld ix,next                  ; needed?
+;     ld ix,(vNext)                  ; needed?
 ;     jp (ix)
 
 words:
@@ -1020,7 +1022,7 @@ def:
     ld ix,def1
     jp func
 def1:
-    ld ix,next
+    ld ix,(vNext)
     pop de                              ; hl = symbol de = addr (sp) = IP
     ld hl,bc
     jr let1
@@ -1260,6 +1262,7 @@ scan:
 ; BC = str
 ; HL = hash
 hashStr:
+    ld (vHashStr),bc                    ; store source string
     ld hl,0                             
 hashStr1:    
     ld a,(bc)                           ; load next char
@@ -1562,6 +1565,7 @@ printStr:
 ; executes a null teminated string (null executes exit_)
 ; the string should be immedaitely following the call
 execStr:
+branch:                         ; executes the address on the stack
     pop bc                      ; bc = code*
     dec bc                      ; dec to prepare for next routine
     jp (ix) 
@@ -1586,7 +1590,7 @@ define:
     jp defineEntry
 
 init:       
-    ld ix,next
+    ld ix,(vNext)
     ld iy,STACK
     ld hl,isysVars
     ld de,sysVars
@@ -1830,8 +1834,10 @@ next1:
     jr z,escape_                   
     cp NUL                      ; end of input string?
     jr z,exit_
-    ; cp ETX                    ; return from function ?
-    ; jr z,return_
+    cp DC1                      ; literal number
+    jr z,literal_
+    cp DC2                      ; enter routine
+    jr z,enter_
     jp interpret                ; no, other whitespace, macros?
 
 escape_:
@@ -1839,6 +1845,25 @@ escape_:
 
 exit_:
     ld hl,bc
+    jp (hl)
+
+literal_:
+    inc bc
+    ld a,(bc)
+    ld l,a
+    inc bc
+    ld a,(bc)
+    ld h,a
+    push hl
+    jp (ix)
+
+enter_:
+    inc bc
+    ld a,(bc)
+    ld l,a
+    inc bc
+    ld a,(bc)
+    ld h,a
     jp (hl)
 
 ; execute a block of code which ends with }
@@ -1971,8 +1996,6 @@ func4:
     dec b
     jr nz, func1                        ; get the next element
 func4a:
-    ; ld a,ETX                            ; compile ETX which means return from function (use ";" ?)
-    ; ld (hl),a
     inc hl
     pop bc                              ; de = defstart, hl = IP
     ld de,(vHeapPtr)                    ; de = defstart
