@@ -666,12 +666,30 @@ blockend:
     ld c,(iy+6)                 ; bc = IP
     ld b,(iy+7)
     exx
-    ld e,(iy+2)                 ; hl = first_arg*
+    ld e,(iy+2)                 ; hl = first_arg*, is it in this scope?
+    ld d,(iy+3)
+    ex de,hl                                                              
+    ld e,(iy+0)                 ; de = oldBP
+    ld d,(iy+1)
+    ; ex de,hl                    ; de = first_arg*, hl = oldBP                                          
+    inc de                      ; for carry flag <=
+    or a
+    sbc hl,de
+    jr c,blockend1              ; oldBP >= first_arg, same scope skip
+    ld d,iyh                    ; de = BP = first_result*, no args in this scope
+    ld e,iyl
+    ld hl,8
+    add hl,de                   ; de = BP = first_result* (BP), hl = first_arg* (BP+8)
+    ex de,hl                    ; de = first_arg*, hl = first_result*
+    jr blockend2
+blockend1:                      ; same scope
+    ld e,(iy+2)                 ; hl = first_arg*, in scope
     ld d,(iy+3)
     ex de,hl                                                              
     ld d,iyh                    ; de = first_arg*, hl = BP = first_result*
     ld e,iyl
     ex de,hl                                                              
+blockend2:                      
     ld bc,hl                    ; bc = hl = BP
     or a                        ; hl = BP - SP = count 
     sbc hl,sp                   
@@ -1883,30 +1901,33 @@ call:
 ; creates a root scope if BP == stack
 ; else uses outer scope 
 exec:				       
-    ld hl,stack                 ; de = BP, hl = stack, (sp) = code*
-    ld d,iyh                    
-    ld e,iyl
-    or a                        ; hl = stack - BP = root_scope
-    sbc hl,de                   
     pop de                      ; de = block*
-    ld a,e                      ; if block* == null, skip
+    ld a,e                      ; if block* == null, exit
     or d
-    jr z,doCall1e
+    jr nz,exit1
+    jp (ix)
+exit1:
     push bc                     ; push IP
+    ld hl,stack                 ; de = BP, hl = stack, (sp) = code*
+    ld b,iyh                    
+    ld c,iyl
+    or a                        ; hl = stack - BP = root_scope
+    sbc hl,bc                   
     ld a,l                      ; if root_scope, skip
     or h                    
-    jr z,exec1
+    jr z,exec2
     ld c,(iy+4)                 ; push arg_list* (parent)
     ld b,(iy+5)                 
     push bc                     
     ld c,(iy+2)                 ; hl = first_arg* (parent)
     ld b,(iy+3)                 
     ld hl,bc
-    jr doCall1d
-exec1:
-    ld hl,0
+    jr doCall4
+exec2:
     push hl                     ; push arg_list (null)
-    jr doCall1d                 ; hl = first_arg* (null)
+    ld hl,4                     ; hl = first_arg* (BP+8)
+    add hl,sp
+    jr doCall4                  ; 
 
 ; call with args
 ; creates a scope
@@ -1915,7 +1936,7 @@ doCall:				            ; execute code at pointer
     pop hl                      ; hl = code*
     ld a,l                      ; if code* == null, skip
     or h
-    jr z,doCall1e
+    jr z,doCall5
     ld e,(hl)                   ; de = block*, hl = arg_list*
     inc hl
     ld d,(hl)
@@ -1923,22 +1944,24 @@ doCall:				            ; execute code at pointer
     ex de,hl
     ld a,l                      ; if arg_list* != null skip
     or h
-    jr nz,doCall1x              
+    jr nz,doCall1              
     push bc                     ; push IP
     push hl                     ; push arg_list (null)
-    jr doCall1d                 ; hl = first_arg* (null)
-doCall1x:
+    ld hl,4                     ; hl = first_arg (BP + 8)
+    add hl,sp
+    jr doCall4                  
+doCall1:
     dec hl                      ; a = num_locals*, de = block* hl = arg_list*
     ld a,(hl)
     inc hl
     or a
-    jr z,doCall1b
-doCall1a:
+    jr z,doCall3
+doCall2:
     dec sp
     dec sp
     dec a
-    jr z,doCall1a
-doCall1b:
+    jr z,doCall2
+doCall3:
     push bc                     ; push IP    
     push hl                     ; push arg_list*
     dec hl                      ; hl = num_args*
@@ -1948,14 +1971,14 @@ doCall1b:
     ld l,a
     ld h,$0
     add hl,sp                   ; hl = first_arg*
-doCall1d:
+doCall4:
     push hl                     ; push first_arg    
     push iy                     ; push BP
     ld iy,0                     ; BP = SP
     add iy,sp
     ld bc,de                    ; bc = de = block*-1
     dec bc                       
-doCall1e:                       
+doCall5:                       
     jp (ix)    
 
 ; arg_list* block* -- ptr
