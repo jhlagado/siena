@@ -1960,7 +1960,7 @@ doCall2:
     dec sp
     dec sp
     dec a
-    jr z,doCall2
+    jr nz,doCall2
 doCall3:
     push bc                     ; push IP    
     push hl                     ; push arg_list*
@@ -1968,6 +1968,7 @@ doCall3:
     dec hl
     ld a,(hl)                   ; hl = num_args * 2
     add a,a
+    add a,4                     ; offset for IP and arg_list
     ld l,a
     ld h,$0
     add hl,sp                   ; hl = first_arg*
