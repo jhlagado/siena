@@ -35,10 +35,10 @@ ESC         EQU     27              ; escape code
 ; loc1
 ;  :
 ; locn                              -- last local             
-; IP                                -- saved interpreter ptr
-; arglist*                          -- arg list ptr
-; ScopeBP                           -- scope base ptr           
-; BP                                -- saved base ptr           <-- iy
+; IP                                -- IP (saved interpreter ptr, return)
+; arg_list*                          -- arg_list*
+; ScopeBP                           -- first_args           
+; BP                                -- BP (saved base ptr)           <-- iy
 ; res0                              -- 0th result
 ; res1
 ;  :
@@ -117,7 +117,7 @@ opcodes:                        ; still available " % , ; DEL
     DB lsb(nop_)                ; %  
     DB lsb(and_)                ; &
     DB lsb(string_)             ; '
-    DB lsb(arglist_)            ; (    
+    DB lsb(arg_list_)            ; (    
     DB lsb(nop_)                ; )
     DB lsb(mul_)                ; *  
     DB lsb(add_)                ; +
@@ -228,8 +228,8 @@ prop_:
 string_:
     jp string
 
-arglist_:    
-    jp arglist
+arg_list_:    
+    jp arg_list
 
 dot_:  
     pop hl
@@ -550,45 +550,45 @@ string2:
     ld (hl),e
     jp (ix)  
 
-; arglist - parses input (ab:c)
+; arg_list - parses input (ab:c)
 ; names after the : represent uninitialised locals
 ; return values are the state of the stack after the block ends
 
-arglist:
+arg_list:
     ld de,0                     ; d = count locals, e = count args ()
     ld hl,(vHeapPtr)            ; hl = heap ptr
     inc hl                      ; skip length field to start
     inc hl
-    push hl                     ; save start of arglist
+    push hl                     ; save start of arg_list
     inc bc                      ; point to next char
-arglist1:
+arg_list1:
     ld a,(bc)
-    cp ")"                      ; ) is the arglist terminator
-    jr z,arglist4
+    cp ")"                      ; ) is the arg_list terminator
+    jr z,arg_list4
     cp ":"
-    jr nz,arglist2
+    jr nz,arg_list2
     inc d                       ; non zero value local count acts as flag
-    jr nz,arglist3
-arglist2:
+    jr nz,arg_list3
+arg_list2:
     ld (hl),a
     inc hl                      
     inc e                       ; increase arg count
     xor a
     or d
-    jr z,arglist3
+    jr z,arg_list3
     inc d                       ; if d > 0 increase local count
-arglist3:
+arg_list3:
     inc bc                      ; point to next char
-    jr arglist1
-arglist4:
+    jr arg_list1
+arg_list4:
     xor a
     or d
-    jr z,arglist5
+    jr z,arg_list5
     dec d                       ; remove initial inc
-arglist5:
+arg_list5:
     inc hl
     ld (vHeapPtr),hl            ; bump heap ptr to after end of string
-    pop hl                      ; hl = start of arglist
+    pop hl                      ; hl = start of arg_list
     push hl                     ; return start of string    
     dec hl                      ; write length bytes to length field at start - 2                                      
     ld (hl),d
@@ -666,21 +666,20 @@ blockend:
     ld c,(iy+6)                 ; bc = IP
     ld b,(iy+7)
     exx
-    ld e,(iy+0)                 ; hl = oldBP
-    ld d,(iy+1)
+    ld e,(iy+2)                 ; hl = first_arg*
+    ld d,(iy+3)
     ex de,hl                                                              
-    ld d,iyh                    ; de = oldBP, hl = BP
+    ld d,iyh                    ; de = first_arg*, hl = BP = first_result*
     ld e,iyl
     ex de,hl                                                              
-    push hl                     ; save BP
-    dec hl                      ; hl += 2 to compensate for pushing BP 
-    dec hl
-    or a                        ; bc = BP - SP = count 
+    ld bc,hl                    ; bc = hl = BP
+    or a                        ; hl = BP - SP = count 
     sbc hl,sp                   
+    push bc                     ; bc = count, hl = BP
     ld bc,hl
-    pop hl                      ; hl = BP
-    dec de                      ; de = args*-1
+    pop hl                      
     dec hl                      ; hl = BP-1
+    dec de                      ; de = args*-1
     lddr
     inc de                      ; hl = new tos
     ex de,hl                    
@@ -703,11 +702,11 @@ blockend:
 ;     ld d,iyh                    ; hl = BP
 ;     ld e,iyl
 ;     ex de,hl                                                              
-;     ld e,(iy+4)                 ; de = BP, hl = arglist* 
+;     ld e,(iy+4)                 ; de = BP, hl = arg_list* 
 ;     ld d,(iy+5)
 ;     ex de,hl                                                              
 ;     ld bc,0                     ; bc = 0, b = num locals = 0, c = num args = 0 
-;     ld a,l                      ; arglist* == null skip
+;     ld a,l                      ; arg_list* == null skip
 ;     or h
 ;     jr z,blockend2
 ;     dec hl                      ; b = (num locals) * 2
@@ -926,7 +925,7 @@ bytes1:
 array:
     ld de,0                     ; create stack frame
     push de                     ; push null for IP
-    ld e,(iy+4)                 ; push arglist* from parent stack frame
+    ld e,(iy+4)                 ; push arg_list* from parent stack frame
     ld d,(iy+5)                 ; 
     push de                     ; 
     ld e,(iy+2)                 ; push ScopeBP from parent stack frame
@@ -993,7 +992,7 @@ arrayEnd3:
     ex de,hl                    ; iy = de = old BP, hl = end of array
     ld iyh,d
     ld iyl,e
-    pop de                      ; pop arglist (discard)
+    pop de                      ; pop arg_list (discard)
     pop de                      ; pop ScopeBP (discard)
     pop de                      ; pop IP (discard)
     ld de,(vHeapPtr)            ; de = array[-2]
@@ -1564,7 +1563,16 @@ printStr:
 
 ; executes a null teminated string (null executes exit_)
 ; the string should be immedaitely following the call
-execStr:
+execStr:                        ; create a root stack frame
+    ; pop bc                      ; bc = code*
+    ; dec bc                      ; dec to prepare for next routine
+    ; ld de,0
+    ; push de                     ; push fake IP
+    ; push de                     ; push null arglist*
+    ; push de                     ; push null first_arg*
+    ; push de                     ; push fake BP
+    ; jp (ix) 
+
 branch:                         ; executes the address on the stack
     pop bc                      ; bc = code*
     dec bc                      ; dec to prepare for next routine
@@ -1866,77 +1874,91 @@ enter_:
     ld h,a
     jp (hl)
 
-; execute a block of code which ends with }
-; uses parent scope
-exec:				       
-    pop hl                      ; hl = code*
-    ld a,h                      ; skip if destination address is NUL
-    or l
-    jr z,exec2
-    push bc                     ; push IP 
-    ld e,(iy+4)                 ; de = scope arglist*
-    ld d,(iy+5)                 
-    push de                     ; push scope arglist*
-    ld e,(iy+2)                 ; de = ScopeBP from parent stack frame
-    ld d,(iy+3)                 
-    push de                     ; push ScopeBP
-    push iy                     ; push BP
-    ld iy,0                     ; BP = SP
-    add iy,sp
-    ld bc,hl                    ; IP = pointer to code
-    dec bc                      ; dec to prepare for next routine
-exec2:
-    jp (ix) 
-
 ; arg1 .. argn func -- ?
 call:
     pop hl
     jp (hl)
-        
+
+; execute a block of code which ends with }
+; creates a root scope if BP == stack
+; else uses outer scope 
+exec:				       
+    ld hl,stack                 ; de = BP, hl = stack, (sp) = code*
+    ld d,iyh                    
+    ld e,iyl
+    or a                        ; hl = stack - BP = root_scope
+    sbc hl,de                   
+    pop de                      ; de = block*
+    ld a,e                      ; if block* == null, skip
+    or d
+    jr z,doCall1e
+    push bc                     ; push IP
+    ld a,l                      ; if root_scope, skip
+    or h                    
+    jr z,exec1
+    ld c,(iy+4)                 ; push arg_list* (parent)
+    ld b,(iy+5)                 
+    push bc                     
+    ld c,(iy+2)                 ; hl = first_arg* (parent)
+    ld b,(iy+3)                 
+    ld hl,bc
+    jr doCall1d
+exec1:
+    ld hl,0
+    push hl                     ; push arg_list (null)
+    jr doCall1d                 ; hl = first_arg* (null)
+
 ; call with args
 ; creates a scope
+; code* -- ?
 doCall:				            ; execute code at pointer
-    pop hl                      ; hl = pointer to code
-    ld a,h                      ; skip if destination address is NUL
-    or l
-    jr z,doCall2
-    ld e,(hl)                   ; de = code*, hl = arglist*
+    pop hl                      ; hl = code*
+    ld a,l                      ; if code* == null, skip
+    or h
+    jr z,doCall1e
+    ld e,(hl)                   ; de = block*, hl = arg_list*
     inc hl
     ld d,(hl)
-    push hl                     ; hl' = block* - 1
-    exx
-    pop hl
-    exx
+    inc hl
     ex de,hl
-    ld a,l                      ; if arglist* == null skip, a = 0
+    ld a,l                      ; if arg_list* != null skip
     or h
-    jr z,doCall1
-    dec hl                      ; a = num locals
-    ld a,(hl)                    
-    inc hl                      ; hl = arglist*
-doCall1:                        ; reserve space for locals
+    jr nz,doCall1x              
+    push bc                     ; push IP
+    push hl                     ; push arg_list (null)
+    jr doCall1d                 ; hl = first_arg* (null)
+doCall1x:
+    dec hl                      ; a = num_locals*, de = block* hl = arg_list*
+    ld a,(hl)
+    inc hl
     or a
-    jr z,doCall1c
-    ld de,0
+    jr z,doCall1b
 doCall1a:
-    push de
+    dec sp
+    dec sp
     dec a
-    jr nz,doCall1a
-doCall1c:
-    push bc                     ; push IP 
-    push hl                     ; push arglist*
-    push iy                     ; push ScopeBP
+    jr z,doCall1a
+doCall1b:
+    push bc                     ; push IP    
+    push hl                     ; push arg_list*
+    dec hl                      ; hl = num_args*
+    dec hl
+    ld a,(hl)                   ; hl = num_args * 2
+    add a,a
+    ld l,a
+    ld h,$0
+    add hl,sp                   ; hl = first_arg*
+doCall1d:
+    push hl                     ; push first_arg    
     push iy                     ; push BP
     ld iy,0                     ; BP = SP
     add iy,sp
-    exx
-    push hl
-    exx
-    pop bc                      ; IP = block-1, ready for NEXT
-doCall2:
-    jp (ix)      
+    ld bc,de                    ; bc = de = block*-1
+    dec bc                       
+doCall1e:                       
+    jp (ix)    
 
-; arglist* block* -- ptr
+; arg_list* block* -- ptr
 func:
     ld hl,(vHeapPtr)                    ; hl = heapptr 
     ld (hl),$cd                         ; compile "call doclosure"
@@ -1947,10 +1969,10 @@ func:
     inc hl
     
     pop de                              ; hl = heapPtr, de = block
-    ex de,hl                            ; hl = heapPtr, de = arglist*, (sp) = block*
+    ex de,hl                            ; hl = heapPtr, de = arg_list*, (sp) = block*
     ex (sp),hl                          
     ex de,hl
-    ld (hl),e                           ; compile arglist*
+    ld (hl),e                           ; compile arg_list*
     inc hl
     ld (hl),d
     inc hl
@@ -2007,32 +2029,32 @@ func4a:
 ; -- value
 ; returns value of arg
 arg:
-    ld e,(iy+4)                 ; hl = arglist* 
+    ld e,(iy+4)                 ; hl = arg_list* 
     ld d,(iy+5)
     ex de,hl                    
-    ld a,l                      ; arglist* == null skip
+    ld a,l                      ; arg_list* == null, skip
     or h
     jr z,arg0a
-    dec hl                      ; e = num_args, hl = arglist*
+    dec hl                      ; a = num_args, hl = arg_list*
     dec hl
     ld a,(hl)                    
+    inc hl
+    inc hl
     or a
-    jr z,arg0a                   
-    ld e,a
-    inc hl
-    inc hl
+    jr z,arg0a                  ; num_args == 0, skip 
+    ld e,a                      ; e = a = num_args
     inc bc                      ; a = next char = arg_name
     ld a,(bc)
     push bc                     ; save IP                         
-    ld b,e                      ; b = num_args
-    ld e,(iy+2)                 ; de = ScopeBP, hl = argslist*   
+    ld b,e                      ; b = e = num_args
+    ld e,(iy+2)                 ; de = first_arg*, hl = argslist*   
     ld d,(iy+3)
 arg0:
     dec de                      ; a = arg_name, de = next arg*
     dec de
     cp (hl)
     jr z,arg1
-    inc hl                      ; hl = next arglist*            
+    inc hl                      ; hl = next arg_list*            
     djnz arg0
     pop bc                      ; no match, restore IP
 arg0a:
