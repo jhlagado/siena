@@ -22,6 +22,7 @@ UNUSED      EQU     $ff
 NUL         EQU     0               ; exit code
 DC1         EQU     17              ; literal number
 DC2         EQU     18              ; enter code
+DC3         EQU     19              ; enter code (anonymous)
 ESC         EQU     27              ; escape code
 
 ; **************************************************************************
@@ -36,7 +37,7 @@ ESC         EQU     27              ; escape code
 ;  :
 ; locn                              -- last local             
 ; IP                                -- IP (saved interpreter ptr, return)
-; arg_list*                          -- arg_list*
+; arg_list*                         -- arg_list*
 ; ScopeBP                           -- first_args           
 ; BP                                -- BP (saved base ptr)           <-- iy
 ; res0                              -- 0th result
@@ -789,9 +790,14 @@ dolet:
 dolet2:
     ld e,(hl)    
     inc hl    
-    ld d,(hl)    
+    ld d,(hl)
+    inc hl
 dolet3:
     push de    
+    ld e,(hl)    
+    inc hl    
+    ld d,(hl)
+    ld (vHashStr),de
     jp (ix)       
 
 index:
@@ -1059,8 +1065,14 @@ let:
     ld (hl),e
     inc hl
     ld (hl),d
-    dec hl
 
+    ld de,(vHashStr)
+    inc hl
+    ld (hl),e
+    inc hl
+    ld (hl),d
+
+    dec hl
     ld de,(vHeapPtr)            ; de = start of definition
     ld (vHeapPtr),hl            ; update heap ptr to end of definition
     pop hl                      ; de = addr, hl = IP
@@ -1904,9 +1916,9 @@ exec:
     pop de                      ; de = block*
     ld a,e                      ; if block* == null, exit
     or d
-    jr nz,exit1
+    jr nz,exec1
     jp (ix)
-exit1:
+exec1:
     push bc                     ; push IP
     ld hl,stack                 ; de = BP, hl = stack, (sp) = code*
     ld b,iyh                    
