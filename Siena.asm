@@ -800,12 +800,64 @@ dolet3:
     ld (vHashStr),de
     jp (ix)       
 
+; if
+; condition then -- value
+if:
+    ld de,0                      ; NUL pointer for else
+    jr ifte1
+
+; ; ifte
+; ; condition then else -- value
+; ifte: 
+;     pop de                      ; de = else
+; ifte1:
+;     pop hl                      ; hl = then
+;     ex (sp),hl                  ; hl = condition, (sp) = then
+;     inc hl                      ; check for true
+;     ld a,h
+;     or l
+;     pop hl                      ; hl = then
+;     jr z,ifte2                   
+;     ex de,hl                    ; condition = false, hl = else  
+; ifte2:                           
+;     push hl
+;     jp exec
+
+; ifte
+; condition then else -- value
+ifte: 
+    pop de                      ; de = else
+ifte1:
+    pop hl                      ; hl = then
+    ex (sp),hl                  ; hl = condition, (sp) = then
+    ld a,h
+    or l
+    pop hl                      ; hl = then
+    jp z,exec0                  ; if z de = else                   
+    ex de,hl                    ; condition = false, hl = else  
+    jp exec0
+
+; switch
+; index array -- value
+switch: 
+    pop de                      ; de = array
+    pop hl                      ; hl = index  
+    add hl,hl                           ; if data width = 2 then double 
+    add hl,de                           ; add addr
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    jp exec0
+
+; index of an array, based on vDataWidth 
+; array num -- value    ; also sets vPointer to address 
 index:
     pop hl                              ; hl = index  
-    pop de                              ; de = addr
+    pop de                              ; de = array
     ld a,(vDataWidth)                   ; a = data width
     dec a
     jr z,index1
+index0:
     add hl,hl                           ; if data width = 2 then double 
 index1:
     add hl,de                           ; add addr
@@ -833,57 +885,6 @@ set:
     ld (hl),d
 set1:	  
     jp (ix)  
-
-; if
-; condition then -- value
-if:
-    ld de,0                      ; NUL pointer for else
-    jr ifte1
-
-; ifte
-; condition then else -- value
-ifte: 
-    pop de                      ; de = else
-ifte1:
-    pop hl                      ; hl = then
-    ex (sp),hl                  ; hl = condition, (sp) = then
-    inc hl                      ; check for true
-    ld a,h
-    or l
-    pop hl                      ; hl = then
-    jr z,ifte2                   
-    ex de,hl                    ; condition = false, hl = else  
-ifte2:                           
-    push hl
-    jp exec
-
-;     ld a,h                      ; check if hl is NUL
-;     or l
-;     jr z,ifte3
-;     push bc                     ; push IP
-;     ld e,(iy+2)                 ; get ScopeBP from parent stack frame
-;     ld d,(iy+3)                 ; make this the old BP for this stack frame
-;     push de                     ; push ScopeBP
-;     push iy                     ; push BP  
-;     ld iy,0                     ; iy = sp
-;     add iy,sp
-;     ld bc,hl                    ; IP = then
-;     dec bc
-; ifte3:
-;     jp (ix)    
-
-; switch
-; index array -- value
-switch: 
-    pop de                      ; de = array
-    pop hl                      ; hl = index  
-    add hl,hl                   ; indec *= 2 
-    add hl,de                   ; add array[0]
-    ld c,(hl)                   ; bc = case    
-    inc hl    
-    ld b,(hl)    
-    dec bc
-    jp (ix)    
 
 ; c b --
 ; loops until c = 0
@@ -1673,7 +1674,7 @@ init1:
 
     call define
     .pstr "false",0                       
-    dw false
+    dw false1
 
     call define
     .pstr "filter",0                       
@@ -1761,7 +1762,7 @@ init1:
 
     call define
     .pstr "true",0                       
-    dw true
+    dw true1
 
     call define
     .pstr "words",0                       
@@ -1914,6 +1915,7 @@ call:
 ; else uses outer scope 
 exec:				       
     pop de                      ; de = block*
+exec0:
     ld a,e                      ; if block* == null, exit
     or d
     jr nz,exec1
@@ -2060,6 +2062,9 @@ func4a:
     push de
     ld (vHeapPtr),hl                    ; update heap ptr to end of definition
     jp (ix)
+
+; closure:
+
 
 ; $a .. $z
 ; -- value
