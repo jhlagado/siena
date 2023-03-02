@@ -19,7 +19,7 @@ PUTCVEC:    ds 2                ;
 
 sysVars:
 
-vFrac:      ds 2                ; 
+vFrac:      ds 2                ; initialised sys variables
 vDataWidth: ds 2                ; 
 vTIBPtr:    ds 2                ; 
 vPointer    ds 2                ; 
@@ -27,6 +27,8 @@ vLastDef:   ds 2                ;
 vHashStr:   ds 2                ; 
 vNext       ds 2                ; 
 vHeapPtr:   ds 2                ; 
+
+vTemp1:     ds 2                ; uninitialised sys variables
 
 .align $100
 TIB:        ds TIBSIZE

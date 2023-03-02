@@ -783,45 +783,11 @@ prop:
     ; push de                     ; push prop value
     jp (ix)
 
-; addr -- value
-dolet:
-    pop hl    
-    ld (vPointer),hl                    ; store address in setter    
-dolet2:
-    ld e,(hl)    
-    inc hl    
-    ld d,(hl)
-    inc hl
-dolet3:
-    push de    
-    ld e,(hl)    
-    inc hl    
-    ld d,(hl)
-    ld (vHashStr),de
-    jp (ix)       
-
 ; if
 ; condition then -- value
 if:
     ld de,0                      ; NUL pointer for else
     jr ifte1
-
-; ; ifte
-; ; condition then else -- value
-; ifte: 
-;     pop de                      ; de = else
-; ifte1:
-;     pop hl                      ; hl = then
-;     ex (sp),hl                  ; hl = condition, (sp) = then
-;     inc hl                      ; check for true
-;     ld a,h
-;     or l
-;     pop hl                      ; hl = then
-;     jr z,ifte2                   
-;     ex de,hl                    ; condition = false, hl = else  
-; ifte2:                           
-;     push hl
-;     jp exec
 
 ; ifte
 ; condition then else -- value
@@ -1088,6 +1054,23 @@ let2:
     pop bc
     jp (ix)
 
+; addr -- value
+dolet:
+    pop hl    
+    ld (vPointer),hl                    ; store address in setter    
+dolet2:
+    ld e,(hl)    
+    inc hl    
+    ld d,(hl)
+    inc hl
+dolet3:
+    push de    
+    ld e,(hl)    
+    inc hl    
+    ld d,(hl)
+    ld (vHashStr),de
+    jp (ix)       
+
 ; symbol -- ptr
 addr:
     pop hl                              ; hl = hash
@@ -1238,7 +1221,7 @@ true1:
     ld hl, TRUE
     push hl
     jp (ix) 
-
+null1:
 false1:
     ld hl, FALSE
     push hl
@@ -1660,9 +1643,9 @@ init1:
     .pstr "call",0                       
     dw call
 
-    ; call define
-    ; .pstr "closure",0                       
-    ; dw closure
+    call define
+    .pstr "closure",0                       
+    dw closure
 
     call define
     .pstr "def",0                       
@@ -1687,10 +1670,6 @@ init1:
     call define
     .pstr "func",0                       
     dw func
-
-    ; call define
-    ; .pstr "get",0                       
-    ; dw get
 
     call define
     .pstr "hash",0                       
@@ -1731,6 +1710,10 @@ init1:
     call define
     .pstr "neg",0                       
     dw neg
+
+    call define
+    .pstr "nil",0                       
+    dw null1
 
     call define
     .pstr "output",0                       
@@ -1881,7 +1864,6 @@ next1:
 
 escape_:
     inc bc                      ; falls through
-
 exit_:
     ld hl,bc
     jp (hl)
@@ -1999,7 +1981,7 @@ doCall5:
 ; arg_list* block* -- ptr
 func:
     ld hl,(vHeapPtr)                    ; hl = heapptr 
-    ld (hl),$cd                         ; compile "call doclosure"
+    ld (hl),$cd                         ; compile "call doCall"
     inc hl
     ld (hl),lsb(doCall)
     inc hl
@@ -2063,9 +2045,6 @@ func4a:
     ld (vHeapPtr),hl                    ; update heap ptr to end of definition
     jp (ix)
 
-; closure:
-
-
 ; $a .. $z
 ; -- value
 ; returns value of arg
@@ -2111,3 +2090,57 @@ arg1:
 arg1a:
     push de                     ; push arg
     jp (ix)
+
+; closure:
+; array -- addr
+closure:
+    ld hl,(vHeapPtr)                    ; hl = heap_ptr 
+    ld (hl),$cd                         ; compile "call doclosure"
+    inc hl
+    ld (hl),lsb(doClosure)
+    inc hl
+    ld (hl),msb(doClosure)
+    pop de
+    inc hl
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    ld de,(vHeapPtr)                    ; de = closure start
+    push de
+    ld (vHeapPtr),hl                    ; update heap ptr to end of closure
+    jp (ix)
+    
+; code* -- arr1 arr2 .. arrn func    
+doClosure:
+    pop hl                              ; hl = code*
+    ld e,(hl)                           ; de = array
+    inc hl
+    ld d,(hl)
+    inc hl
+    ld a,e                              ; de == null, skip
+    or d
+    jr z,doClosure3
+    ex de,hl                            ; hl = array
+    ld (vTemp1),bc                      ; save IP
+    dec hl                              ; bc = count
+    ld b,(hl)
+    dec hl
+    ld c,(hl)
+    inc hl                              ; push each item on stack
+    inc hl
+    jr doClosure2
+doClosure1:
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    push de
+    dec bc
+doClosure2:
+    ld a,c
+    or b
+    jr nz,doClosure1
+doClosure3:
+    ld bc,(vTemp1)                      ; restore IP
+    jp (ix)
+
