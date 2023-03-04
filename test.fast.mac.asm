@@ -42,3 +42,10 @@ expect%%M:
     .cstr code1
     expect code1,val1
 .endm
+
+.macro kall,label1
+    db msb(label1 / 2) + $80
+    db lsb(label1 / 2)
+.endm
+
+

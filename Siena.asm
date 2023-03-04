@@ -109,7 +109,7 @@ ctrlCodes:
     DB lsb(EMPTY)               ; ^^ 30 RS
     DB lsb(EMPTY)               ; ^_ 31 US
 
-opcodes:                        ; still available " % , ; DEL 
+opcodes:                        ; still available @ " % , ; DEL 
     DB lsb(nop_)                ; SP  
     DB lsb(not_)                ; !  
     DB lsb(nop_)                ; "
@@ -142,7 +142,7 @@ opcodes:                        ; still available " % , ; DEL
     DB lsb(eq_)                 ; =  
     DB lsb(gt_)                 ; >  
     DB lsb(index_)              ; ?    
-    DB lsb(prop_)               ; @  
+    DB lsb(nop_)                ; @  
     DB lsb(ident_)              ; A     
     DB lsb(ident_)              ; B     
     DB lsb(ident_)              ; C     
@@ -222,9 +222,6 @@ hexnum_:
 
 arg_:
     jp arg
-
-prop_:
-    jp prop
 
 string_:
     jp string
@@ -711,78 +708,6 @@ blockend2:
     pop iy
     jp (ix)    
 
-; blockend:
-;     exx
-;     ld e,(iy+0)                 ; de = oldBP
-;     ld d,(iy+1)
-;     ld c,(iy+6)                 ; bc = IP
-;     ld b,(iy+7)
-;     exx
-;     ld d,iyh                    ; hl = BP
-;     ld e,iyl
-;     ex de,hl                                                              
-;     ld e,(iy+4)                 ; de = BP, hl = arg_list* 
-;     ld d,(iy+5)
-;     ex de,hl                                                              
-;     ld bc,0                     ; bc = 0, b = num locals = 0, c = num args = 0 
-;     ld a,l                      ; arg_list* == null skip
-;     or h
-;     jr z,blockend2
-;     dec hl                      ; b = (num locals) * 2
-;     ld b,(hl)                   
-;     sla b                        
-;     dec hl              
-;     ld c,(hl)                   ; c = (num args) * 2
-;     sla c                        
-; blockend2:
-;     ld a,8                      ; a = header size in bytes
-;     add a,c                     ; a = offset to args*
-;     ld l,a                      ; de = bp, hl = offset to args*
-;     ld h,0
-;     add hl,de                   ; de = args*, hl = bp, 
-;     ex de,hl
-;     push hl                     ; save bp
-;     or a                        ; bc = count 
-;     sbc hl,sp                   
-;     ld bc,hl
-;     dec bc                      ; bc -= 2 remove space used to save BP
-;     dec bc
-;     pop hl                      ; hl = bp
-;     dec de                      ; de = args*-1
-;     dec hl                      ; hl = BP-1
-;     lddr
-;     inc de                      ; hl = new tos
-;     ex de,hl                    
-;     ld sp,hl                    ; sp = new tos
-;     exx                         ; bc = IP, iy = oldBP
-;     push de                     
-;     push bc                     
-;     exx 
-;     pop bc
-;     pop iy
-;     jp (ix)    
-
-        
-; @1..9
-; returns address of prop
-prop:
-    ; inc bc                      ; get next char
-    ; ld a,(bc)
-    ; sub "1"                     ; treat as a digit, 1 based index
-    ; and $0F                     ; mask 
-    ; add a,a                     ; double
-    ; ld l,a                      ; hl = offset into args
-    ; ld h,0
-    ; ld e,(iy+6)                 ; de = closure array
-    ; ld d,(iy+7)
-    ; add hl,de                   ; find address of prop in array
-    ; ld (vPointer),hl             ; store address in setter    
-    ; ld e,(hl)                   
-    ; inc hl
-    ; ld d,(hl)
-    ; push de                     ; push prop value
-    jp (ix)
-
 ; if
 ; condition then -- value
 if:
@@ -930,10 +855,7 @@ array:
 arrayEnd:
     ld d,iyh                    ; de = BP
     ld e,iyl
-    push bc                     ; save IP
-    exx
-    pop bc                  
-    exx
+    ld (vTemp1),bc              ; save IP
     ld hl,de                    ; hl = de = BP
     or a 
     sbc hl,sp                   ; hl = array count (items on stack)
@@ -988,10 +910,7 @@ arrayEnd3:
     pop de                      ; pop IP (discard)
     ld de,(vHeapPtr)            ; de = array[-2]
     ld (vHeapPtr),hl            ; move heapPtr to end of array
-    exx                         ; restore IP
-    push bc                     
-    exx
-    pop bc                  
+    ld bc,(vTemp1)              ; restore IP
     inc de                      ; de = array[0]
     inc de
     push de                     ; return array[0]
@@ -1160,6 +1079,7 @@ frac:
     push hl
     jp (ix)
 
+.align 2
 sqrt1:
     pop hl
     push bc
@@ -1432,7 +1352,9 @@ squareRoot4:
 squareRoot5:
     ld d,0
     ret           
- 
+
+; print decimal
+; hl = value
 prtdec:        
     bit 7,h
     jr z,prtdec0
@@ -1846,6 +1768,8 @@ next:
     cp " "                      ; whitespace?
     jr z,next                   ; space? ignore
     jr c,next1
+    cp $80                      ; if bit 7 = 1, treat as a big endian 15 bit address
+    jr nc,next2
     ld l,a                      ; index into table
     ld h,msb(opcodesBase)       ; start address of jump table    
     ld l,(hl)                   ; get low jump address
@@ -1861,6 +1785,13 @@ next1:
     cp DC2                      ; enter routine
     jr z,enter_
     jp interpret                ; no, other whitespace, macros?
+next2:
+    ld h,a                      ; hl = big endian 15 bit address, ignore high bit
+    inc bc
+    ld a,(bc)
+    ld l,a
+    add hl,hl                   ; hl = word aligned 16 bit address
+    jp (hl)
 
 escape_:
     inc bc                      ; falls through
