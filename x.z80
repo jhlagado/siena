@@ -14,7 +14,7 @@
 
                                 
 DSIZE       EQU     $80
-TIBSIZE     EQU     $100	        ; 256 bytes , along line!
+bufferSIZE     EQU     $100	        ; 256 bytes , along line!
 TRUE        EQU     -1		        ; C-style true
 FALSE       EQU     0
 EMPTY       EQU     0		         
@@ -23,6 +23,7 @@ NUL         EQU     0               ; exit code
 DC1         EQU     17              ; literal number
 DC2         EQU     18              ; enter code
 DC3         EQU     19              ; enter code (anonymous)
+DC4         EQU     20              ; enter code (anonymous)
 ESC         EQU     27              ; escape code
 
 ; **************************************************************************
@@ -62,14 +63,15 @@ macros:
 ; Initial values for system vars		
 ; ***********************************************************************		
 isysVars:			            
-    DW 0                        ; a vFrac fractional part of calculation			
-    DW 2                        ; b vDataWidth in bytes of array operations (default 1 byte) 
-    DW 0                        ; c vTIBPtr an offset to the tib
-    DW 0                        ; d vPointer
-    DW 0                        ; e vLastDef
-    DW 0                        ; f vHashStr
-    DW next                     ; g nNext
-    DW heap                     ; h vHeapPtr \h start of the free mem
+    DW 0                        ; vFrac fractional part of calculation			
+    DW 0                        ;   
+    DW 0                        ; vBufferPtr an offset to the buffer
+    DW 0                        ; vPointer
+    DW 0                        ; vHashStr
+    DW next                     ; vNext
+    DW heap                     ; vHeapPtr \h start of the free mem
+    DB 0                        ; vNesting used to store nesting dept
+    DB 2                        ; vDataWidth    
 
     .align $100
 
@@ -118,7 +120,7 @@ opcodes:                        ; still available @ " % , ; DEL
     DB lsb(nop_)                ; %  
     DB lsb(and_)                ; &
     DB lsb(string_)             ; '
-    DB lsb(arg_list_)            ; (    
+    DB lsb(arg_list_)           ; (    
     DB lsb(nop_)                ; )
     DB lsb(mul_)                ; *  
     DB lsb(add_)                ; +
@@ -612,6 +614,8 @@ char3:
     push hl
     jp (ix)  
 
+; -- addr 
+
 block:
     inc bc
     push bc                     ; return first opcode of block    
@@ -707,6 +711,102 @@ blockend2:
     pop bc
     pop iy
     jp (ix)    
+
+; block:
+;     inc bc
+;     push bc                     ; return first opcode of block    
+;     ld d,1                      ; nesting: count first parenthesis
+; block1:                         ; Skip to end of definition    
+;     ld a,(bc)                   ; Get the next character
+;     inc bc                      ; Point to next character
+;     cp " " + 1                  ; ignore whitespace 
+;     jr c,block1
+
+;     cp ")"
+;     jr z,block4
+;     cp "}"                       
+;     jr z,block4
+;     cp "]"
+;     jr z,block4
+
+;     cp "("
+;     jr z,block2
+;     cp "{"
+;     jr z,block2
+;     cp "["
+;     jr z,block2
+
+;     cp "'"
+;     jr z,block3
+;     cp "`"
+;     jr z,block3
+;     jr block1
+; block2:
+;     inc d
+;     jr block1                   
+; block3:
+;     ld a,$80
+;     xor d
+;     ld b,a
+;     jr nz, block1
+;     jr block5
+; block4:
+;     dec d
+;     jr nz, block1               ; get the next element
+; block5:
+;     dec bc                      ; balanced, exit
+;     jp (ix)  
+
+; blockend:
+;     exx
+;     ld e,(iy+0)                 ; de = oldBP
+;     ld d,(iy+1)
+;     ld c,(iy+6)                 ; bc = IP
+;     ld b,(iy+7)
+;     exx
+;     ld e,(iy+2)                 ; hl = first_arg*, is it in this scope?
+;     ld d,(iy+3)
+;     ex de,hl                                                              
+;     ld e,(iy+0)                 ; de = oldBP
+;     ld d,(iy+1)
+;     ; ex de,hl                    ; de = first_arg*, hl = oldBP                                          
+;     inc de                      ; for carry flag <=
+;     or a
+;     sbc hl,de
+;     jr c,blockend1              ; oldBP >= first_arg, same scope skip
+;     ld d,iyh                    ; de = BP = first_result*, no args in this scope
+;     ld e,iyl
+;     ld hl,8
+;     add hl,de                   ; de = BP = first_result* (BP), hl = first_arg* (BP+8)
+;     ex de,hl                    ; de = first_arg*, hl = first_result*
+;     jr blockend2
+; blockend1:                      ; same scope
+;     ld e,(iy+2)                 ; hl = first_arg*, in scope
+;     ld d,(iy+3)
+;     ex de,hl                                                              
+;     ld d,iyh                    ; de = first_arg*, hl = BP = first_result*
+;     ld e,iyl
+;     ex de,hl                                                              
+; blockend2:                      
+;     ld bc,hl                    ; bc = hl = BP
+;     or a                        ; hl = BP - SP = count 
+;     sbc hl,sp                   
+;     push bc                     ; bc = count, hl = BP
+;     ld bc,hl
+;     pop hl                      
+;     dec hl                      ; hl = BP-1
+;     dec de                      ; de = args*-1
+;     lddr
+;     inc de                      ; hl = new tos
+;     ex de,hl                    
+;     ld sp,hl                    ; sp = new tos
+;     exx                         ; bc = IP, iy = oldBP
+;     push de                     
+;     push bc                     
+;     exx 
+;     pop bc
+;     pop iy
+;     jp (ix)    
 
 ; if
 ; condition then -- value
@@ -830,12 +930,12 @@ loop:
 ;     jp (ix)
 
 words:
-    ld hl,2
+    ld a,2
     jr bytes1
 bytes:
-    ld hl,1
+    ld a,1
 bytes1:
-    ld (vDataWidth),hl
+    ld (vDataWidth),a
     jp (ix)
     
 array:
@@ -1167,6 +1267,588 @@ scan:
     jp (ix)
 
 
+init:       
+    ld ix,(vNext)
+    ld iy,STACK
+    ld hl,isysVars
+    ld de,sysVars
+    ld bc,8 * 2
+    ldir
+    
+    ld a,UNUSED
+    ld b,0
+    ld hl, hashSlots
+init1:
+    ld (hl),a
+    inc hl
+    djnz init1 
+
+    call define
+    .pstr "abs",0                       
+    dw abs1
+
+    call define
+    .pstr "addr",0                       
+    dw addr
+
+    call define
+    .pstr "bytes",0                       
+    dw bytes
+
+    call define
+    .pstr "call",0                       
+    dw call
+
+    call define
+    .pstr "closure",0                       
+    dw closure
+
+    call define
+    .pstr "def",0                       
+    dw def
+
+    call define
+    .pstr "exec",0                       
+    dw exec
+
+    call define
+    .pstr "false",0                       
+    dw false1
+
+    call define
+    .pstr "filter",0                       
+    dw filter
+
+    call define
+    .pstr "frac",0                       
+    dw frac
+
+    call define
+    .pstr "func",0                       
+    dw func
+
+    call define
+    .pstr "hash",0                       
+    dw hash
+
+    call define
+    .pstr "input",0                       
+    dw input
+
+    call define
+    .pstr "if",0                       
+    dw if
+
+    call define
+    .pstr "ifte",0                       
+    dw ifte
+
+    call define
+    .pstr "key",0                       
+    dw key
+
+    call define
+    .pstr "let",0                       
+    dw let
+
+    call define
+    .pstr "loop",0                       
+    dw loop
+
+    call define
+    .pstr "map",0                       
+    dw map
+
+    call define
+    .pstr "mod",0                       
+    dw mod
+
+    call define
+    .pstr "neg",0                       
+    dw neg
+
+    call define
+    .pstr "nil",0                       
+    dw null1
+
+    call define
+    .pstr "output",0                       
+    dw output
+
+    call define
+    .pstr "scan",0                       
+    dw scan
+
+    call define
+    .pstr "set",0                       
+    dw set
+
+    call define
+    .pstr "shl",0                       
+    dw shl
+
+    call define
+    .pstr "shr",0                       
+    dw shr
+
+    call define
+    .pstr "sqrt",0                       
+    dw sqrt1
+
+    call define
+    .pstr "switch",0                       
+    dw switch
+
+    call define
+    .pstr "true",0                       
+    dw true1
+
+    call define
+    .pstr "words",0                       
+    dw words
+
+    ret
+
+start:
+    ld sp,STACK		            ; start of Siena
+    call init		            ; setups
+    call printStr		        ; prog count to stack, put code line 235 on stack then call print
+    .cstr "Siena V0.0\r\n"
+
+interpret:
+    call prompt
+
+    ld bc,0                     ; load bc with offset into buffer, decide char into buffer or execute or control    
+    ld (vBufferPtr),bc
+
+interpret2:                     ; calc nesting (a macro might have changed it)
+    ld e,0                      ; initilize nesting value
+    push bc                     ; save offset into buffer, 
+                                ; bc is also the count of chars in buffer
+    ld hl,buffer                   ; hl is start of buffer
+    jr interpret4
+
+interpret3:
+    ld a,(hl)                   ; a = char in buffer
+    inc hl                      ; inc pointer into buffer
+    dec bc                      ; dec count of chars in buffer
+    call nesting                ; update nesting value
+
+interpret4:
+    ld a,c                      ; is count zero?
+    or b
+    jr nz, interpret3           ; if not loop
+    pop bc                      ; restore offset into buffer
+    
+waitchar:    
+    call getchar                ; loop around waiting for character from serial port
+    cp $20			            ; compare to space
+    jr nc,waitchar1		        ; if >= space, if below 20 set cary flag
+    cp $0                       ; is it end of string? NUL end of string
+                                ; ???? NEEDED?
+    jr z,waitchar4
+    cp '\r'                     ; carriage return? ascii 13
+    jr z,waitchar3		        ; if anything else its macro/control 
+
+macro:       
+;  ld (vBufferPtr),bc
+;  ld hl,ctrlCodes
+;  add a,l			            ; look up key of macros
+;  ld l,a
+;  ld e,(hl)
+;  ld a,e
+;  or a
+;  jr z,macro1
+;  ld d,msb(macros)
+;  push de
+;  call call		            ; Siena exec_ operation and jump to it
+;  db DC1,0
+; macro1:
+;  ld bc,(vBufferPtr)
+    jr interpret2
+
+waitchar1:
+    ld hl,buffer
+    add hl,bc
+    ld (hl),a                   ; store the character in textbuf
+    inc bc
+    call putchar                ; echo character to screen
+    call nesting
+    jr  waitchar                ; wait for next character
+
+waitchar3:
+    ld hl,buffer
+    add hl,bc
+    ld (hl),"\r"                ; store the crlf in textbuf
+    inc hl
+    ld (hl),"\n"  
+    inc hl    
+    inc bc
+    inc bc
+    call crlf                   ; echo character to screen
+    ld a,e                      ; if zero nesting append and ETX after \r
+    or a
+    jr nz,waitchar
+
+waitchar4:    
+    ld (vBufferPtr),bc
+    ld bc,buffer                   ; Instructions stored on heap at address HERE, 
+                                ; we pressed enter
+    dec bc
+
+next:        
+    inc bc                      ; Increment the IP
+    ld a,(bc)                   ; Get the next character and dispatch
+    cp " "                      ; whitespace?
+    jr z,next                   ; space? ignore
+    jr c,next1
+    cp $80                      ; if bit 7 = 1, treat as a big endian 15 bit address
+    jr nc,next2
+    ld l,a                      ; index into table
+    ld h,msb(opcodesBase)       ; start address of jump table    
+    ld l,(hl)                   ; get low jump address
+    ld h,msb(page4)             ; Load h with the 1st page address
+    jp (hl)                     ; Jump to routine
+next1:
+    cp ESC                      ; escape from interpreter, needed???
+    jr z,escape_                   
+    cp NUL                      ; end of input string?
+    jr z,exit_
+    cp DC1                      ; literal number
+    jr z,literal_
+    cp DC2                      ; enter routine
+    jr z,enter_
+    cp DC4                      ; relative branch
+    jr z,branch_
+    jp interpret                ; no, other whitespace, macros?
+next2:
+    ld h,a                      ; hl = big endian 15 bit address, ignore high bit
+    inc bc
+    ld a,(bc)
+    ld l,a
+    add hl,hl                   ; hl = word aligned 16 bit address
+    jp (hl)
+
+escape_:
+    inc bc                      ; falls through
+exit_:
+    ld hl,bc
+    jp (hl)
+
+literal_:
+    inc bc
+    ld a,(bc)
+    ld l,a
+    inc bc
+    ld a,(bc)
+    ld h,a
+    push hl
+    jp (ix)
+
+branch_:                        ; jumps relative to IP
+    inc bc
+    ld a,(bc)
+    ld l,a
+    inc bc
+    ld a,(bc)
+    ld h,a
+    add hl,bc
+    ld bc,hl
+    jp (ix)
+
+enter_:
+    inc bc
+    ld a,(bc)
+    ld l,a
+    inc bc
+    ld a,(bc)
+    ld h,a
+    jp (hl)
+
+; arg1 .. argn func -- ?
+call:
+    pop hl
+    jp (hl)
+
+; execute a block of code which ends with }
+; creates a root scope if BP == stack
+; else uses outer scope 
+exec:				       
+    pop de                      ; de = block*
+exec0:
+    ld a,e                      ; if block* == null, exit
+    or d
+    jr nz,exec1
+    jp (ix)
+exec1:
+    push bc                     ; push IP
+    ld hl,stack                 ; de = BP, hl = stack, (sp) = code*
+    ld b,iyh                    
+    ld c,iyl
+    or a                        ; hl = stack - BP = root_scope
+    sbc hl,bc                   
+    ld a,l                      ; if root_scope, skip
+    or h                    
+    jr z,exec2
+    ld c,(iy+4)                 ; push arg_list* (parent)
+    ld b,(iy+5)                 
+    push bc                     
+    ld c,(iy+2)                 ; hl = first_arg* (parent)
+    ld b,(iy+3)                 
+    ld hl,bc
+    jr doCall4
+exec2:
+    push hl                     ; push arg_list (null)
+    ld hl,4                     ; hl = first_arg* (BP+8)
+    add hl,sp
+    jr doCall4                  ; 
+
+; call with args
+; creates a scope
+; code* -- ?
+doCall:				            ; execute code at pointer
+    pop hl                      ; hl = code*
+    ld a,l                      ; if code* == null, skip
+    or h
+    jr z,doCall5
+    ld e,(hl)                   ; de = block*, hl = arg_list*
+    inc hl
+    ld d,(hl)
+    inc hl
+    ex de,hl
+    ld a,l                      ; if arg_list* != null skip
+    or h
+    jr nz,doCall1              
+    push bc                     ; push IP
+    push hl                     ; push arg_list (null)
+    ld hl,4                     ; hl = first_arg (BP + 8)
+    add hl,sp
+    jr doCall4                  
+doCall1:
+    dec hl                      ; a = num_locals*, de = block* hl = arg_list*
+    ld a,(hl)
+    inc hl
+    or a
+    jr z,doCall3
+doCall2:
+    dec sp
+    dec sp
+    dec a
+    jr nz,doCall2
+doCall3:
+    push bc                     ; push IP    
+    push hl                     ; push arg_list*
+    dec hl                      ; hl = num_args*
+    dec hl
+    ld a,(hl)                   ; hl = num_args * 2
+    add a,a
+    add a,4                     ; offset for IP and arg_list
+    ld l,a
+    ld h,$0
+    add hl,sp                   ; hl = first_arg*
+doCall4:
+    push hl                     ; push first_arg    
+    push iy                     ; push BP
+    ld iy,0                     ; BP = SP
+    add iy,sp
+    ld bc,de                    ; bc = de = block*-1
+    dec bc                       
+doCall5:                       
+    jp (ix)    
+
+; arg_list* block* -- ptr
+func:
+    ld hl,(vHeapPtr)                    ; hl = heapptr 
+    ld (hl),$cd                         ; compile "call doCall"
+    inc hl
+    ld (hl),lsb(doCall)
+    inc hl
+    ld (hl),msb(doCall)
+    inc hl
+    
+    pop de                              ; hl = heapPtr, de = block
+    ex de,hl                            ; hl = heapPtr, de = arg_list*, (sp) = block*
+    ex (sp),hl                          
+    ex de,hl
+    ld (hl),e                           ; compile arg_list*
+    inc hl
+    ld (hl),d
+    inc hl
+
+    pop de                              ; de = block*
+    push bc                             ; (sp) = IP 
+    ld b,1                              ; b = nesting
+func1:
+    ld a,(de)                           
+    inc de
+    ld (hl),a
+    inc hl
+    
+    cp ")"
+    jr z,func4
+    cp "}"                       
+    jr z,func4
+    cp "]"
+    jr z,func4
+
+    cp "("
+    jr z,func2
+    cp "{"
+    jr z,func2
+    cp "["
+    jr z,func2
+
+    cp "'"
+    jr z,func3
+    cp "`"
+    jr z,func3
+    jr func1
+func2:
+    inc b
+    jr func1                   
+func3:
+    ld a,$80
+    xor b
+    ld b,a
+    jr nz,func1
+    jr func4a
+func4:
+    dec b
+    jr nz, func1                        ; get the next element
+func4a:
+    inc hl
+    pop bc                              ; de = defstart, hl = IP
+    ld de,(vHeapPtr)                    ; de = defstart
+    push de
+    ld (vHeapPtr),hl                    ; update heap ptr to end of definition
+    jp (ix)
+
+; $a .. $z
+; -- value
+; returns value of arg
+arg:
+    ld e,(iy+4)                 ; hl = arg_list* 
+    ld d,(iy+5)
+    ex de,hl                    
+    ld a,l                      ; arg_list* == null, skip
+    or h
+    jr z,arg0a
+    dec hl                      ; a = num_args, hl = arg_list*
+    dec hl
+    ld a,(hl)                    
+    inc hl
+    inc hl
+    or a
+    jr z,arg0a                  ; num_args == 0, skip 
+    ld e,a                      ; e = a = num_args
+    inc bc                      ; a = next char = arg_name
+    ld a,(bc)
+    push bc                     ; save IP                         
+    ld b,e                      ; b = e = num_args
+    ld e,(iy+2)                 ; de = first_arg*, hl = argslist*   
+    ld d,(iy+3)
+arg0:
+    dec de                      ; a = arg_name, de = next arg*
+    dec de
+    cp (hl)
+    jr z,arg1
+    inc hl                      ; hl = next arg_list*            
+    djnz arg0
+    pop bc                      ; no match, restore IP
+arg0a:
+    ld de,0                     ; return 0
+    jr arg1a
+arg1:
+    pop bc                      ; restore IP
+    ex de,hl                    ; hl = arg*
+    ld (vPointer),hl            ; store arg* in setter    
+    ld e,(hl)
+    inc hl
+    ld d,(hl)                   ; de = arg
+arg1a:
+    push de                     ; push arg
+    jp (ix)
+
+; closure:
+; array -- addr
+closure:
+    ld hl,(vHeapPtr)                    ; hl = heap_ptr 
+    ld (hl),$cd                         ; compile "call doclosure"
+    inc hl
+    ld (hl),lsb(doClosure)
+    inc hl
+    ld (hl),msb(doClosure)
+    pop de
+    inc hl
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    ld de,(vHeapPtr)                    ; de = closure start
+    push de
+    ld (vHeapPtr),hl                    ; update heap ptr to end of closure
+    jp (ix)
+    
+; code* -- arr1 arr2 .. arrn func    
+doClosure:
+    pop hl                              ; hl = code*
+    ld e,(hl)                           ; de = array
+    inc hl
+    ld d,(hl)
+    inc hl
+    ld a,e                              ; de == null, skip
+    or d
+    jr z,doClosure3
+    ex de,hl                            ; hl = array
+    ld (vTemp1),bc                      ; save IP
+    dec hl                              ; bc = count
+    ld b,(hl)
+    dec hl
+    ld c,(hl)
+    inc hl                              ; push each item on stack
+    inc hl
+    jr doClosure2
+doClosure1:
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    push de
+    dec bc
+doClosure2:
+    ld a,c
+    or b
+    jr nz,doClosure1
+doClosure3:
+    ld bc,(vTemp1)                      ; restore IP
+    jp (ix)
+
+; readIdent
+; reads identifier from input stream into buffer
+; input: bc = IP, de = buffer
+
+readIdent:
+    ld h,msb(opcodesBase)               ; this table identifies the char type
+    jr readIdent1
+readIdent0:                                 ; copy to PAD area 
+    inc bc                              ; characters that are part of the identifier  
+    inc de
+readIdent1:                                 ; 0-9 A-Z a-z _
+    ld a,(bc)
+    ld (de),a
+    cp " "+1
+    jr c,readIdent2
+    ld l,a
+    ld a,(hl)
+    cp lsb(ident_)
+    jr z,readIdent0
+    cp lsb(num_)
+    jr z,readIdent0
+readIdent2:
+    dec bc
+    xor a
+    ld (de),a                           ; terminate string with NUL
+    ret
+    
 ; -------------------------------------------------------------------------------
 
 
@@ -1488,11 +2170,6 @@ execStr:                        ; create a root stack frame
     ; push de                     ; push fake BP
     ; jp (ix) 
 
-branch:                         ; executes the address on the stack
-    pop bc                      ; bc = code*
-    dec bc                      ; dec to prepare for next routine
-    jp (ix) 
-
 define:
     pop hl
     ld a,(hl)
@@ -1512,571 +2189,3 @@ define:
     ld bc,hl
     jp defineEntry
 
-init:       
-    ld ix,(vNext)
-    ld iy,STACK
-    ld hl,isysVars
-    ld de,sysVars
-    ld bc,8 * 2
-    ldir
-    
-    ld a,UNUSED
-    ld b,0
-    ld hl, hashSlots
-init1:
-    ld (hl),a
-    inc hl
-    djnz init1 
-
-    call define
-    .pstr "abs",0                       
-    dw abs1
-
-    call define
-    .pstr "addr",0                       
-    dw addr
-
-    call define
-    .pstr "bytes",0                       
-    dw bytes
-
-    call define
-    .pstr "call",0                       
-    dw call
-
-    call define
-    .pstr "closure",0                       
-    dw closure
-
-    call define
-    .pstr "def",0                       
-    dw def
-
-    call define
-    .pstr "exec",0                       
-    dw exec
-
-    call define
-    .pstr "false",0                       
-    dw false1
-
-    call define
-    .pstr "filter",0                       
-    dw filter
-
-    call define
-    .pstr "frac",0                       
-    dw frac
-
-    call define
-    .pstr "func",0                       
-    dw func
-
-    call define
-    .pstr "hash",0                       
-    dw hash
-
-    call define
-    .pstr "input",0                       
-    dw input
-
-    call define
-    .pstr "if",0                       
-    dw if
-
-    call define
-    .pstr "ifte",0                       
-    dw ifte
-
-    call define
-    .pstr "key",0                       
-    dw key
-
-    call define
-    .pstr "let",0                       
-    dw let
-
-    call define
-    .pstr "loop",0                       
-    dw loop
-
-    call define
-    .pstr "map",0                       
-    dw map
-
-    call define
-    .pstr "mod",0                       
-    dw mod
-
-    call define
-    .pstr "neg",0                       
-    dw neg
-
-    call define
-    .pstr "nil",0                       
-    dw null1
-
-    call define
-    .pstr "output",0                       
-    dw output
-
-    call define
-    .pstr "scan",0                       
-    dw scan
-
-    call define
-    .pstr "set",0                       
-    dw set
-
-    call define
-    .pstr "shl",0                       
-    dw shl
-
-    call define
-    .pstr "shr",0                       
-    dw shr
-
-    call define
-    .pstr "sqrt",0                       
-    dw sqrt1
-
-    call define
-    .pstr "switch",0                       
-    dw switch
-
-    call define
-    .pstr "true",0                       
-    dw true1
-
-    call define
-    .pstr "words",0                       
-    dw words
-
-    ret
-
-start:
-    ld sp,STACK		        ; start of Siena
-    call init		            ; setups
-    call printStr		        ; prog count to stack, put code line 235 on stack then call print
-    .cstr "Siena V0.0\r\n"
-
-interpret:
-    call prompt
-
-    ld bc,0                     ; load bc with offset into TIB, decide char into tib or execute or control    
-    ld (vTIBPtr),bc
-
-interpret2:                     ; calc nesting (a macro might have changed it)
-    ld e,0                      ; initilize nesting value
-    push bc                     ; save offset into TIB, 
-                                ; bc is also the count of chars in TIB
-    ld hl,TIB                   ; hl is start of TIB
-    jr interpret4
-
-interpret3:
-    ld a,(hl)                   ; a = char in TIB
-    inc hl                      ; inc pointer into TIB
-    dec bc                      ; dec count of chars in TIB
-    call nesting                ; update nesting value
-
-interpret4:
-    ld a,c                      ; is count zero?
-    or b
-    jr nz, interpret3           ; if not loop
-    pop bc                      ; restore offset into TIB
-    
-waitchar:    
-    call getchar                ; loop around waiting for character from serial port
-    cp $20			            ; compare to space
-    jr nc,waitchar1		        ; if >= space, if below 20 set cary flag
-    cp $0                       ; is it end of string? NUL end of string
-                                ; ???? NEEDED?
-    jr z,waitchar4
-    cp '\r'                     ; carriage return? ascii 13
-    jr z,waitchar3		        ; if anything else its macro/control 
-
-macro:       
-;  ld (vTIBPtr),bc
-;  ld hl,ctrlCodes
-;  add a,l			            ; look up key of macros
-;  ld l,a
-;  ld e,(hl)
-;  ld a,e
-;  or a
-;  jr z,macro1
-;  ld d,msb(macros)
-;  push de
-;  call call		            ; Siena exec_ operation and jump to it
-;  db DC1,0
-; macro1:
-;  ld bc,(vTIBPtr)
-    jr interpret2
-
-waitchar1:
-    ld hl,TIB
-    add hl,bc
-    ld (hl),a                   ; store the character in textbuf
-    inc bc
-    call putchar                ; echo character to screen
-    call nesting
-    jr  waitchar                ; wait for next character
-
-waitchar3:
-    ld hl,TIB
-    add hl,bc
-    ld (hl),"\r"                ; store the crlf in textbuf
-    inc hl
-    ld (hl),"\n"  
-    inc hl    
-    inc bc
-    inc bc
-    call crlf                   ; echo character to screen
-    ld a,e                      ; if zero nesting append and ETX after \r
-    or a
-    jr nz,waitchar
-
-waitchar4:    
-    ld (vTIBPtr),bc
-    ld bc,TIB                   ; Instructions stored on heap at address HERE, 
-                                ; we pressed enter
-    dec bc
-
-next:        
-    inc bc                      ; Increment the IP
-    ld a,(bc)                   ; Get the next character and dispatch
-    cp " "                      ; whitespace?
-    jr z,next                   ; space? ignore
-    jr c,next1
-    cp $80                      ; if bit 7 = 1, treat as a big endian 15 bit address
-    jr nc,next2
-    ld l,a                      ; index into table
-    ld h,msb(opcodesBase)       ; start address of jump table    
-    ld l,(hl)                   ; get low jump address
-    ld h,msb(page4)             ; Load h with the 1st page address
-    jp (hl)                     ; Jump to routine
-next1:
-    cp ESC                      ; escape from interpreter, needed???
-    jr z,escape_                   
-    cp NUL                      ; end of input string?
-    jr z,exit_
-    cp DC1                      ; literal number
-    jr z,literal_
-    cp DC2                      ; enter routine
-    jr z,enter_
-    jp interpret                ; no, other whitespace, macros?
-next2:
-    ld h,a                      ; hl = big endian 15 bit address, ignore high bit
-    inc bc
-    ld a,(bc)
-    ld l,a
-    add hl,hl                   ; hl = word aligned 16 bit address
-    jp (hl)
-
-escape_:
-    inc bc                      ; falls through
-exit_:
-    ld hl,bc
-    jp (hl)
-
-literal_:
-    inc bc
-    ld a,(bc)
-    ld l,a
-    inc bc
-    ld a,(bc)
-    ld h,a
-    push hl
-    jp (ix)
-
-enter_:
-    inc bc
-    ld a,(bc)
-    ld l,a
-    inc bc
-    ld a,(bc)
-    ld h,a
-    jp (hl)
-
-; arg1 .. argn func -- ?
-call:
-    pop hl
-    jp (hl)
-
-; execute a block of code which ends with }
-; creates a root scope if BP == stack
-; else uses outer scope 
-exec:				       
-    pop de                      ; de = block*
-exec0:
-    ld a,e                      ; if block* == null, exit
-    or d
-    jr nz,exec1
-    jp (ix)
-exec1:
-    push bc                     ; push IP
-    ld hl,stack                 ; de = BP, hl = stack, (sp) = code*
-    ld b,iyh                    
-    ld c,iyl
-    or a                        ; hl = stack - BP = root_scope
-    sbc hl,bc                   
-    ld a,l                      ; if root_scope, skip
-    or h                    
-    jr z,exec2
-    ld c,(iy+4)                 ; push arg_list* (parent)
-    ld b,(iy+5)                 
-    push bc                     
-    ld c,(iy+2)                 ; hl = first_arg* (parent)
-    ld b,(iy+3)                 
-    ld hl,bc
-    jr doCall4
-exec2:
-    push hl                     ; push arg_list (null)
-    ld hl,4                     ; hl = first_arg* (BP+8)
-    add hl,sp
-    jr doCall4                  ; 
-
-; call with args
-; creates a scope
-; code* -- ?
-doCall:				            ; execute code at pointer
-    pop hl                      ; hl = code*
-    ld a,l                      ; if code* == null, skip
-    or h
-    jr z,doCall5
-    ld e,(hl)                   ; de = block*, hl = arg_list*
-    inc hl
-    ld d,(hl)
-    inc hl
-    ex de,hl
-    ld a,l                      ; if arg_list* != null skip
-    or h
-    jr nz,doCall1              
-    push bc                     ; push IP
-    push hl                     ; push arg_list (null)
-    ld hl,4                     ; hl = first_arg (BP + 8)
-    add hl,sp
-    jr doCall4                  
-doCall1:
-    dec hl                      ; a = num_locals*, de = block* hl = arg_list*
-    ld a,(hl)
-    inc hl
-    or a
-    jr z,doCall3
-doCall2:
-    dec sp
-    dec sp
-    dec a
-    jr nz,doCall2
-doCall3:
-    push bc                     ; push IP    
-    push hl                     ; push arg_list*
-    dec hl                      ; hl = num_args*
-    dec hl
-    ld a,(hl)                   ; hl = num_args * 2
-    add a,a
-    add a,4                     ; offset for IP and arg_list
-    ld l,a
-    ld h,$0
-    add hl,sp                   ; hl = first_arg*
-doCall4:
-    push hl                     ; push first_arg    
-    push iy                     ; push BP
-    ld iy,0                     ; BP = SP
-    add iy,sp
-    ld bc,de                    ; bc = de = block*-1
-    dec bc                       
-doCall5:                       
-    jp (ix)    
-
-; arg_list* block* -- ptr
-func:
-    ld hl,(vHeapPtr)                    ; hl = heapptr 
-    ld (hl),$cd                         ; compile "call doCall"
-    inc hl
-    ld (hl),lsb(doCall)
-    inc hl
-    ld (hl),msb(doCall)
-    inc hl
-    
-    pop de                              ; hl = heapPtr, de = block
-    ex de,hl                            ; hl = heapPtr, de = arg_list*, (sp) = block*
-    ex (sp),hl                          
-    ex de,hl
-    ld (hl),e                           ; compile arg_list*
-    inc hl
-    ld (hl),d
-    inc hl
-
-    pop de                              ; de = block*
-    push bc                             ; (sp) = IP 
-    ld b,1                              ; b = nesting
-func1:
-    ld a,(de)                           
-    inc de
-    ld (hl),a
-    inc hl
-    
-    cp ")"
-    jr z,func4
-    cp "}"                       
-    jr z,func4
-    cp "]"
-    jr z,func4
-
-    cp "("
-    jr z,func2
-    cp "{"
-    jr z,func2
-    cp "["
-    jr z,func2
-
-    cp "'"
-    jr z,func3
-    cp "`"
-    jr z,func3
-    jr func1
-func2:
-    inc b
-    jr func1                   
-func3:
-    ld a,$80
-    xor b
-    ld b,a
-    jr nz,func1
-    jr func4a
-func4:
-    dec b
-    jr nz, func1                        ; get the next element
-func4a:
-    inc hl
-    pop bc                              ; de = defstart, hl = IP
-    ld de,(vHeapPtr)                    ; de = defstart
-    push de
-    ld (vHeapPtr),hl                    ; update heap ptr to end of definition
-    jp (ix)
-
-; $a .. $z
-; -- value
-; returns value of arg
-arg:
-    ld e,(iy+4)                 ; hl = arg_list* 
-    ld d,(iy+5)
-    ex de,hl                    
-    ld a,l                      ; arg_list* == null, skip
-    or h
-    jr z,arg0a
-    dec hl                      ; a = num_args, hl = arg_list*
-    dec hl
-    ld a,(hl)                    
-    inc hl
-    inc hl
-    or a
-    jr z,arg0a                  ; num_args == 0, skip 
-    ld e,a                      ; e = a = num_args
-    inc bc                      ; a = next char = arg_name
-    ld a,(bc)
-    push bc                     ; save IP                         
-    ld b,e                      ; b = e = num_args
-    ld e,(iy+2)                 ; de = first_arg*, hl = argslist*   
-    ld d,(iy+3)
-arg0:
-    dec de                      ; a = arg_name, de = next arg*
-    dec de
-    cp (hl)
-    jr z,arg1
-    inc hl                      ; hl = next arg_list*            
-    djnz arg0
-    pop bc                      ; no match, restore IP
-arg0a:
-    ld de,0                     ; return 0
-    jr arg1a
-arg1:
-    pop bc                      ; restore IP
-    ex de,hl                    ; hl = arg*
-    ld (vPointer),hl            ; store arg* in setter    
-    ld e,(hl)
-    inc hl
-    ld d,(hl)                   ; de = arg
-arg1a:
-    push de                     ; push arg
-    jp (ix)
-
-; closure:
-; array -- addr
-closure:
-    ld hl,(vHeapPtr)                    ; hl = heap_ptr 
-    ld (hl),$cd                         ; compile "call doclosure"
-    inc hl
-    ld (hl),lsb(doClosure)
-    inc hl
-    ld (hl),msb(doClosure)
-    pop de
-    inc hl
-    ld (hl),e
-    inc hl
-    ld (hl),d
-    ld de,(vHeapPtr)                    ; de = closure start
-    push de
-    ld (vHeapPtr),hl                    ; update heap ptr to end of closure
-    jp (ix)
-    
-; code* -- arr1 arr2 .. arrn func    
-doClosure:
-    pop hl                              ; hl = code*
-    ld e,(hl)                           ; de = array
-    inc hl
-    ld d,(hl)
-    inc hl
-    ld a,e                              ; de == null, skip
-    or d
-    jr z,doClosure3
-    ex de,hl                            ; hl = array
-    ld (vTemp1),bc                      ; save IP
-    dec hl                              ; bc = count
-    ld b,(hl)
-    dec hl
-    ld c,(hl)
-    inc hl                              ; push each item on stack
-    inc hl
-    jr doClosure2
-doClosure1:
-    ld e,(hl)
-    inc hl
-    ld d,(hl)
-    inc hl
-    push de
-    dec bc
-doClosure2:
-    ld a,c
-    or b
-    jr nz,doClosure1
-doClosure3:
-    ld bc,(vTemp1)                      ; restore IP
-    jp (ix)
-
-; readIdent
-; reads identifier from input stream into buffer
-; input: bc = IP, de = buffer
-
-readIdent:
-    ld h,msb(opcodesBase)               ; this table identifies the char type
-    jr readIdent1
-readIdent0:                             ; copy to PAD area 
-    inc bc                              ; characters that are part of the identifier  
-    inc de
-readIdent1:                             ; 0-9 A-Z a-z
-    ld a,(bc)
-    ld (de),a
-    cp " "+1
-    jr c,readIdent2
-    ld l,a
-    ld a,(hl)
-    cp lsb(ident_)
-    jr z,readIdent0
-    cp lsb(num_)
-    jr z,readIdent0
-readIdent2:
-    dec bc
-    xor a
-    ld (de),a                           ; terminate string with NUL
-    ret
